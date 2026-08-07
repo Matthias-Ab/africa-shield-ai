@@ -1,0 +1,58 @@
+{
+  "regions": [
+    { "location_name": "Lagos, Nigeria", "latitude": 6.5244, "longitude": 3.3792, "risk_level": "high" },
+    { "location_name": "Nairobi, Kenya", "latitude": -1.2921, "longitude": 36.8219, "risk_level": "low" },
+    { "location_name": "Cairo, Egypt", "latitude": 30.0444, "longitude": 31.2357, "risk_level": "medium" },
+    { "location_name": "Accra, Ghana", "latitude": 5.6037, "longitude": -0.1870, "risk_level": "medium" },
+    { "location_name": "Kampala, Uganda", "latitude": 0.3476, "longitude": 32.5825, "risk_level": "high" },
+    { "location_name": "Maputo, Mozambique", "latitude": -25.9692, "longitude": 32.5732, "risk_level": "low" },
+    { "location_name": "Dar es Salaam, Tanzania", "latitude": -6.7924, "longitude": 39.2083, "risk_level": "high" },
+    { "location_name": "Kinshasa, DRC", "latitude": -4.4419, "longitude": 15.2663, "risk_level": "low" }
+  ],
+  "alerts": [
+    {
+      "location_name": "Lagos, Nigeria",
+      "risk_level": "high",
+      "message_sent": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
+      "channel": "SMS (simulated)",
+      "timestamp": "2026-08-07T09:15:00Z"
+    },
+    {
+      "location_name": "Kampala, Uganda",
+      "risk_level": "high",
+      "message_sent": "Flood risk is HIGH in Kampala. Move to higher ground and avoid riverbanks.",
+      "channel": "USSD (simulated)",
+      "timestamp": "2026-08-07T09:20:00Z"
+    },
+    {
+      "location_name": "Dar es Salaam, Tanzania",
+      "risk_level": "high",
+      "message_sent": "Flood risk is HIGH in Dar es Salaam. Move to higher ground and avoid riverbanks.",
+      "channel": "SMS (simulated)",
+      "timestamp": "2026-08-07T09:25:00Z"
+    },
+    {
+      "location_name": "Accra, Ghana",
+      "risk_level": "medium",
+      "message_sent": "Flood risk is MEDIUM in Accra. Stay alert and monitor local updates.",
+      "channel": "WhatsApp (simulated)",
+      "timestamp": "2026-08-07T09:30:00Z"
+    },
+    {
+      "location_name": "Cairo, Egypt",
+      "risk_level": "medium",
+      "message_sent": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
+      "channel": "SMS (simulated)",
+      "timestamp": "2026-08-07T09:35:00Z"
+    }
+  ],
+  "risk_check_example": {
+    "location_name": "Lagos, Nigeria",
+    "risk_level": "high",
+    "risk_score": 0.82,
+    "alert_message_en": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
+    "alert_message_local": "Ewu omi ga soke ni Lagos. Lo si ibi giga, yago fun eti odo.",
+    "local_language": "Yoruba",
+    "timestamp": "2026-08-07T12:00:00Z"
+  }
+}
