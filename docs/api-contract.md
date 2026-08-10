@@ -47,12 +47,12 @@ mapping used.
 
 ```json
 {
-  "location_name": "Lagos, Nigeria",
-  "risk_level": "high",
-  "risk_score": 0.82,
-  "alert_message_en": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
-  "alert_message_local": "Ewu omi ga soke ni Lagos. Lo si ibi giga, yago fun eti odo.",
-  "local_language": "Yoruba",
+  "location_name": "Cairo, Egypt",
+  "risk_level": "medium",
+  "risk_score": 0.42,
+  "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
+  "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
+  "local_language": "Arabic",
   "timestamp": "2026-08-07T12:00:00Z"
 }
 ```
@@ -63,8 +63,8 @@ mapping used.
 | `risk_level`           | string | `"low"` \| `"medium"` \| `"high"`        |
 | `risk_score`           | float  | 0.0–1.0                                   |
 | `alert_message_en`     | string | Human-readable alert, English            |
-| `alert_message_local`  | string | Same alert, translated to `local_language` |
-| `local_language`       | string | e.g. `"Yoruba"`, `"Swahili"`, `"Arabic"` |
+| `alert_message_local`  | string | Same alert, translated to `local_language`. **Right-to-left when `local_language` is `"Arabic"`** — the frontend must handle RTL display; this field is a plain string with no directionality markers. |
+| `local_language`       | string | One of the team's four agreed languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"` |
 | `timestamp`            | string | ISO 8601, UTC                            |
 
 ---

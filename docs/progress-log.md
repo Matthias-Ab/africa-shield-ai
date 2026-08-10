@@ -5,6 +5,40 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — Finalize language mapping (English/Swahili/Arabic/Somali)
+
+### Completed
+- `backend/app/models/translations.py`: replaced `LOCAL_LANGUAGE_BY_COUNTRY` to map only to the team's four agreed languages. Final mapping: `kenya` → Swahili, `tanzania` → Swahili, `uganda` → Swahili, `egypt` → Arabic, `somalia` → Somali, `nigeria` → English, `ghana` → English, `mozambique` → English, `drc` → English. `DEFAULT_LOCAL_LANGUAGE` changed from `"Swahili"` to `"English"` for any country not explicitly listed.
+- Removed Yoruba entirely from `translations.py` — no leftover mapping entries or template block. (It remains mentioned in this log's 2026-08-10 "real logic" entry below and the entry before that, since those are a historical record of what was true at the time and are not rewritten.)
+- `ALERT_TEMPLATES` restructured: kept `"en"` (always used for `alert_message_en`), added an `"English"` alias pointing at the same template dict (needed because `local_language` can now be `"English"` itself, and the lookup would otherwise `KeyError`), kept the Swahili and Arabic draft templates as-is, added a `"Somali"` block with `"TODO: awaiting reviewed Somali translation"` placeholders for `high`/`medium`/`low` instead of any guessed wording.
+- Added a prominent module-docstring flag: Swahili and Arabic strings are unreviewed AI-written drafts; Somali has no wording yet; both need the team's reviewed text before Aug 12.
+- Added a module-docstring note that `alert_message_local` is right-to-left when `local_language` is `"Arabic"`, and that this module does nothing about RTL rendering — that's explicitly a frontend concern.
+- `docs/mock-data.json` and `docs/api-contract.md`: replaced the `risk_check_example` (was Lagos/Nigeria/Yoruba) with Cairo/Egypt/Arabic, using the exact same Arabic string as `translations.py`'s `ALERT_TEMPLATES["Arabic"]["medium"]` formatted for Cairo — verified character-for-character identical, so there's no drift between the docs and the code. Updated the `local_language` field note in `api-contract.md` to list the four agreed languages and call out the RTL consideration.
+- Verified end-to-end with the server running locally: tested one request per language path — Cairo/Egypt → Arabic (medium/0.42), Nairobi/Kenya → Swahili (low/0.20), Lagos/Nigeria → English (high/0.82, now matching `alert_message_en` since Nigeria has no dedicated local template), Mogadishu/Somalia → Somali (medium/0.50, returned the TODO placeholder string as expected, not invented wording), and an unmapped country → English (high/0.93, confirming the fallback change from Swahili to English). `/api/regions` response shape unchanged. Confirmed no remaining "Yoruba" references anywhere in `backend/` via a full-repo grep (the only hits are in this log's historical entries below, which is correct — they're a record of the past, not live code).
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's scope.
+
+### Not Yet Started
+- Reviewed Swahili and Arabic wording (still AI-written drafts as of this entry).
+- Any Somali wording at all (currently just TODO placeholders).
+- Frontend RTL handling for Arabic (`frontend-web/` not touched this session, per instructions).
+- Everything else already listed as Not Yet Started in the entry below (real translation API, real SMS/USSD gateway, ML model, frontend dashboard, pitch deck, etc.).
+
+### Findings & Decisions
+- **Somalia is in the language mapping even though it's not one of the 8 sample cities in `backend/app/data/regions.json`.** Added because Somali is one of the four agreed languages and Somalia is the obvious country for it — flagging this as an addition beyond the 8 sample cities so it can be sanity-checked.
+- **Nigeria, Ghana, Mozambique, and DRC are mapped explicitly to `"English"`** in the dictionary (rather than relying on `DEFAULT_LOCAL_LANGUAGE` for them) — this makes the mapping self-documenting and means adding a 9th agreed language later won't silently change what these four countries show.
+- **The `"English"` alias in `ALERT_TEMPLATES` is a plumbing necessity, not a design choice** — `build_alert_messages` looks up `ALERT_TEMPLATES[local_language][risk_level]`, and once `"English"` became a possible value of `local_language` (not just `"en"`), that lookup needed a matching key or it would crash. `alert_message_local` and `alert_message_en` are therefore identical strings whenever `local_language == "English"`.
+
+### Flags for the Team
+- **Yoruba is fully removed.** The final four languages are English, Swahili, Arabic, and Somali — English is always the baseline, the other three are the local-language options depending on country.
+- **Swahili and Arabic wording in `translations.py` is still an unreviewed AI-written draft.** Needs native/fluent-speaker review before Aug 12 — same flag as the previous entry, not yet resolved.
+- **Somali has zero real wording yet** — three `"TODO: awaiting reviewed Somali translation"` placeholder strings sitting in `ALERT_TEMPLATES["Somali"]`. Whoever owns Somali translation needs to fill these in; until then, any Somalia-mapped request will visibly return the TODO string, not silently wrong text.
+- **Arabic is right-to-left — this needs frontend handling.** The backend returns plain Arabic text with no directionality markup; the dashboard needs to render it RTL (e.g. `dir="rtl"`) when `local_language === "Arabic"`. Flagging explicitly for Habiba/Farid/Thompson since this is easy to miss until someone actually looks at a Cairo alert card.
+- **Default fallback language changed from Swahili to English** for any country not in `LOCAL_LANGUAGE_BY_COUNTRY`. If a new sample city gets added later and its country isn't explicitly mapped, it'll now show English by default, not Swahili — worth knowing if that ever looks surprising in a demo.
+
+---
+
 ## 2026-08-10 — Real flood risk scoring and translation logic
 
 ### Completed
