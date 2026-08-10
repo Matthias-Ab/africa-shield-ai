@@ -5,6 +5,29 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — Beginner-friendly project overview PDF
+
+### Completed
+- Wrote `docs/Africa-Shield-AI-Overview.pdf` (14 pages) — a beginner-friendly explainer of the whole project: what it is, the problem it solves, the workflow step by step, the risk-scoring formula worked through with a real example (Lagos, 0.82 → HIGH), the four-language translation mapping, simulated alert delivery, tech stack in plain language, system architecture, API overview, and the roadmap. Includes diagrams (workflow pipeline, risk-score bar chart, language-mapping diagram, roadmap timeline) rather than just text.
+- Built from an HTML source (print-styled) and converted with headless Chrome (`--print-to-pdf`) — no paid tooling needed. Verified page count (14, matches the 12 content sections + cover + TOC, no overflow) and visually spot-checked rendering (emoji, SVG diagrams, RTL Arabic, tables) via screenshots before finalizing.
+- Linked from the top-level `README.md`'s Docs section as the recommended starting point for anyone new to the project, including judges/reviewers.
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session.
+
+### Not Yet Started
+- N/A — this was a standalone documentation task, not tied to open backend/frontend work.
+
+### Findings & Decisions
+- Used population/risk figures and translation examples already established in prior sessions (e.g. Lagos 0.82/HIGH, Cairo/Arabic example) rather than inventing new ones, so this document can't drift from the actual running system.
+- Repeated the same honesty pattern as the rest of this project's docs: the PDF explicitly states what's simulated (SMS/USSD/WhatsApp sending), what's unreviewed (Swahili/Arabic/Somali translations), and what's roadmap vs. built today — rather than presenting the demo as more finished than it is.
+
+### Flags for the Team
+- This PDF is a good one to send to judges/reviewers ahead of the live demo, or to hand a new teammate on day one.
+- The source HTML isn't committed to the repo (only the final PDF is, in `docs/`) — if the content needs updating later, ask for it to be regenerated rather than hand-editing the PDF.
+
+---
+
 ## 2026-08-10 — "Make the demo superb" backend pass + frontend handoff spec
 
 ### Completed

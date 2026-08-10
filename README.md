@@ -55,6 +55,11 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 
 ## Docs
 
+- [`docs/Africa-Shield-AI-Overview.pdf`](docs/Africa-Shield-AI-Overview.pdf) —
+  beginner-friendly project overview with diagrams: what this is, how the
+  workflow works, the risk model explained, tech stack, architecture, and
+  roadmap. Good starting point for anyone new to the project (including
+  judges/reviewers), no technical background assumed.
 - [`docs/api-contract.md`](docs/api-contract.md) — exact request/response
   shapes for all 3 endpoints.
 - [`docs/mock-data.json`](docs/mock-data.json) — sample data in those exact
