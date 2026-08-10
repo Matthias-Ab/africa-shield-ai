@@ -5,11 +5,13 @@ droughts, heatwaves, wildfires, cyclones, earthquakes) across Africa and
 sends early warnings to at-risk communities before disasters happen,
 prioritizing accessibility for people without smartphones or reliable
 internet. **Scoped hackathon demo:** "Last-Mile Alert AI" — flooding
-only, working end-to-end: a rules-based flood risk score, an API that
-turns it into a human-readable alert, translation into a local African
+only, working end-to-end: a rules-based flood risk score shown alongside
+a genuine trained ML model as a second opinion, an API that turns the
+result into a human-readable alert, translation into a local African
 language, and a simulated SMS/USSD/WhatsApp send, all shown on a simple
-web dashboard. **Future:** expand to the other hazards, a real ML model,
-a real SMS gateway, and an offline-first mobile app (see
+web dashboard. **Future:** expand to the other hazards, train the ML
+model on real historical data instead of synthetic data, a real SMS
+gateway, and an offline-first mobile app (see
 [Future Improvements](#future-improvements) below).
 
 Built for the **"AI for All Hackathon: Building Inclusive Solutions for
@@ -24,6 +26,12 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   hardcoded translation dictionary in `backend/app/models/translations.py`.
   See [`docs/progress-log.md`](docs/progress-log.md) for thresholds,
   assumptions, and what's still unverified.
+- **A second, genuinely trained ML model now runs alongside the
+  rules-based one** (`ml_risk_level`/`ml_risk_score`, additive fields on
+  both endpoints) — a `scikit-learn` logistic regression, trained on
+  synthetic data standing in for real historical flood data. See
+  [`docs/architecture.md`](docs/architecture.md)'s "Two risk scores, on
+  purpose" section for why both are kept.
 - `GET /api/alerts` is **still an intentional simulated stub** — no real
   SMS/USSD gateway this week (documented future improvement, not an
   oversight).
@@ -44,9 +52,11 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 ## Tech stack
 
 - **Backend:** Python, FastAPI
+- **ML model:** scikit-learn (`StandardScaler` + `LogisticRegression`),
+  trained on synthetic data — see `backend/app/models/train_ml_model.py`
 - **Frontend:** React + Vite
 - **Data:** hardcoded/mock JSON for the hackathon demo (no database, no
-  real ML model, no real SMS gateway — see Future Improvements)
+  real SMS gateway — see Future Improvements)
 
 ## Running it locally
 
@@ -82,8 +92,9 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 
 Beyond the hackathon demo, the roadmap includes:
 
-- Replace the rules-based risk score with a real ML model trained on
-  historical satellite (NASA/ESA) and meteorological data.
+- Train the ML risk model on real historical flood/rainfall/river-level
+  data (e.g. NASA/ESA satellite archives, national meteorological
+  services) instead of the synthetic data it uses today.
 - Integrate a real SMS/USSD gateway (e.g., Africa's Talking, Twilio)
   instead of simulating sends.
 - Expand beyond flooding to droughts, heatwaves, wildfires, cyclones, and

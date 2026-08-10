@@ -5,6 +5,39 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — Dual risk model: genuine ML "second opinion" alongside rules
+
+### Completed
+- **Added a real, trained ML model** alongside the rules-based one, per the team's decision to lean into the hackathon's AI track. Model type: a `scikit-learn` `Pipeline` of `StandardScaler` + `LogisticRegression`, three-class (low/medium/high). Chosen because it's simple enough to describe in one sentence to a judge ("a learned linear boundary between the three risk levels, after standardizing the two inputs") — no deep learning, no ensemble methods, per the constraint to keep it judge-explainable.
+- **Training data is synthetic** (`backend/app/models/train_ml_model.py`, `generate_synthetic_training_data()`), clearly flagged as such in that file's docstring with a `# TODO` pointing at the real upgrade path. It is deliberately **not** a 1:1 re-encoding of the rules-based formula: different feature weights (55/45 vs. the rules' 50/50), a compounding rainfall×river-level interaction term, and injected Gaussian noise before bucketing into labels. On a held-out synthetic test split, the trained model disagreed with what the rules-based formula would say for the same inputs on **11.00%** of samples (test accuracy against its own synthetic ground truth: 87.25%) — real variation, not a restatement.
+- Verified against the 9 real sample cities in `app/data/regions.json`: **all 9 agree on risk_level bucket** between the two models, while the underlying scores differ slightly (e.g. Lagos: rules 0.82 vs. ML 0.84; Kinshasa: rules 0.31 vs. ML 0.23) — exactly the "second opinion, not a contradiction" framing wanted for the demo, confirmed empirically rather than assumed.
+- Trained the model and committed the fitted pipeline to `backend/app/models/ml_risk_model.pkl` (1.2 KB) so the server loads it once at import time instead of retraining on every start.
+- `backend/app/models/ml_risk_model.py`: inference wrapper. Blends the model's per-class probabilities into a single 0.0–1.0 `ml_risk_score` using fixed severity weights (low=0.2, medium=0.55, high=0.85 — the midpoints of the rules-based bands), then buckets that score into `ml_risk_level` using the **same** `HIGH_THRESHOLD`/`MEDIUM_THRESHOLD` constants as the rules-based model — so the ML label and ML score can never visually contradict each other, and the two models' scores are on a directly comparable scale.
+- **API contract change (additive, explicitly flagged per standing instructions):** `POST /api/risk-check` and `GET /api/regions` both gained `ml_risk_level` and `ml_risk_score`. No existing field renamed, removed, or retyped. Updated `docs/api-contract.md` (both endpoints' example responses and field tables) and `docs/mock-data.json` (all 9 regions plus the risk-check example) with the exact live values, verified byte-for-byte via a script diffing live API output against `mock-data.json` (zero drift, timestamp excluded).
+- Added a "Two risk scores, on purpose" section to `docs/architecture.md` explaining why both models are kept, what the ML model actually is, and the documented path to training on real data. Lightly corrected adjacent stale claims in that file (risk model/translations were still marked "Not implemented yet" from the very first skeleton session) since leaving them would have directly contradicted the new section.
+- Updated `README.md` (pitch paragraph, status section, tech stack, Future Improvements) and `backend/README.md` (full rewrite — was still describing the stubbed-skeleton state) to reflect the dual-model reality.
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's scope.
+
+### Not Yet Started
+- Training on real historical data (see Findings below for what that would require).
+- Frontend display of the second score — explicitly not this session's job; `frontend-web/` was not touched.
+- Everything else already listed as Not Yet Started in prior entries.
+
+### Findings & Decisions
+- **What a real-data upgrade would need:** a real historical dataset of (rainfall, river level, actual flood outcome) tuples — e.g. from NASA/ESA satellite archives or national meteorological services — to replace `generate_synthetic_training_data()`. Everything downstream (the `Pipeline` definition, the train/test split, the save-to-`.pkl` step, the inference wrapper, the API fields) needs no changes; only the data-loading function changes. This isolation was a deliberate design choice this session, not an accident.
+- Chose to blend class probabilities into a severity-weighted score (rather than e.g. using `P(high)` alone) specifically so `ml_risk_score` sits on the same 0–1 scale and "feels like" `risk_score` for a side-by-side display — a UX/comparability decision, not a modeling requirement.
+- Used a fixed random seed (42) for both the synthetic data generation and the train/test split, so retraining reproduces the same model unless the generation logic itself changes — important for demo stability (nobody wants the numbers to shift between now and Aug 29 just from re-running the training script).
+
+### Flags for the Team
+- **This is the one deliberate exception to "don't change the API contract without asking"** — the user's own instructions for this task explicitly pre-authorized and requested this additive change, and it's called out here and in `docs/api-contract.md` per those same instructions, not snuck in silently.
+- **Frontend team:** two new fields are available (`ml_risk_level`, `ml_risk_score`) on both endpoints whenever you want to surface them — no rush, they're additive and nothing existing changed shape.
+- **The ML model's wording/behavior hasn't been "reviewed" the way the translations were flagged as unreviewed** — it's a real trained model, not placeholder text, but it's still trained on synthetic (not real) data, which is the honest caveat to have ready if a judge asks "is this trained on real flood data?" — the answer is no, and that's documented, not hidden.
+- If `backend/app/models/ml_risk_model.pkl` is ever deleted or `.gitignore`'d by accident, the server will fail to start (`ml_risk_model.py` loads it at import time with no fallback) — regenerate with `python -m app.models.train_ml_model` from `backend/`.
+
+---
+
 ## 2026-08-10 — Documentation accuracy pass
 
 ### Completed

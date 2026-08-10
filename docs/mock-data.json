@@ -6,7 +6,9 @@
       "longitude": 3.3792,
       "risk_level": "high",
       "population_estimate": 15000000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 85, "river_level_m": 3.2, "normalized_rainfall": 0.85, "normalized_river_level": 0.8, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "high", "risk_score": 0.82 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 85, "river_level_m": 3.2, "normalized_rainfall": 0.85, "normalized_river_level": 0.8, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "high", "risk_score": 0.82 },
+      "ml_risk_level": "high",
+      "ml_risk_score": 0.84
     },
     {
       "location_name": "Nairobi, Kenya",
@@ -14,7 +16,9 @@
       "longitude": 36.8219,
       "risk_level": "low",
       "population_estimate": 4400000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 12, "river_level_m": 1.1, "normalized_rainfall": 0.12, "normalized_river_level": 0.28, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "low", "risk_score": 0.2 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 12, "river_level_m": 1.1, "normalized_rainfall": 0.12, "normalized_river_level": 0.28, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "low", "risk_score": 0.2 },
+      "ml_risk_level": "low",
+      "ml_risk_score": 0.2
     },
     {
       "location_name": "Cairo, Egypt",
@@ -22,7 +26,9 @@
       "longitude": 31.2357,
       "risk_level": "medium",
       "population_estimate": 10000000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 35, "river_level_m": 2.0, "normalized_rainfall": 0.35, "normalized_river_level": 0.5, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.42 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 35, "river_level_m": 2.0, "normalized_rainfall": 0.35, "normalized_river_level": 0.5, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.42 },
+      "ml_risk_level": "medium",
+      "ml_risk_score": 0.43
     },
     {
       "location_name": "Accra, Ghana",
@@ -30,7 +36,9 @@
       "longitude": -0.1870,
       "risk_level": "medium",
       "population_estimate": 2500000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 60, "river_level_m": 2.5, "normalized_rainfall": 0.6, "normalized_river_level": 0.62, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.61 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 60, "river_level_m": 2.5, "normalized_rainfall": 0.6, "normalized_river_level": 0.62, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.61 },
+      "ml_risk_level": "medium",
+      "ml_risk_score": 0.61
     },
     {
       "location_name": "Kampala, Uganda",
@@ -38,7 +46,9 @@
       "longitude": 32.5825,
       "risk_level": "high",
       "population_estimate": 1700000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 90, "river_level_m": 3.5, "normalized_rainfall": 0.9, "normalized_river_level": 0.88, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "high", "risk_score": 0.89 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 90, "river_level_m": 3.5, "normalized_rainfall": 0.9, "normalized_river_level": 0.88, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "high", "risk_score": 0.89 },
+      "ml_risk_level": "high",
+      "ml_risk_score": 0.85
     },
     {
       "location_name": "Maputo, Mozambique",
@@ -46,7 +56,9 @@
       "longitude": 32.5732,
       "risk_level": "low",
       "population_estimate": 1100000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 15, "river_level_m": 1.0, "normalized_rainfall": 0.15, "normalized_river_level": 0.25, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "low", "risk_score": 0.2 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 15, "river_level_m": 1.0, "normalized_rainfall": 0.15, "normalized_river_level": 0.25, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "low", "risk_score": 0.2 },
+      "ml_risk_level": "low",
+      "ml_risk_score": 0.2
     },
     {
       "location_name": "Dar es Salaam, Tanzania",
@@ -54,7 +66,9 @@
       "longitude": 39.2083,
       "risk_level": "high",
       "population_estimate": 7400000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 70, "river_level_m": 2.8, "normalized_rainfall": 0.7, "normalized_river_level": 0.7, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "high", "risk_score": 0.7 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 70, "river_level_m": 2.8, "normalized_rainfall": 0.7, "normalized_river_level": 0.7, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "high", "risk_score": 0.7 },
+      "ml_risk_level": "high",
+      "ml_risk_score": 0.75
     },
     {
       "location_name": "Kinshasa, DRC",
@@ -62,7 +76,9 @@
       "longitude": 15.2663,
       "risk_level": "low",
       "population_estimate": 15000000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 25, "river_level_m": 1.5, "normalized_rainfall": 0.25, "normalized_river_level": 0.38, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "low", "risk_score": 0.31 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 25, "river_level_m": 1.5, "normalized_rainfall": 0.25, "normalized_river_level": 0.38, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "low", "risk_score": 0.31 },
+      "ml_risk_level": "low",
+      "ml_risk_score": 0.23
     },
     {
       "location_name": "Mogadishu, Somalia",
@@ -70,7 +86,9 @@
       "longitude": 45.3182,
       "risk_level": "medium",
       "population_estimate": 2600000,
-      "risk_score_breakdown": { "rainfall_mm_24h": 55, "river_level_m": 2.6, "normalized_rainfall": 0.55, "normalized_river_level": 0.65, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.6 }
+      "risk_score_breakdown": { "rainfall_mm_24h": 55, "river_level_m": 2.6, "normalized_rainfall": 0.55, "normalized_river_level": 0.65, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.6 },
+      "ml_risk_level": "medium",
+      "ml_risk_score": 0.59
     }
   ],
   "alerts": [
@@ -118,6 +136,8 @@
     "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
     "local_language": "Arabic",
     "timestamp": "2026-08-07T12:00:00Z",
-    "risk_score_breakdown": { "rainfall_mm_24h": 35, "river_level_m": 2.0, "normalized_rainfall": 0.35, "normalized_river_level": 0.5, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.42 }
+    "risk_score_breakdown": { "rainfall_mm_24h": 35, "river_level_m": 2.0, "normalized_rainfall": 0.35, "normalized_river_level": 0.5, "rainfall_cap_mm": 100.0, "river_level_cap_m": 4.0, "high_threshold": 0.7, "medium_threshold": 0.4, "risk_level": "medium", "risk_score": 0.42 },
+    "ml_risk_level": "medium",
+    "ml_risk_score": 0.43
   }
 }

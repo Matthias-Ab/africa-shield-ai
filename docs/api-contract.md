@@ -15,6 +15,17 @@ changed type — anything built against the previous shapes still works
 unmodified; these are new fields to opt into. See
 [`frontend-feature-spec.md`](frontend-feature-spec.md) for how to use them.
 
+**Second contract change, also additive (2026-08-10): `ml_risk_level` and
+`ml_risk_score`.** Both endpoints now also return a genuine trained-ML
+"second opinion" alongside the existing rules-based `risk_level`/
+`risk_score` — the rules-based fields are unchanged and remain primary;
+the ML fields are new, optional-to-use additions. **Flagging this
+explicitly, per standing instructions not to change the contract without
+saying so** — this is intentional and requested (see
+`docs/progress-log.md`'s 2026-08-10 "dual risk model" entry), not a
+silent drift. See `backend/app/models/ml_risk_model.py` for how the score
+is computed.
+
 Base URL (local dev): `http://localhost:8000`
 
 ---
@@ -71,20 +82,24 @@ mapping used.
     "medium_threshold": 0.4,
     "risk_level": "medium",
     "risk_score": 0.42
-  }
+  },
+  "ml_risk_level": "medium",
+  "ml_risk_score": 0.43
 }
 ```
 
 | Field                  | Type   | Notes                                    |
 |------------------------|--------|-------------------------------------------|
 | `location_name`        | string | Echoed from the request                  |
-| `risk_level`           | string | `"low"` \| `"medium"` \| `"high"`        |
-| `risk_score`           | float  | 0.0–1.0                                   |
+| `risk_level`           | string | `"low"` \| `"medium"` \| `"high"` — **rules-based, primary** |
+| `risk_score`           | float  | 0.0–1.0 — **rules-based, primary**        |
 | `alert_message_en`     | string | Human-readable alert, English            |
 | `alert_message_local`  | string | Same alert, translated to `local_language`. **Right-to-left when `local_language` is `"Arabic"`** — the frontend must handle RTL display; this field is a plain string with no directionality markers. |
 | `local_language`       | string | One of the team's four agreed languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"` |
 | `timestamp`            | string | ISO 8601, UTC                            |
-| `risk_score_breakdown` | object | **New.** Explainability data for a "why this score" UI — see below. |
+| `risk_score_breakdown` | object | Explainability data for a "why this score" UI — see below. |
+| `ml_risk_level`        | string | **New.** `"low"` \| `"medium"` \| `"high"` — the trained ML model's second opinion, bucketed with the same thresholds as the rules-based score (see `risk_score_breakdown.high_threshold`/`medium_threshold`). |
+| `ml_risk_score`        | float  | **New.** 0.0–1.0, same scale as `risk_score`, from a logistic regression trained on synthetic data — see `docs/architecture.md`'s "Two risk scores, on purpose" section and `backend/app/models/train_ml_model.py`. Will often differ slightly from `risk_score`; that's expected, not a bug. |
 
 `risk_score_breakdown` fields:
 
@@ -133,19 +148,23 @@ the dashboard's map/list view.
       "medium_threshold": 0.4,
       "risk_level": "high",
       "risk_score": 0.82
-    }
+    },
+    "ml_risk_level": "high",
+    "ml_risk_score": 0.84
   }
 ]
 ```
 
 An array of objects, each with `location_name`, `latitude`, `longitude`,
 and `risk_level` (`"low"` | `"medium"` | `"high"`, unchanged from before),
-plus two **new** fields:
+plus four **new** fields:
 
 | Field                    | Type   | Notes |
 |--------------------------|--------|-------|
 | `population_estimate`   | int    | Rough public population figure for the city (e.g. commonly cited metro/city-proper estimates). **This is a general population figure, not a flood-exposure model** — it does not mean this many people are at risk of flooding, only that this many people live in the monitored area. See [`frontend-feature-spec.md`](frontend-feature-spec.md) for suggested UI copy that doesn't overstate this. |
 | `risk_score_breakdown`  | object | Same shape as in `POST /api/risk-check`'s response, above — explainability data for a "why this score" UI. |
+| `ml_risk_level`         | string | Same meaning as in `POST /api/risk-check` — the trained ML model's second opinion for this region's sample rainfall/river data. |
+| `ml_risk_score`         | float  | Same meaning as in `POST /api/risk-check`. |
 
 Currently 9 regions — see `backend/app/data/regions.json` for the
 underlying sensor inputs and population figures.

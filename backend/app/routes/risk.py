@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from app.models.ml_risk_model import predict_ml_risk
 from app.models.risk_model import risk_score_breakdown
 from app.models.translations import build_alert_messages
 
@@ -39,6 +40,8 @@ class RiskCheckResponse(BaseModel):
     local_language: str
     timestamp: str
     risk_score_breakdown: RiskScoreBreakdown
+    ml_risk_level: str
+    ml_risk_score: float
 
 
 @router.post("/api/risk-check", response_model=RiskCheckResponse)
@@ -48,6 +51,7 @@ def risk_check(payload: RiskCheckRequest) -> RiskCheckResponse:
     message_en, message_local, local_language = build_alert_messages(
         payload.location_name, risk_level
     )
+    ml_risk_level, ml_risk_score = predict_ml_risk(payload.rainfall_mm_24h, payload.river_level_m)
 
     return RiskCheckResponse(
         location_name=payload.location_name,
@@ -58,4 +62,6 @@ def risk_check(payload: RiskCheckRequest) -> RiskCheckResponse:
         local_language=local_language,
         timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         risk_score_breakdown=RiskScoreBreakdown(**breakdown),
+        ml_risk_level=ml_risk_level,
+        ml_risk_score=ml_risk_score,
     )
