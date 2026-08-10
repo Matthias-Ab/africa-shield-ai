@@ -72,7 +72,7 @@ Example response (abbreviated — full shape in `api-contract.md`):
   "risk_score": 0.82,
   "alert_message_en": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
   "alert_message_local": "...",
-  "local_language": "Yoruba" or whatever the location maps to
+  "local_language": "English" (Nigeria has no dedicated local template — see the Note below)
 }
 ```
 

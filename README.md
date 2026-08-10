@@ -35,8 +35,11 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 
 ## Team
 
-- [ Name ] — Backend / AI (risk model, API)
-- [ Name ] — Frontend web dashboard
+- Matthias — Backend / AI (risk model, API)
+- Habiba — Frontend web dashboard
+- Farid — Frontend web dashboard
+- Thompson — Frontend web dashboard
+- Mohamed Zaki — Embedded Systems / Robotics
 
 ## Tech stack
 

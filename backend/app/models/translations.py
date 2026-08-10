@@ -8,9 +8,10 @@
 # FLAG FOR THE TEAM: the Swahili, Arabic, and Somali strings in
 # ALERT_TEMPLATES below are AI-written and have not been checked by a
 # native/fluent speaker. Team decision (2026-08-10): ship these as the
-# working translations for the Aug 12 demo rather than block on a review
-# pass. A native-speaker review is still worth doing before any use
-# beyond the hackathon — flag any wording that looks off if you notice.
+# working translations for the hackathon demo (deadline 2026-08-29)
+# rather than block on a review pass. A native-speaker review is still
+# worth doing before any use beyond the hackathon — flag any wording
+# that looks off if you notice.
 #
 # ARABIC IS RIGHT-TO-LEFT. This module returns Arabic alert text as a
 # plain string in `alert_message_local` — it does not add any RTL

@@ -33,5 +33,8 @@ _Fill this in as the demo comes together. Structure below is a starting point._
 
 ## Team roles
 
-- [ Name ] — backend / AI (risk model, API)
-- [ Name ] — frontend web dashboard
+- Matthias — backend / AI (risk model, API)
+- Habiba — frontend web dashboard
+- Farid — frontend web dashboard
+- Thompson — frontend web dashboard
+- Mohamed Zaki — embedded systems / robotics

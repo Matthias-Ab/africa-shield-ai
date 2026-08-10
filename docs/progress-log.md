@@ -5,6 +5,34 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — Documentation accuracy pass
+
+### Completed
+- **Leftover Yoruba reference removed** from `docs/frontend-feature-spec.md` (an example response had literally said `"local_language": "Yoruba"`, stale from before the team dropped Yoruba) and from the PDF's API-overview example (same issue). Confirmed via full-text extraction of the regenerated PDF and a grep of `docs/*.md` that no live-facing doc mentions Yoruba anymore. `docs/progress-log.md`'s own historical entries still mention Yoruba by name — that's correct and intentional (they're a dated record of what was true in earlier sessions, not live content) and were left unchanged.
+- **"3-day hackathon" framing corrected.** The actual deadline is **2026-08-29**, not the ~3-day/Aug-12 window several earlier sessions assumed. Fixed in the PDF (4 occurrences — the "simulated" callout, the translations caveat, the tech-stack callout, and the closing note) and in `backend/app/models/translations.py`'s module docstring (was "the Aug 12 demo," now references the real 2026-08-29 deadline). Historical `docs/progress-log.md` entries that mention "Aug 12" were left as-is — they're an accurate record of what the team believed/decided at the time, not a live claim.
+- **Confirmed Mogadishu, Somalia is genuinely in `backend/app/data/regions.json`** (read the file directly rather than trusting memory) — it is, bringing the total to 9 sample cities, matching every current doc that states "9." The only places that say "8 sample cities" are `docs/progress-log.md`'s historical entries from before Mogadishu was added, which is correct as a dated record — no live doc or code needed a fix here.
+- **Team & Roles completed.** Added Mohamed Zaki (Embedded Systems / Robotics, confirmed with the team lead) and removed the `[ Name ] / [ Role ]` placeholder row, in `README.md`, `docs/pitch-notes.md`, and the PDF's Team & Roles table. Full team: Matthias (Backend/AI), Habiba/Farid/Thompson (Frontend web dashboard), Mohamed Zaki (Embedded Systems/Robotics).
+- **Docs/code sync claim corrected.** The PDF's architecture section previously said syncing was "checked automatically" — it isn't; there's no test suite or CI check in this repo enforcing it. Reworded to say it's manually re-verified each session (which is what actually happened — see the 2026-08-10 "backend pass" entry below, where a one-off script was run by hand, not a standing automated check).
+- Regenerated `docs/Africa-Shield-AI-Overview.pdf` from the corrected HTML source and verified via text extraction (not just visual spot-check) that none of the fixed strings reappear and the corrected ones (Mohamed Zaki, 2026-08-29, "manually re-verifying") are present on the expected pages. Page count unchanged (14).
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session.
+
+### Not Yet Started
+- `docs/architecture.md` itself (the markdown file, not the PDF) is still written from the very first skeleton session and says things like "risk model... Not implemented yet" and frontend "starting tomorrow" — both long since overtaken by events. Noticed during this pass but **not fixed**, since it wasn't one of the 5 items asked for this session and a full rewrite is a bigger job than a targeted correction. Worth a dedicated pass.
+- Everything else already listed as Not Yet Started in prior entries.
+
+### Findings & Decisions
+- Distinguished consistently between "historical record" (progress-log.md's dated entries — never rewritten, even when they mention since-corrected facts like Yoruba or Aug 12) and "live/current-state claims" (README, pitch-notes, architecture sections of the PDF, code comments — corrected when wrong). This distinction is what let this pass fix real inconsistencies without falsifying the team's actual history of decisions.
+- The "checked automatically" claim was an overstatement of what actually happened in past sessions: a person (or this assistant) ran a one-off Python script via the terminal to diff live API output against `docs/mock-data.json`. That's more rigorous than eyeballing, but it is not a repeatable, automated mechanism (no test file, no CI config) — so it shouldn't be described as "automatic" without that caveat.
+
+### Flags for the Team
+- **If the Aug 29 deadline changes again, search before editing.** The stale "Aug 12" framing this session fixed came from an earlier, apparently superseded deadline. Live docs affected: `docs/Africa-Shield-AI-Overview.pdf` (regenerate from `docs/frontend-feature-spec.md`'s sibling HTML source — ask for it, it isn't committed) and `backend/app/models/translations.py`'s docstring.
+- **`docs/architecture.md` is stale** (see Not Yet Started above) — don't cite it as current-state without checking against `docs/api-contract.md` and `docs/progress-log.md` first.
+- **Team roster is now complete** in README/pitch-notes/PDF: Matthias, Habiba, Farid, Thompson, Mohamed Zaki. If anyone else joins or a role changes, update all three places (they're not generated from a single source).
+
+---
+
 ## 2026-08-10 — Beginner-friendly project overview PDF
 
 ### Completed
