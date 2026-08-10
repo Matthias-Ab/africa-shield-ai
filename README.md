@@ -74,7 +74,10 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   roadmap. Good starting point for anyone new to the project (including
   judges/reviewers), no technical background assumed.
 - [`docs/api-contract.md`](docs/api-contract.md) — exact request/response
-  shapes for all 3 endpoints.
+  shapes for all 3 endpoints. Living source of truth.
+- [`docs/API-Schema-Reference.pdf`](docs/API-Schema-Reference.pdf) —
+  frontend-facing PDF snapshot of the exact schema (same content as
+  `api-contract.md`, formatted to hand directly to a teammate).
 - [`docs/mock-data.json`](docs/mock-data.json) — sample data in those exact
   shapes (also what the backend's stubbed endpoints currently return).
 - [`docs/architecture.md`](docs/architecture.md) — how the pieces connect,

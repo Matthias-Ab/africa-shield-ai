@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.models.ml_risk_model import predict_ml_risk
 from app.models.risk_model import risk_score_breakdown
-from app.models.translations import build_alert_messages
+from app.models.translations import build_alert_messages, country_from_location
 
 router = APIRouter()
 
@@ -33,6 +33,11 @@ class RiskScoreBreakdown(BaseModel):
 
 class RiskCheckResponse(BaseModel):
     location_name: str
+    country: str
+    latitude: float
+    longitude: float
+    rainfall_mm_24h: float
+    river_level_m: float
     risk_level: str
     risk_score: float
     alert_message_en: str
@@ -55,6 +60,11 @@ def risk_check(payload: RiskCheckRequest) -> RiskCheckResponse:
 
     return RiskCheckResponse(
         location_name=payload.location_name,
+        country=country_from_location(payload.location_name),
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        rainfall_mm_24h=payload.rainfall_mm_24h,
+        river_level_m=payload.river_level_m,
         risk_level=risk_level,
         risk_score=risk_score,
         alert_message_en=message_en,

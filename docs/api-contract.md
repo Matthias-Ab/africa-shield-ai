@@ -26,6 +26,26 @@ saying so** — this is intentional and requested (see
 silent drift. See `backend/app/models/ml_risk_model.py` for how the score
 is computed.
 
+**Third contract change, also additive (2026-08-10): `country`,
+`rainfall_mm_24h`/`river_level_m` promoted to top-level, and
+`alert_message_en`/`alert_message_local`/`local_language` added to
+`GET /api/regions`.** Prompted by a frontend teammate asking for the
+exact schema and flagging four gaps — see `docs/progress-log.md`'s
+2026-08-10 "API enrichment" entry for the full reasoning. Specifically:
+- `country` (string) is now a field on both endpoints, parsed from
+  `location_name`, so callers don't have to split the string themselves.
+- `rainfall_mm_24h` and `river_level_m` are now top-level fields on both
+  endpoints (previously only nested inside `risk_score_breakdown`). They
+  remain in `risk_score_breakdown` too — this is a duplicate, additive
+  copy for convenience, not a move.
+- `latitude`/`longitude` are now echoed back in `POST /api/risk-check`'s
+  response (previously only in the request).
+- `GET /api/regions` now includes `alert_message_en`, `alert_message_local`,
+  and `local_language` per region, computed the same way `/api/risk-check`
+  does. Previously `GET /api/alerts` was the only source of alert text,
+  and it's a separate 5-entry simulated stub, not one-per-region.
+Again: no existing field was renamed, removed, or retyped.
+
 Base URL (local dev): `http://localhost:8000`
 
 ---
@@ -65,6 +85,11 @@ mapping used.
 ```json
 {
   "location_name": "Cairo, Egypt",
+  "country": "Egypt",
+  "latitude": 30.0444,
+  "longitude": 31.2357,
+  "rainfall_mm_24h": 35.0,
+  "river_level_m": 2.0,
   "risk_level": "medium",
   "risk_score": 0.42,
   "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
@@ -72,7 +97,7 @@ mapping used.
   "local_language": "Arabic",
   "timestamp": "2026-08-07T12:00:00Z",
   "risk_score_breakdown": {
-    "rainfall_mm_24h": 35,
+    "rainfall_mm_24h": 35.0,
     "river_level_m": 2.0,
     "normalized_rainfall": 0.35,
     "normalized_river_level": 0.5,
@@ -91,6 +116,11 @@ mapping used.
 | Field                  | Type   | Notes                                    |
 |------------------------|--------|-------------------------------------------|
 | `location_name`        | string | Echoed from the request                  |
+| `country`              | string | **New.** Parsed from `location_name` (everything after the last comma). Empty string if `location_name` has no comma. |
+| `latitude`             | float  | **New.** Echoed from the request.        |
+| `longitude`            | float  | **New.** Echoed from the request.        |
+| `rainfall_mm_24h`      | float  | **New.** Echoed from the request. Also present (same value) inside `risk_score_breakdown`. |
+| `river_level_m`        | float  | **New.** Echoed from the request. Also present (same value) inside `risk_score_breakdown`. |
 | `risk_level`           | string | `"low"` \| `"medium"` \| `"high"` — **rules-based, primary** |
 | `risk_score`           | float  | 0.0–1.0 — **rules-based, primary**        |
 | `alert_message_en`     | string | Human-readable alert, English            |
@@ -98,8 +128,8 @@ mapping used.
 | `local_language`       | string | One of the team's four agreed languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"` |
 | `timestamp`            | string | ISO 8601, UTC                            |
 | `risk_score_breakdown` | object | Explainability data for a "why this score" UI — see below. |
-| `ml_risk_level`        | string | **New.** `"low"` \| `"medium"` \| `"high"` — the trained ML model's second opinion, bucketed with the same thresholds as the rules-based score (see `risk_score_breakdown.high_threshold`/`medium_threshold`). |
-| `ml_risk_score`        | float  | **New.** 0.0–1.0, same scale as `risk_score`, from a logistic regression trained on synthetic data — see `docs/architecture.md`'s "Two risk scores, on purpose" section and `backend/app/models/train_ml_model.py`. Will often differ slightly from `risk_score`; that's expected, not a bug. |
+| `ml_risk_level`        | string | `"low"` \| `"medium"` \| `"high"` — the trained ML model's second opinion, bucketed with the same thresholds as the rules-based score (see `risk_score_breakdown.high_threshold`/`medium_threshold`). |
+| `ml_risk_score`        | float  | 0.0–1.0, same scale as `risk_score`, from a logistic regression trained on synthetic data — see `docs/architecture.md`'s "Two risk scores, on purpose" section and `backend/app/models/train_ml_model.py`. Will often differ slightly from `risk_score`; that's expected, not a bug. |
 
 `risk_score_breakdown` fields:
 
@@ -133,9 +163,15 @@ the dashboard's map/list view.
 [
   {
     "location_name": "Lagos, Nigeria",
+    "country": "Nigeria",
     "latitude": 6.5244,
     "longitude": 3.3792,
+    "rainfall_mm_24h": 85,
+    "river_level_m": 3.2,
     "risk_level": "high",
+    "alert_message_en": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
+    "alert_message_local": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
+    "local_language": "English",
     "population_estimate": 15000000,
     "risk_score_breakdown": {
       "rainfall_mm_24h": 85,
@@ -155,12 +191,15 @@ the dashboard's map/list view.
 ]
 ```
 
-An array of objects, each with `location_name`, `latitude`, `longitude`,
-and `risk_level` (`"low"` | `"medium"` | `"high"`, unchanged from before),
-plus four **new** fields:
+An array of objects. `location_name`, `latitude`, `longitude`, and
+`risk_level` are unchanged from before; everything else is additive:
 
 | Field                    | Type   | Notes |
 |--------------------------|--------|-------|
+| `country`               | string | Parsed from `location_name`. |
+| `rainfall_mm_24h`       | float  | This region's sample rainfall input. Also present (same value) inside `risk_score_breakdown`. |
+| `river_level_m`         | float  | This region's sample river-level input. Also present (same value) inside `risk_score_breakdown`. |
+| `alert_message_en` / `alert_message_local` / `local_language` | string | Computed the same way as `POST /api/risk-check`, from this region's `risk_level`. **This is the only place in `/api/regions` an alert message appears** — `GET /api/alerts` is a separate, unrelated 5-entry simulated stub, not one-per-region. |
 | `population_estimate`   | int    | Rough public population figure for the city (e.g. commonly cited metro/city-proper estimates). **This is a general population figure, not a flood-exposure model** — it does not mean this many people are at risk of flooding, only that this many people live in the monitored area. See [`frontend-feature-spec.md`](frontend-feature-spec.md) for suggested UI copy that doesn't overstate this. |
 | `risk_score_breakdown`  | object | Same shape as in `POST /api/risk-check`'s response, above — explainability data for a "why this score" UI. |
 | `ml_risk_level`         | string | Same meaning as in `POST /api/risk-check` — the trained ML model's second opinion for this region's sample rainfall/river data. |

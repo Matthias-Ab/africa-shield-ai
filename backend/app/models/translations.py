@@ -90,9 +90,15 @@ def _city_only(location_name: str) -> str:
     return location_name.split(",")[0].strip()
 
 
-def _country_from_location(location_name: str) -> str:
+def country_from_location(location_name: str) -> str:
+    """"Lagos, Nigeria" -> "Nigeria" (empty string if no comma). Display-cased,
+    unlike the lowercase form used internally for the language lookup below."""
     parts = location_name.split(",")
-    return parts[-1].strip().lower() if len(parts) > 1 else ""
+    return parts[-1].strip() if len(parts) > 1 else ""
+
+
+def _country_from_location(location_name: str) -> str:
+    return country_from_location(location_name).lower()
 
 
 def build_alert_messages(location_name: str, risk_level: str) -> tuple[str, str, str]:

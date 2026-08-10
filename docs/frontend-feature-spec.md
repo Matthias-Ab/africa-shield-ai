@@ -129,10 +129,13 @@ doesn't change anything you've already built against):
 a smartphone would receive." A JSON blob doesn't sell that; a fake phone
 screen with a real SMS bubble does.
 
-**Data:** `alert_message_en`/`alert_message_local` from `/api/risk-check`,
-or `message_sent`/`channel` from `GET /api/alerts` (the simulated alert
-history — channel is one of `"SMS (simulated)"`, `"USSD (simulated)"`,
-`"WhatsApp (simulated)"`).
+**Data:** `alert_message_en`/`alert_message_local` — now available
+directly on **both** `POST /api/risk-check` and each object in
+`GET /api/regions` (added 2026-08-10; previously only on `risk-check`,
+which meant a per-region view needed an extra call). For `channel`
+labels (`"SMS (simulated)"`, `"USSD (simulated)"`, `"WhatsApp (simulated)"`)
+use `GET /api/alerts` — that's still the only source of channel type,
+since it's a separate 5-entry simulated history, not one-per-region.
 
 **Suggested UX:** a simple phone-frame `<div>` with a status bar and, based
 on `channel`:

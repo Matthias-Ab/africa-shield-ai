@@ -5,6 +5,36 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — API enrichment: closed 4 gaps a frontend teammate flagged
+
+### Completed
+- A frontend teammate asked for the exact live API schema (fields: location, country, lat/lon, risk level, risk score, rainfall, water level, alert message). Cross-checked the actual route code against that list and found 4 gaps, then decided — for the strongest possible demo/judging outcome — to close all 4 as additive fields rather than push the workarounds onto the frontend:
+  1. **`country` added** as a real field on both `POST /api/risk-check` and `GET /api/regions`, parsed from `location_name`. Implemented via a new public `country_from_location()` in `backend/app/models/translations.py` (display-cased); the existing internal `_country_from_location()` now delegates to it and lowercases for the language-lookup dict, so no behavior changed there.
+  2. **`latitude`/`longitude` echoed back** in `POST /api/risk-check`'s response (previously only in the request — `GET /api/regions` already had them).
+  3. **`rainfall_mm_24h`/`river_level_m` promoted to top-level** on both endpoints (previously only reachable via `risk_score_breakdown.rainfall_mm_24h` etc.). Kept in `risk_score_breakdown` too — additive duplicate, not a move, so nothing that already reads the nested path breaks.
+  4. **`alert_message_en`/`alert_message_local`/`local_language` added to `GET /api/regions`**, computed per-region the same way `/api/risk-check` does (via `build_alert_messages`, using each region's rules-based `risk_level`). This was the highest-value fix: before this, a per-region alert view needed either a second API call per region or client-side duplication of the sample rainfall/river data — now it's one field, one call.
+- Verified via live server calls (not reconstructed from memory) that all 4 new capabilities work correctly for every affected case, including non-trivial ones: `country: "DRC"` for Kinshasa (no comma-splitting edge case), `alert_message_local` in Arabic/Swahili/Somali/English correctly varying per-region, `rainfall_mm_24h`/`river_level_m` matching their `risk_score_breakdown` counterparts exactly.
+- Regenerated `docs/mock-data.json` **programmatically** (a Python script writing the file from captured live JSON, not hand-edited) for all 9 regions plus the risk-check example, to eliminate any chance of transcription error given how many fields are now involved.
+- Updated `docs/api-contract.md` (a third additive contract-change note, plus updated examples/field tables for both endpoints) and `docs/frontend-feature-spec.md` (noted that alert messages no longer require an extra risk-check call per region).
+- Produced a standalone PDF (`docs/API-Schema-Reference.pdf`) of the finalized schema, in the exact copy-paste markdown format the teammate asked for, for the team lead to send her directly.
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's scope.
+
+### Not Yet Started
+- Nothing new — this closed out a specific request rather than opening new work.
+
+### Findings & Decisions
+- **Decision rationale for closing all 4 gaps rather than leaving some to client-side parsing:** the team lead asked to "decide the best for winning" — for a judged hackathon demo, a clean, flat, complete API response that "just works" for a frontend developer reduces integration risk and dev time under a tight deadline, which matters more here than minimizing backend surface area. All 4 changes are additive and zero-risk to existing consumers, so there was no real tradeoff to weigh against doing them.
+- **`alert_message` on `/api/regions` intentionally reflects the rules-based `risk_level`, not `ml_risk_level`.** The ML score is a comparison/second-opinion field, not the "official" score used for alerting — consistent with the existing design (see the "Two risk scores, on purpose" section of `docs/architecture.md`). If the team ever wants an ML-based alert variant, that's a new, separate decision, not implied by this change.
+
+### Flags for the Team
+- **This is now the third documented exception to "don't change the API contract without asking"** — same as the ML fields, this was explicitly requested by the team lead this session, and is flagged in `docs/api-contract.md`, not snuck in.
+- **Frontend team:** `country`, top-level `rainfall_mm_24h`/`river_level_m`, and per-region alert messages are now available on `GET /api/regions` — if you'd already built a workaround for any of these (e.g. parsing `location_name` yourself, or maintaining a duplicate rainfall/river table to call `risk-check` per region), you can simplify to use the new fields whenever convenient. Nothing forces an immediate change — old fields are untouched.
+- `docs/API-Schema-Reference.pdf` is a snapshot as of this session — if the schema changes again, regenerate rather than hand-editing the PDF (same convention as the beginner-friendly overview PDF).
+
+---
+
 ## 2026-08-10 — Dual risk model: genuine ML "second opinion" alongside rules
 
 ### Completed
