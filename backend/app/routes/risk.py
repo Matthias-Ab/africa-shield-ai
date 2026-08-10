@@ -1,12 +1,12 @@
-import json
-from pathlib import Path
+from datetime import datetime, timezone
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-router = APIRouter()
+from app.models.risk_model import compute_risk
+from app.models.translations import build_alert_messages
 
-MOCK_DATA_FILE = Path(__file__).resolve().parents[3] / "docs" / "mock-data.json"
+router = APIRouter()
 
 
 class RiskCheckRequest(BaseModel):
@@ -17,16 +17,29 @@ class RiskCheckRequest(BaseModel):
     river_level_m: float
 
 
-@router.post("/api/risk-check")
-def risk_check(payload: RiskCheckRequest) -> dict:
-    """STUBBED for today: validates the request shape but always returns
-    the hardcoded example response from docs/mock-data.json, regardless
-    of the input values.
+class RiskCheckResponse(BaseModel):
+    location_name: str
+    risk_level: str
+    risk_score: float
+    alert_message_en: str
+    alert_message_local: str
+    local_language: str
+    timestamp: str
 
-    # TODO: implement real risk scoring logic here — call
-    # app.models.risk_model.compute_risk(payload.rainfall_mm_24h,
-    # payload.river_level_m) and app.models.translations.build_alert_messages(...)
-    # instead of returning the fixed example below.
-    """
-    mock_data = json.loads(MOCK_DATA_FILE.read_text(encoding="utf-8"))
-    return mock_data["risk_check_example"]
+
+@router.post("/api/risk-check", response_model=RiskCheckResponse)
+def risk_check(payload: RiskCheckRequest) -> RiskCheckResponse:
+    risk_level, risk_score = compute_risk(payload.rainfall_mm_24h, payload.river_level_m)
+    message_en, message_local, local_language = build_alert_messages(
+        payload.location_name, risk_level
+    )
+
+    return RiskCheckResponse(
+        location_name=payload.location_name,
+        risk_level=risk_level,
+        risk_score=risk_score,
+        alert_message_en=message_en,
+        alert_message_local=message_local,
+        local_language=local_language,
+        timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    )

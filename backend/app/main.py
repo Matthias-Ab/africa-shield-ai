@@ -7,8 +7,9 @@ app = FastAPI(
     title="Africa Shield AI - Last-Mile Alert API",
     description=(
         "Flood risk scoring and simulated early-warning alerts for the AI for All "
-        "Hackathon demo. Endpoints are currently stubbed to return hardcoded data "
-        "from docs/mock-data.json — real scoring logic lands next."
+        "Hackathon demo. Risk scoring and translation are real (rules-based, not "
+        "ML) — see docs/architecture.md. /api/alerts is still a simulated stub, "
+        "by design (no real SMS/USSD gateway this week)."
     ),
     version="0.1.0",
 )

@@ -16,20 +16,22 @@ Built for the **"AI for All Hackathon: Building Inclusive Solutions for
 Early Warning and Disaster Resilience,"** organized by the African Youth
 Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 
-## Status: skeleton only
+## Status: backend logic real, frontend in progress (updated 2026-08-10)
 
-This repo currently contains **project scaffolding, not finished
-features.** Backend logic (the real risk scoring + translations) and
-frontend UI (the dashboard) both **start tomorrow**. Right now:
-
-- Backend runs, but its 3 endpoints return **hardcoded stub data** (see
-  `docs/mock-data.json`) instead of computing anything.
-- Frontend is an **unmodified Vite + React starter** — no dashboard
-  components, routing, or styling yet. That's intentionally left open for
-  whoever builds it.
-- The API contract (request/response shapes) is fully defined and
-  documented, so both of us can build against it independently without
-  waiting on each other or re-negotiating data shapes later.
+- **Backend risk scoring and translation are real**, not stubbed.
+  `POST /api/risk-check` and `GET /api/regions` compute live from the
+  rules-based model in `backend/app/models/risk_model.py` and the
+  hardcoded translation dictionary in `backend/app/models/translations.py`.
+  See [`docs/progress-log.md`](docs/progress-log.md) for thresholds,
+  assumptions, and what's still unverified.
+- `GET /api/alerts` is **still an intentional simulated stub** — no real
+  SMS/USSD gateway this week (documented future improvement, not an
+  oversight).
+- **Frontend** (Habiba, Farid, Thompson building) is in progress in
+  `frontend-web/` — see that folder for current state.
+- The API contract (request/response shapes) hasn't changed since the
+  skeleton — the frontend team's work against `docs/mock-data.json` is
+  still valid.
 
 ## Team
 
@@ -61,6 +63,8 @@ frontend UI (the dashboard) both **start tomorrow**. Right now:
   plus the future roadmap.
 - [`docs/pitch-notes.md`](docs/pitch-notes.md) — placeholder for demo
   narrative and talking points.
+- [`docs/progress-log.md`](docs/progress-log.md) — dated session log: what's
+  done, in progress, assumptions, and flags for the team.
 
 ## Future Improvements
 

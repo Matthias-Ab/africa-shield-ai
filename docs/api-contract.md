@@ -1,12 +1,13 @@
 # API Contract — Africa Shield AI Backend
 
-**Status: today's implementation is stubbed.** All three endpoints below
-currently return hardcoded data from [`mock-data.json`](mock-data.json)
-regardless of input. Real rules-based scoring and translation logic land
-next (see the `# TODO` comments in `backend/app/models/` and
-`backend/app/routes/risk.py`). The shapes documented here are the
-long-term contract both the backend and frontend should build against —
-they won't change when the real logic is implemented.
+**Status (as of 2026-08-10): risk scoring and translation are real.**
+`POST /api/risk-check` and `GET /api/regions` now compute live from the
+rules-based model in `backend/app/models/risk_model.py` and the
+translation dictionary in `backend/app/models/translations.py` — see
+[`progress-log.md`](progress-log.md) for details. `GET /api/alerts` is
+still an intentional simulated stub (no real SMS/USSD gateway this week).
+**The response shapes below are unchanged from the stub version** — the
+frontend team's work against `mock-data.json` is still valid.
 
 Base URL (local dev): `http://localhost:8000`
 
@@ -17,8 +18,10 @@ Base URL (local dev): `http://localhost:8000`
 Score a location's flood risk from rainfall and river level, and get back
 a ready-to-send alert message in English and one local language.
 
-**Current status:** stubbed — validates the request body shape, then
-always returns the fixed example below regardless of the values sent.
+**Current status:** real — computes `risk_level`/`risk_score` from the
+rules-based model and looks up the translated alert message. See
+[`progress-log.md`](progress-log.md) for the thresholds and translation
+mapping used.
 
 ### Request
 
@@ -71,7 +74,9 @@ always returns the fixed example below regardless of the values sent.
 Static/mock list of monitored regions with their current risk levels, for
 the dashboard's map/list view.
 
-**Current status:** stubbed — returns the hardcoded list from `mock-data.json`.
+**Current status:** real — computes each region's `risk_level` live from
+`backend/app/data/regions.json` via the same risk model used by
+`/api/risk-check`.
 
 ### Response
 
@@ -84,8 +89,8 @@ the dashboard's map/list view.
 ```
 
 An array of objects, each with `location_name`, `latitude`, `longitude`,
-and `risk_level` (`"low"` | `"medium"` | `"high"`). The current stub
-returns 8 regions — see `mock-data.json` for the full list.
+and `risk_level` (`"low"` | `"medium"` | `"high"`). Currently 8 regions —
+see `backend/app/data/regions.json` for the underlying sensor inputs.
 
 ---
 
@@ -94,7 +99,9 @@ returns 8 regions — see `mock-data.json` for the full list.
 Mock list of recently "sent" alerts (simulated — no real SMS/USSD/WhatsApp
 provider), for the dashboard's alert history view.
 
-**Current status:** stubbed — returns the hardcoded list from `mock-data.json`.
+**Current status:** stubbed, intentionally — returns the hardcoded list
+from `mock-data.json`. No real SMS/USSD/WhatsApp gateway this week; see
+`docs/architecture.md`'s Future Improvements.
 
 ### Response
 
