@@ -65,6 +65,10 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   narrative and talking points.
 - [`docs/progress-log.md`](docs/progress-log.md) — dated session log: what's
   done, in progress, assumptions, and flags for the team.
+- [`docs/frontend-feature-spec.md`](docs/frontend-feature-spec.md) — handoff
+  spec for the frontend team: map view, live risk simulator, "why this
+  score" breakdown, phone-mockup alert screens, population/impact framing,
+  low-bandwidth mode — with exact API examples for each.
 
 ## Future Improvements
 

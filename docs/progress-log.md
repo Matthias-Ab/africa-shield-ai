@@ -5,6 +5,37 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — "Make the demo superb" backend pass + frontend handoff spec
+
+### Completed
+- Discussed a prioritized feature list to strengthen the Aug 12 demo (map view, live risk simulator, "why this score" breakdown, phone-mockup alert screens, population/impact framing, low-bandwidth mode). Confirmed with the team lead that `frontend-web/` is still off-limits (no teammate commits there yet, but the boundary stands) — so this session did backend enrichment + a written spec instead of touching frontend code.
+- `backend/app/models/risk_model.py`: added `risk_score_breakdown(rainfall_mm_24h, river_level_m) -> dict`, returning the raw inputs, their normalized values, the caps/thresholds used, and the resulting risk_level/risk_score — full explainability data for a "why this score" UI. Refactored the normalization math into a shared `_normalized_inputs()` helper used by both `compute_risk()` (unchanged signature/behavior) and the new function.
+- `backend/app/data/regions.json`: added `population_estimate` to all 9 sample cities — rough, publicly-known city/metro population figures (e.g. Lagos 15,000,000, Kinshasa 15,000,000, Maputo 1,100,000). **Not a flood-exposure model** — see Flags below.
+- `backend/app/routes/regions.py` and `risk.py`: both endpoints now include `risk_score_breakdown` in their response; `/api/regions` also includes `population_estimate` per region. Both are **additive fields only** — `location_name`/`latitude`/`longitude`/`risk_level`/`risk_score`/`alert_message_en`/`alert_message_local`/`local_language`/`timestamp` are all unchanged in name, type, and meaning.
+- `docs/api-contract.md` and `docs/mock-data.json` updated to document and mirror the new fields exactly, including a top-of-file note flagging this as an additive/non-breaking contract change.
+- Wrote `docs/frontend-feature-spec.md` — a full handoff doc for Habiba/Farid/Thompson covering all 6 features with concrete API request/response examples, a suggested priority order (map → live simulator → score breakdown → phone mockups → population framing → low-bandwidth toggle), and explicit caveats (population figures aren't a flood model; Arabic needs `dir="rtl"`; USSD has no rich UI).
+- Verified end-to-end with a programmatic diff (not just eyeballing): started the server, pulled live `/api/regions` and `/api/risk-check` responses, and asserted they match `docs/mock-data.json` byte-for-byte (excluding the timestamp field) — confirmed zero drift for all 9 regions plus the Cairo/Arabic risk-check example.
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's backend scope. The 6 features themselves are specced, not built — that's explicitly frontend work per the team's decision this session.
+
+### Not Yet Started
+- All 6 frontend features described in `docs/frontend-feature-spec.md` (map, live simulator, score breakdown UI, phone mockups, population framing, low-bandwidth toggle) — backend is ready for all of them, none are built yet.
+- Everything else already listed as Not Yet Started in prior entries (native-speaker translation review — no longer a hard blocker per the earlier team decision, but still open; real SMS/USSD gateway; ML model; pitch deck).
+
+### Findings & Decisions
+- **Chose to keep `population_estimate` as a general city-population figure rather than attempting a flood-exposure estimate.** Computing "population actually in a flood-prone zone" would need real GIS/elevation data this team doesn't have this week; a fabricated-looking subset number would be easier for a judge to poke a hole in than an honestly-labeled general population figure. Flagged prominently in both `api-contract.md` and `frontend-feature-spec.md` with suggested safe phrasing.
+- **`risk_score_breakdown` duplicates `risk_level`/`risk_score` inside itself** (they also appear at the top level of the response). Deliberate — lets a UI component receive the breakdown object standalone (e.g. for a detail modal) without needing to also thread through the parent response's top-level fields.
+- Confirmed via automated diff, not manual inspection, that there is no drift between `docs/mock-data.json` and the live API — this is a stronger check than previous sessions' manual `curl` comparisons and worth repeating this way going forward.
+
+### Flags for the Team
+- **API contract gained two new fields, non-breaking.** If anyone already started building against the old `/api/regions`/`/api/risk-check` shapes, nothing breaks — the new fields (`population_estimate`, `risk_score_breakdown`) are additive and can be adopted whenever convenient.
+- **`population_estimate` is not a flood-risk number — it's the city's general population.** Do not present it in the pitch as "X people at risk of flooding." See the caveat and suggested phrasing in `docs/frontend-feature-spec.md` section 5. If a judge asks about it, the honest answer is "general population of the monitored area, not a flood-exposure model — that's on the roadmap."
+- **All 6 features are specced in `docs/frontend-feature-spec.md` with a suggested priority order** (map view first, low-bandwidth toggle last) in case there isn't time for all six before Aug 12 — do the highest-impact ones first rather than going in this log's listed order.
+- **Arabic RTL reminder repeated in the new spec doc** (section 4) — easy to miss until someone actually renders a Cairo/Mogadishu-adjacent-Arabic alert card.
+
+---
+
 ## 2026-08-10 — Add Mogadishu, Somalia; ship AI-drafted translations as-is
 
 ### Completed

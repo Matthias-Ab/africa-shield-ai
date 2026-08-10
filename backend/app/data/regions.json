@@ -4,62 +4,71 @@
     "latitude": 6.5244,
     "longitude": 3.3792,
     "rainfall_mm_24h": 85,
-    "river_level_m": 3.2
+    "river_level_m": 3.2,
+    "population_estimate": 15000000
   },
   {
     "location_name": "Nairobi, Kenya",
     "latitude": -1.2921,
     "longitude": 36.8219,
     "rainfall_mm_24h": 12,
-    "river_level_m": 1.1
+    "river_level_m": 1.1,
+    "population_estimate": 4400000
   },
   {
     "location_name": "Cairo, Egypt",
     "latitude": 30.0444,
     "longitude": 31.2357,
     "rainfall_mm_24h": 35,
-    "river_level_m": 2.0
+    "river_level_m": 2.0,
+    "population_estimate": 10000000
   },
   {
     "location_name": "Accra, Ghana",
     "latitude": 5.6037,
     "longitude": -0.1870,
     "rainfall_mm_24h": 60,
-    "river_level_m": 2.5
+    "river_level_m": 2.5,
+    "population_estimate": 2500000
   },
   {
     "location_name": "Kampala, Uganda",
     "latitude": 0.3476,
     "longitude": 32.5825,
     "rainfall_mm_24h": 90,
-    "river_level_m": 3.5
+    "river_level_m": 3.5,
+    "population_estimate": 1700000
   },
   {
     "location_name": "Maputo, Mozambique",
     "latitude": -25.9692,
     "longitude": 32.5732,
     "rainfall_mm_24h": 15,
-    "river_level_m": 1.0
+    "river_level_m": 1.0,
+    "population_estimate": 1100000
   },
   {
     "location_name": "Dar es Salaam, Tanzania",
     "latitude": -6.7924,
     "longitude": 39.2083,
     "rainfall_mm_24h": 70,
-    "river_level_m": 2.8
+    "river_level_m": 2.8,
+    "population_estimate": 7400000
   },
   {
     "location_name": "Kinshasa, DRC",
     "latitude": -4.4419,
     "longitude": 15.2663,
     "rainfall_mm_24h": 25,
-    "river_level_m": 1.5
+    "river_level_m": 1.5,
+    "population_estimate": 15000000
   },
   {
     "location_name": "Mogadishu, Somalia",
     "latitude": 2.0469,
     "longitude": 45.3182,
     "rainfall_mm_24h": 55,
-    "river_level_m": 2.6
+    "river_level_m": 2.6,
+    "population_estimate": 2600000
   }
 ]
