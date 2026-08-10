@@ -7,7 +7,8 @@
     { "location_name": "Kampala, Uganda", "latitude": 0.3476, "longitude": 32.5825, "risk_level": "high" },
     { "location_name": "Maputo, Mozambique", "latitude": -25.9692, "longitude": 32.5732, "risk_level": "low" },
     { "location_name": "Dar es Salaam, Tanzania", "latitude": -6.7924, "longitude": 39.2083, "risk_level": "high" },
-    { "location_name": "Kinshasa, DRC", "latitude": -4.4419, "longitude": 15.2663, "risk_level": "low" }
+    { "location_name": "Kinshasa, DRC", "latitude": -4.4419, "longitude": 15.2663, "risk_level": "low" },
+    { "location_name": "Mogadishu, Somalia", "latitude": 2.0469, "longitude": 45.3182, "risk_level": "medium" }
   ],
   "alerts": [
     {

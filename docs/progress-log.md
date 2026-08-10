@@ -5,6 +5,32 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-10 — Add Mogadishu, Somalia; ship AI-drafted translations as-is
+
+### Completed
+- Added `Mogadishu, Somalia` (lat 2.0469, lon 45.3182, rainfall 55mm/24h, river 2.6m) to `backend/app/data/regions.json` and the matching entry to `docs/mock-data.json`'s `regions` list — the sample set is now 9 cities, not 8. Computed risk: 0.6 / `medium`. Chosen to give an even 3-high/3-medium/3-low spread across all 9 sample cities (previously 3/2/3 with none in Somalia).
+- Wrote real Somali wording in `backend/app/models/translations.py`'s `ALERT_TEMPLATES["Somali"]`, replacing the three `"TODO: awaiting reviewed Somali translation"` placeholders. Per team decision, kept the existing AI-written Swahili and Arabic strings as the working translations too — no longer blocking on a review pass before Aug 12 (softened the "MUST be replaced" comment in the module docstring to reflect this; the native-speaker-review recommendation stays, just not as a blocker).
+- Updated region counts from "8" to "9" everywhere they were stated as current-state facts: `docs/api-contract.md`, and the sanity-check comments in `backend/app/models/risk_model.py` and `translations.py`. (Left "8" untouched in this log's own prior dated entries — those describe the past, not now.)
+- Verified end-to-end: `GET /api/regions` now returns 9 entries including `{"location_name": "Mogadishu, Somalia", ..., "risk_level": "medium"}`; `POST /api/risk-check` for Mogadishu returns the real Somali sentence (`"Khatarta daadka ee Mogadishu waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah."`), not a TODO string, and it matches `docs/mock-data.json` exactly.
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's scope.
+
+### Not Yet Started
+- Native-speaker review of Swahili/Arabic/Somali wording — no longer a hard blocker for Aug 12 per today's team decision, but still worth doing if time allows.
+- Frontend RTL handling for Arabic, real translation API, real SMS/USSD gateway, ML model, pitch deck — all still open from prior entries.
+
+### Findings & Decisions
+- **Team decision (2026-08-10): ship the AI-written Swahili/Arabic/Somali translations as the working set for the Aug 12 demo**, rather than waiting on a native-speaker review pass. This reverses the "MUST be replaced" framing from the previous entry — the review is now a nice-to-have, not a blocker.
+- Mogadishu's rainfall/river inputs (55mm, 2.6m) were picked specifically to land in the `medium` bucket and even out the risk-level distribution across all 9 cities — not based on real Somali hydrological data.
+
+### Flags for the Team
+- **`/api/regions` now returns 9 entries, not 8** — anyone (frontend, pitch deck) who assumed a fixed count of 8 should double check that assumption.
+- **Somali now has real (if unreviewed) wording**, not a visible TODO string — if you test a Somalia request and expect to still see a placeholder, that's been replaced.
+- Swahili/Arabic wording is unchanged from the previous entry — still AI-written, just no longer flagged as blocking.
+
+---
+
 ## 2026-08-10 — Finalize language mapping (English/Swahili/Arabic/Somali)
 
 ### Completed

@@ -5,11 +5,12 @@
 # lookup across the team's four agreed languages: English, Swahili,
 # Arabic, Somali.
 #
-# FLAG FOR THE TEAM: the Swahili and Arabic strings in ALERT_TEMPLATES
-# below are still unreviewed AI-written drafts and MUST be replaced with
-# reviewed wording before the August 12 presentation. Somali has no
-# wording yet at all — see the "TODO: awaiting reviewed Somali
-# translation" placeholders below; do not ship those as-is.
+# FLAG FOR THE TEAM: the Swahili, Arabic, and Somali strings in
+# ALERT_TEMPLATES below are AI-written and have not been checked by a
+# native/fluent speaker. Team decision (2026-08-10): ship these as the
+# working translations for the Aug 12 demo rather than block on a review
+# pass. A native-speaker review is still worth doing before any use
+# beyond the hackathon — flag any wording that looks off if you notice.
 #
 # ARABIC IS RIGHT-TO-LEFT. This module returns Arabic alert text as a
 # plain string in `alert_message_local` — it does not add any RTL
@@ -28,10 +29,9 @@
 #
 # Nigeria, Ghana, Mozambique, and DRC don't cleanly map to Swahili,
 # Arabic, or Somali, so they're mapped to English explicitly rather than
-# guessing at a language outside the agreed four. "somalia" is included
-# even though it's not one of the 8 sample cities in app/data/regions.json,
-# since Somali is one of the four agreed languages and this is the
-# obvious country for it.
+# guessing at a language outside the agreed four. Mogadishu, Somalia is
+# one of the 9 sample cities in app/data/regions.json, so this mapping
+# is now exercised by /api/regions, not just a hypothetical.
 LOCAL_LANGUAGE_BY_COUNTRY = {
     "kenya": "Swahili",
     "tanzania": "Swahili",
@@ -62,26 +62,24 @@ ALERT_TEMPLATES = {
     # alert_message_local resolves without a KeyError.
     "en": _EN_TEMPLATES,
     "English": _EN_TEMPLATES,
-    # DRAFT — unreviewed AI-written Swahili, see module docstring. Replace
-    # before Aug 12.
+    # AI-written, unreviewed by a native speaker — see module docstring.
     "Swahili": {
         "high": "Hatari ya mafuriko ni KUBWA katika {location}. Hamia mahali salama na epuka kingo za mto.",
         "medium": "Hatari ya mafuriko ni WASTANI katika {location}. Kuwa macho na fuatilia taarifa za eneo lako.",
         "low": "Hatari ya mafuriko ni NDOGO katika {location}. Hakuna hatua inayohitajika kwa sasa.",
     },
-    # DRAFT — unreviewed AI-written Arabic, see module docstring. Replace
-    # before Aug 12. Right-to-left text — see RTL note in module docstring.
+    # AI-written, unreviewed by a native speaker — see module docstring.
+    # Right-to-left text — see RTL note in module docstring.
     "Arabic": {
         "high": "خطر الفيضانات مرتفع في {location}. انتقل إلى مكان مرتفع وتجنب ضفاف النهر.",
         "medium": "خطر الفيضانات متوسط في {location}. توخَّ الحذر وتابع التحديثات المحلية.",
         "low": "خطر الفيضانات منخفض في {location}. لا حاجة لاتخاذ إجراء في الوقت الحالي.",
     },
-    # PLACEHOLDER ONLY — no Somali wording has been written yet. Do not
-    # ship these TODO strings; replace with reviewed Somali translations.
+    # AI-written, unreviewed by a native speaker — see module docstring.
     "Somali": {
-        "high": "TODO: awaiting reviewed Somali translation",
-        "medium": "TODO: awaiting reviewed Somali translation",
-        "low": "TODO: awaiting reviewed Somali translation",
+        "high": "Khatarta daadka ee {location} waa SARE. U guuri meel sare kana fogow xeebaha webiga.",
+        "medium": "Khatarta daadka ee {location} waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah.",
+        "low": "Khatarta daadka ee {location} waa HOOSE. Wax tallaabo lagama qaadanayo hadda.",
     },
 }
 

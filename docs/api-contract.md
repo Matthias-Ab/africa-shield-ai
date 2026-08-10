@@ -89,7 +89,7 @@ the dashboard's map/list view.
 ```
 
 An array of objects, each with `location_name`, `latitude`, `longitude`,
-and `risk_level` (`"low"` | `"medium"` | `"high"`). Currently 8 regions —
+and `risk_level` (`"low"` | `"medium"` | `"high"`). Currently 9 regions —
 see `backend/app/data/regions.json` for the underlying sensor inputs.
 
 ---
