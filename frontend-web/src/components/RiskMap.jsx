@@ -1,68 +1,137 @@
 import {
-  Navigation,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
   Layers3,
+  Maximize2,
+  RefreshCw,
 } from "lucide-react";
 
-const regions = [
-  {
-    id: 1,
-    name: "Garissa",
-    country: "Kenya",
-    risk: "High",
-    position: "left-[31%] top-[58%]",
-  },
-  {
-    id: 2,
-    name: "Addis Ababa",
-    country: "Ethiopia",
-    risk: "High",
-    position: "left-[48%] top-[50%]",
-  },
-  {
-    id: 3,
-    name: "Lagos",
-    country: "Nigeria",
-    risk: "Medium",
-    position: "left-[23%] top-[56%]",
-  },
-  {
-    id: 4,
-    name: "Cairo",
-    country: "Egypt",
-    risk: "Low",
-    position: "left-[47%] top-[28%]",
-  },
-];
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Popup,
+  useMap,
+} from "react-leaflet";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import "leaflet/dist/leaflet.css";
+
+const API_URL = "http://localhost:8000/api/regions";
 
 const riskStyles = {
-  High: {
-    marker: "bg-red-500 ring-red-100",
-    badge: "bg-red-50 text-red-600",
+  high: {
+    color: "#ef4444",
+    fillColor: "#ef4444",
   },
-  Medium: {
-    marker: "bg-orange-500 ring-orange-100",
-    badge: "bg-orange-50 text-orange-600",
+  medium: {
+    color: "#f97316",
+    fillColor: "#f97316",
   },
-  Low: {
-    marker: "bg-emerald-500 ring-emerald-100",
-    badge: "bg-emerald-50 text-emerald-600",
+  low: {
+    color: "#10b981",
+    fillColor: "#10b981",
   },
 };
 
-function RiskMap() {
-  return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+function MapBounds({ regions }) {
+  const map = useMap();
 
+  useEffect(() => {
+    const validRegions = regions.filter(
+      (region) =>
+        typeof region.latitude === "number" &&
+        typeof region.longitude === "number"
+    );
+
+    if (validRegions.length === 0) return;
+
+    const bounds = validRegions.map((region) => [
+      region.latitude,
+      region.longitude,
+    ]);
+
+    map.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 5,
+    });
+  }, [regions, map]);
+
+  return null;
+}
+
+function RiskMap() {
+  const [regions, setRegions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const mapWrapperRef = useRef(null);
+
+  const fetchRegions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(false);
+
+      const response = await fetch(API_URL);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch regions");
+      }
+
+      const data = await response.json();
+
+      setRegions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching map regions:", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRegions();
+  }, [fetchRegions]);
+
+  const validRegions = useMemo(() => {
+    return regions.filter(
+      (region) =>
+        typeof region.latitude === "number" &&
+        typeof region.longitude === "number"
+    );
+  }, [regions]);
+
+  const countries = useMemo(() => {
+    return new Set(
+      regions
+        .map((region) => region.country)
+        .filter(Boolean)
+    ).size;
+  }, [regions]);
+
+  const handleFullscreen = async () => {
+    if (!mapWrapperRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await mapWrapperRef.current.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  };
+
+  return (
+    <section
+      ref={mapWrapperRef}
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-
         <div className="flex items-center gap-3">
-
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
-            <Navigation size={18} />
+            <Layers3 size={18} />
           </div>
 
           <div>
@@ -73,178 +142,190 @@ function RiskMap() {
             <h3 className="mt-0.5 text-xl font-bold text-slate-800">
               Africa Flood Risk Map
             </h3>
-          </div>
 
+            <p className="mt-0.5 text-[11px] text-slate-400">
+              Live geographic flood intelligence
+            </p>
+          </div>
         </div>
 
-        {/* Map controls */}
+        {/* Controls */}
         <div className="flex items-center gap-2">
-
           <button
             type="button"
-            title="Layers"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 hover:shadow-sm"
+            onClick={fetchRegions}
+            disabled={loading}
+            title="Refresh map data"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-50"
           >
-            <Layers3 size={16} />
-          </button>
-
-          <button
-            type="button"
-            title="Zoom in"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 hover:shadow-sm"
-          >
-            <ZoomIn size={16} />
-          </button>
-
-          <button
-            type="button"
-            title="Zoom out"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 hover:shadow-sm"
-          >
-            <ZoomOut size={16} />
+            <RefreshCw
+              size={16}
+              className={loading ? "animate-spin" : ""}
+            />
           </button>
 
           <button
             type="button"
             title="Fullscreen"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 hover:shadow-sm"
+            onClick={handleFullscreen}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
           >
             <Maximize2 size={16} />
           </button>
-
         </div>
       </div>
 
       {/* Map */}
-      <div className="relative h-[400px] overflow-hidden bg-slate-50 sm:h-[420px]">
-
-        {/* Background grid */}
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        {/* Decorative Africa silhouette */}
-        <div className="absolute left-1/2 top-1/2 h-[330px] w-[280px] -translate-x-1/2 -translate-y-1/2">
-
-          {/* Main Africa shape */}
-          <div className="absolute inset-0 rotate-[8deg] rounded-[45%_55%_48%_52%_/_25%_25%_75%_75%] bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]" />
-
-          {/* Regional areas */}
-          <div className="absolute left-[28%] top-[20%] h-[95px] w-[105px] rotate-[20deg] rounded-[55%_45%_45%_55%] bg-teal-50" />
-
-          <div className="absolute left-[20%] top-[38%] h-[140px] w-[150px] rotate-[10deg] rounded-[45%_55%_55%_45%] bg-teal-50" />
-
-          <div className="absolute left-[34%] top-[61%] h-[130px] w-[115px] rotate-[18deg] rounded-[45%_55%_50%_50%] bg-teal-50" />
-
-          <div className="absolute left-[18%] top-[77%] h-[65px] w-[55px] rotate-[25deg] rounded-full bg-teal-50" />
-
-          {/* Internal geographic lines */}
-          <div className="absolute left-[45%] top-[30%] h-[210px] w-px rotate-[18deg] bg-teal-100" />
-
-          <div className="absolute left-[27%] top-[48%] h-px w-[190px] rotate-[5deg] bg-teal-100" />
-
-          <div className="absolute left-[35%] top-[65%] h-px w-[140px] rotate-[20deg] bg-teal-100" />
-
-        </div>
-
-        {/* Network label */}
-        <div className="absolute left-5 top-5 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-
-          <div className="flex items-center gap-2">
-
-            <Navigation size={15} className="text-teal-600" />
-
-            <div>
-              <p className="text-xs font-bold text-slate-700">
-                Africa Monitoring Network
+      <div className="relative h-[420px] w-full">
+        {error ? (
+          <div className="flex h-full items-center justify-center bg-slate-50">
+            <div className="text-center">
+              <p className="text-sm font-bold text-slate-700">
+                Map data unavailable
               </p>
 
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                Live regional flood intelligence
-              </p>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* Region markers */}
-        {regions.map((region) => {
-          const styles = riskStyles[region.risk];
-
-          return (
-            <button
-              type="button"
-              key={region.id}
-              className={`group absolute ${region.position} z-20`}
-              title={`${region.name}, ${region.country} — ${region.risk} risk`}
-            >
-
-              {/* Marker */}
-              <span
-                className={`relative flex h-5 w-5 items-center justify-center rounded-full ${styles.marker} ring-8 transition-all duration-200 group-hover:scale-125 group-hover:shadow-lg`}
+              <button
+                onClick={fetchRegions}
+                className="mt-3 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700"
               >
-                <span className="h-2 w-2 rounded-full bg-white" />
-              </span>
+                Try again
+              </button>
+            </div>
+          </div>
+        ) : (
+          <MapContainer
+            center={[5, 20]}
+            zoom={3}
+            minZoom={2}
+            maxZoom={10}
+            scrollWheelZoom={true}
+            className="h-full w-full"
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
 
-              {/* Popup */}
-              <span className="pointer-events-none absolute bottom-8 left-1/2 hidden w-44 -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl group-hover:block">
+            <MapBounds regions={validRegions} />
 
-                <span className="block text-xs font-bold text-slate-800">
-                  {region.name}
-                </span>
+            {validRegions.map((region, index) => {
+              const riskLevel =
+                region.risk_level?.toLowerCase() || "low";
 
-                <span className="mt-0.5 block text-[10px] text-slate-400">
-                  {region.country}
-                </span>
+              const style =
+                riskStyles[riskLevel] || riskStyles.low;
 
-                <span
-                  className={`mt-2 inline-block rounded-full px-2 py-1 text-[9px] font-bold ${styles.badge}`}
+              return (
+                <CircleMarker
+                  key={`${region.location_name}-${index}`}
+                  center={[
+                    region.latitude,
+                    region.longitude,
+                  ]}
+                  radius={10}
+                  pathOptions={{
+                    color: "#ffffff",
+                    weight: 3,
+                    fillColor: style.fillColor,
+                    fillOpacity: 0.95,
+                  }}
                 >
-                  {region.risk} flood risk
+                  <Popup>
+                    <div className="min-w-[180px]">
+                      <p className="text-sm font-bold text-slate-800">
+                        {region.location_name}
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-500">
+                        {region.country}
+                      </p>
+
+                      <div className="mt-3 rounded-lg bg-slate-50 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-500">
+                            Risk level
+                          </span>
+
+                          <span
+                            className={`text-xs font-bold uppercase ${
+                              riskLevel === "high"
+                                ? "text-red-600"
+                                : riskLevel === "medium"
+                                ? "text-orange-600"
+                                : "text-emerald-600"
+                            }`}
+                          >
+                            {riskLevel}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-xs text-slate-500">
+                            Risk score
+                          </span>
+
+                          <span className="text-xs font-bold text-slate-800">
+                            {typeof region.risk_score === "number"
+                              ? Math.round(
+                                  region.risk_score <= 1
+                                    ? region.risk_score * 100
+                                    : region.risk_score
+                                )
+                              : 0}
+                            /100
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-xs text-slate-500">
+                            Rainfall
+                          </span>
+
+                          <span className="text-xs font-bold text-slate-800">
+                            {region.rainfall_mm_24h ?? 0} mm
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-xs text-slate-500">
+                            River level
+                          </span>
+
+                          <span className="text-xs font-bold text-slate-800">
+                            {region.river_level_m ?? 0} m
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              );
+            })}
+          </MapContainer>
+        )}
+
+        {/* Network status */}
+        {!loading && !error && (
+          <div className="absolute bottom-5 left-1/2 z-[1000] -translate-x-1/2">
+            <div className="rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-md backdrop-blur">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+
+                <span className="text-[10px] font-semibold text-slate-600">
+                  Monitoring {validRegions.length} regions
                 </span>
-
-              </span>
-
-            </button>
-          );
-        })}
-
-        {/* Zoom controls */}
-        <div className="absolute bottom-5 left-5 flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
-
-          <button
-            type="button"
-            title="Zoom in"
-            className="flex h-9 w-9 items-center justify-center border-b border-slate-100 text-slate-500 transition hover:bg-slate-50 hover:text-teal-600"
-          >
-            <ZoomIn size={15} />
-          </button>
-
-          <button
-            type="button"
-            title="Zoom out"
-            className="flex h-9 w-9 items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-teal-600"
-          >
-            <ZoomOut size={15} />
-          </button>
-
-        </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Legend */}
-        <div className="absolute bottom-5 right-5 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur">
-
+        <div className="absolute bottom-5 right-5 z-[1000] rounded-xl border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur">
           <p className="mb-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
             Flood risk
           </p>
 
           <div className="space-y-2">
-
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-red-500" />
               <span className="text-[10px] font-semibold text-slate-600">
@@ -265,26 +346,23 @@ function RiskMap() {
                 Low
               </span>
             </div>
-
           </div>
-
         </div>
 
-        {/* Monitoring status */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-sm backdrop-blur">
+        {/* Country count */}
+        {!loading && !error && (
+          <div className="absolute left-5 top-5 z-[1000]">
+            <div className="rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-md backdrop-blur">
+              <p className="text-xs font-bold text-slate-700">
+                Africa Monitoring Network
+              </p>
 
-          <div className="flex items-center gap-2">
-
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-
-            <span className="text-[10px] font-semibold text-slate-600">
-              Monitoring 4 countries
-            </span>
-
+              <p className="mt-1 text-[10px] text-slate-400">
+                Monitoring {countries} countries
+              </p>
+            </div>
           </div>
-
-        </div>
-
+        )}
       </div>
     </section>
   );

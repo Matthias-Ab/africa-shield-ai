@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Map,
@@ -19,15 +20,17 @@ function Sidebar() {
         {
           name: "Dashboard",
           icon: LayoutDashboard,
-          active: true,
+          path: "/",
         },
         {
           name: "Live Flood Map",
           icon: Map,
+          path: "/map",
         },
         {
           name: "Alerts",
           icon: Bell,
+          path: "/alerts",
           badge: 4,
         },
       ],
@@ -38,25 +41,28 @@ function Sidebar() {
         {
           name: "Regions",
           icon: MapPinned,
+          path: "/regions",
         },
         {
           name: "Analytics",
           icon: BarChart3,
+          path: "/analytics",
         },
         {
           name: "Reports",
           icon: FileText,
+          path: "/reports",
         },
       ],
     },
   ];
 
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-screen w-[250px] flex-col border-r border-slate-200 bg-white px-4 py-6">
+    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white px-4 py-5">
       {/* Logo */}
-      <div className="mb-8 flex items-center gap-3 px-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
-          <ShieldCheck size={24} strokeWidth={2.2} />
+      <div className="mb-8 flex items-center gap-3 px-2">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
+          <ShieldCheck size={21} />
         </div>
 
         <div>
@@ -83,41 +89,48 @@ function Sidebar() {
                 const Icon = item.icon;
 
                 return (
-                  <button
+                  <NavLink
                     key={item.name}
-                    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200 ${
-                      item.active
-                        ? "bg-teal-50 text-teal-700 shadow-sm"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                    }`}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200 ${
+                        isActive
+                          ? "bg-teal-50 text-teal-700 shadow-sm"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                      }`
+                    }
                   >
-                    <Icon
-                      size={19}
-                      strokeWidth={item.active ? 2.4 : 2}
-                      className={
-                        item.active
-                          ? "text-teal-600"
-                          : "text-slate-400 group-hover:text-slate-600"
-                      }
-                    />
+                    {({ isActive }) => (
+                      <>
+                        <Icon
+                          size={19}
+                          strokeWidth={isActive ? 2.4 : 2}
+                          className={
+                            isActive
+                              ? "text-teal-600"
+                              : "text-slate-400 group-hover:text-slate-600"
+                          }
+                        />
 
-                    <span className="flex-1 text-[13px] font-semibold">
-                      {item.name}
-                    </span>
+                        <span className="flex-1 text-[13px] font-semibold">
+                          {item.name}
+                        </span>
 
-                    {item.badge && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-100 px-1.5 text-[10px] font-bold text-red-600">
-                        {item.badge}
-                      </span>
+                        {item.badge && (
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-100 px-1.5 text-[10px] font-bold text-red-600">
+                            {item.badge}
+                          </span>
+                        )}
+
+                        {isActive && (
+                          <ChevronRight
+                            size={15}
+                            className="text-teal-500"
+                          />
+                        )}
+                      </>
                     )}
-
-                    {item.active && (
-                      <ChevronRight
-                        size={15}
-                        className="text-teal-500"
-                      />
-                    )}
-                  </button>
+                  </NavLink>
                 );
               })}
             </div>
@@ -127,18 +140,34 @@ function Sidebar() {
 
       {/* Bottom Navigation */}
       <div className="space-y-1 border-t border-slate-100 pt-4">
-        <button className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+              isActive
+                ? "bg-teal-50 text-teal-700"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+            }`
+          }
+        >
           <Settings
             size={19}
             className="text-slate-400 group-hover:text-slate-600"
           />
 
-          <span className="text-[13px] font-semibold">
-            Settings
-          </span>
-        </button>
+          <span className="text-[13px] font-semibold">Settings</span>
+        </NavLink>
 
-        <button className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+        <NavLink
+          to="/help"
+          className={({ isActive }) =>
+            `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+              isActive
+                ? "bg-teal-50 text-teal-700"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+            }`
+          }
+        >
           <HelpCircle
             size={19}
             className="text-slate-400 group-hover:text-slate-600"
@@ -147,7 +176,7 @@ function Sidebar() {
           <span className="text-[13px] font-semibold">
             Help & Support
           </span>
-        </button>
+        </NavLink>
 
         {/* System status */}
         <div className="mt-4 rounded-xl bg-slate-50 p-3.5">

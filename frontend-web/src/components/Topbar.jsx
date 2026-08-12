@@ -8,10 +8,14 @@ import {
 
 function Topbar() {
   return (
-<header className="sticky top-0 z-40 flex h-[76px] items-center justify-between border-b border-slate-200 bg-white/95 px-8 backdrop-blur">      {/* Left side */}
-      <div className="flex items-center gap-4">
+    <header className="fixed top-0 z-30 flex h-[72px] items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-8">
+      {/* Left side */}
+      <div className="flex items-center gap-3">
         {/* Mobile menu */}
-        <button className="hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+        <button
+          type="button"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50 lg:hidden"
+        >
           <Menu size={20} />
         </button>
 
@@ -29,7 +33,10 @@ function Topbar() {
       {/* Right side */}
       <div className="flex items-center gap-3">
         {/* Search */}
-        <button className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-400 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600">
+        <button
+          type="button"
+          className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-400 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+        >
           <Search size={17} />
 
           <span className="hidden text-[11px] font-medium md:block">
@@ -42,7 +49,10 @@ function Topbar() {
         </button>
 
         {/* Date */}
-        <button className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-slate-600 transition hover:border-teal-200 hover:bg-teal-50 md:flex">
+        <button
+          type="button"
+          className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-slate-600 transition hover:border-teal-200 hover:bg-teal-50 md:flex"
+        >
           <CalendarDays size={16} className="text-teal-600" />
 
           <span className="text-[10px] font-semibold">
@@ -53,7 +63,10 @@ function Topbar() {
         </button>
 
         {/* Notifications */}
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600">
+        <button
+          type="button"
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+        >
           <Bell size={18} />
 
           <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-white bg-red-500" />
@@ -63,7 +76,10 @@ function Topbar() {
         <div className="mx-1 hidden h-8 w-px bg-slate-200 sm:block" />
 
         {/* Profile */}
-        <button className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-50">
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-50"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100 text-[11px] font-extrabold text-teal-700">
             HA
           </div>
