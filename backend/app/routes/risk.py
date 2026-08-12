@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.ml_risk_model import predict_ml_risk
 from app.models.risk_model import risk_score_breakdown
@@ -12,10 +12,10 @@ router = APIRouter()
 
 class RiskCheckRequest(BaseModel):
     location_name: str
-    latitude: float
-    longitude: float
-    rainfall_mm_24h: float
-    river_level_m: float
+    latitude: float = Field(allow_inf_nan=False)
+    longitude: float = Field(allow_inf_nan=False)
+    rainfall_mm_24h: float = Field(allow_inf_nan=False)
+    river_level_m: float = Field(allow_inf_nan=False)
 
 
 class RiskScoreBreakdown(BaseModel):

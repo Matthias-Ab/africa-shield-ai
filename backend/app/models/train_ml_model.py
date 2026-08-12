@@ -33,6 +33,7 @@ from app.models.risk_model import (
     MEDIUM_THRESHOLD,
     RAINFALL_CAP_MM,
     RIVER_LEVEL_CAP_M,
+    compute_risk,
 )
 
 MODEL_FILE = Path(__file__).resolve().parent / "ml_risk_model.pkl"
@@ -111,8 +112,6 @@ def train_and_save() -> None:
     # deterministic rules-based formula would say for the exact same
     # inputs — evidence this is a genuine "second opinion," not the same
     # formula wearing a different hat.
-    from app.models.risk_model import compute_risk  # local import to avoid a cycle at module load
-
     rules_labels = np.array([compute_risk(r, l)[0] for r, l in X_test])
     ml_labels = pipeline.predict(X_test)
     disagreement_rate = float(np.mean(rules_labels != ml_labels))
