@@ -14,9 +14,9 @@ function Dashboard() {
         {/* Title */}
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-teal-500" />
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
 
-            <p className="text-[11px] font-extrabold uppercase tracking-[1.8px] text-teal-600">
+            <p className="text-[11px] font-extrabold uppercase tracking-[1.8px] text-blue-600">
               FLOOD INTELLIGENCE
             </p>
           </div>

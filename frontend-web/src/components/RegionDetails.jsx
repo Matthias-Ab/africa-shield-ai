@@ -64,7 +64,7 @@ function RegionDetails({ region, onClose }) {
               </div>
 
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-teal-600">
+                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-blue-600">
                   REGION DETAILS
                 </p>
 
@@ -192,7 +192,7 @@ function RegionDetails({ region, onClose }) {
 
               <div className="flex items-center gap-3">
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <Activity size={17} />
                 </div>
 
@@ -235,7 +235,7 @@ function RegionDetails({ region, onClose }) {
         <div className="sticky bottom-0 border-t border-slate-100 bg-white px-6 py-4">
           <button
             onClick={onClose}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-teal-700 hover:shadow-lg hover:shadow-teal-700/20 active:scale-[0.98]"
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-700/20 active:scale-[0.98]"
           >
             Close Region Details
           </button>

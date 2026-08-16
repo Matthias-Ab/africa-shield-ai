@@ -151,7 +151,7 @@ function RegionTable() {
         {/* Header */}
         <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-teal-600">
+            <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-blue-600">
               REGIONAL MONITORING
             </p>
 
@@ -161,7 +161,7 @@ function RegionTable() {
               </h3>
 
               {!loading && !error && (
-                <span className="rounded-full bg-teal-50 px-3 py-1 text-[10px] font-bold text-teal-600">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-600">
                   {regions.length} regions
                 </span>
               )}
@@ -177,7 +177,7 @@ function RegionTable() {
             onClick={fetchRegions}
             disabled={loading}
             title="Refresh regional data"
-            className="flex h-9 w-9 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
+            className="flex h-9 w-9 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
           >
             <RefreshCw
               size={16}
@@ -190,7 +190,7 @@ function RegionTable() {
         {loading && (
           <div className="flex min-h-[300px] items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-teal-500" />
+              <div className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-blue-500" />
 
               <p className="text-sm font-semibold text-slate-500">
                 Loading regional data...
@@ -217,7 +217,7 @@ function RegionTable() {
 
               <button
                 onClick={fetchRegions}
-                className="mt-4 rounded-lg bg-teal-600 px-5 py-2 text-xs font-bold text-white transition hover:bg-teal-700"
+                className="mt-4 rounded-lg bg-blue-600 px-5 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
               >
                 Try again
               </button>
@@ -284,7 +284,7 @@ function RegionTable() {
                     <tr
                       key={`${region.location_name}-${index}`}
                       onClick={() => setSelectedRegion(region)}
-                      className="group cursor-pointer border-b border-slate-100 transition-all duration-200 last:border-0 hover:bg-teal-50/40"
+                      className="group cursor-pointer border-b border-slate-100 transition-all duration-200 last:border-0 hover:bg-blue-50/40"
                     >
                       {/* Region */}
                       <td className="px-6 py-4">

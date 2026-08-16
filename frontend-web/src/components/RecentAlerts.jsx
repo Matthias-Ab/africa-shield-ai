@@ -58,12 +58,12 @@ function RecentAlerts() {
 
           <div className="flex items-center gap-3">
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
               <Bell size={19} />
             </div>
 
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[1.6px] text-teal-600">
+              <p className="text-[10px] font-extrabold uppercase tracking-[1.6px] text-blue-600">
                 EARLY WARNING
               </p>
 
@@ -76,7 +76,7 @@ function RecentAlerts() {
 
           <button
             type="button"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-teal-600 transition-all duration-200 hover:bg-teal-50 hover:text-teal-800"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-blue-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-800"
           >
             View all
             <ArrowRight size={15} />
@@ -85,9 +85,9 @@ function RecentAlerts() {
         </div>
 
         {/* Active notifications */}
-        <div className="mx-6 mt-5 flex items-center gap-3 rounded-xl border border-teal-100 bg-teal-50 px-4 py-4">
+        <div className="mx-6 mt-5 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-4">
 
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-teal-600 shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm">
             <Bell size={18} />
           </div>
 
@@ -126,8 +126,8 @@ function RecentAlerts() {
                   transition-all
                   duration-200
                   hover:-translate-y-1
-                  hover:border-teal-200
-                  hover:bg-teal-50/30
+                  hover:border-blue-200
+                  hover:bg-blue-50/30
                   hover:shadow-lg
                   hover:shadow-slate-200/50
                 "
@@ -157,7 +157,7 @@ function RecentAlerts() {
                           className="shrink-0 text-slate-400"
                         />
 
-                        <p className="truncate text-sm font-bold text-slate-700 transition-colors group-hover:text-teal-700">
+                        <p className="truncate text-sm font-bold text-slate-700 transition-colors group-hover:text-blue-700">
                           {alert.location}
                         </p>
 
@@ -187,7 +187,7 @@ function RecentAlerts() {
                 {/* Language + time */}
                 <div className="mt-5 flex items-center justify-between">
 
-                  <span className="rounded-md bg-slate-100 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 transition-colors group-hover:bg-teal-50 group-hover:text-teal-700">
+                  <span className="rounded-md bg-slate-100 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 transition-colors group-hover:bg-blue-50 group-hover:text-blue-700">
                     {alert.local_language}
                   </span>
 
@@ -207,7 +207,7 @@ function RecentAlerts() {
                       Local warning
                     </span>
 
-                    <span className="text-[9px] font-bold text-teal-600">
+                    <span className="text-[9px] font-bold text-blue-600">
                       View details
                     </span>
 
@@ -232,7 +232,7 @@ function RecentAlerts() {
                     Click to investigate alert
                   </span>
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400 transition-all duration-200 group-hover:bg-teal-600 group-hover:text-white">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400 transition-all duration-200 group-hover:bg-blue-600 group-hover:text-white">
                     <ChevronRight size={16} />
                   </div>
 

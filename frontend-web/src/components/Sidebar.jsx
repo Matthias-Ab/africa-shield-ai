@@ -61,7 +61,7 @@ function Sidebar() {
     <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white px-4 py-5">
       {/* Logo */}
       <div className="mb-8 flex items-center gap-3 px-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
           <ShieldCheck size={21} />
         </div>
 
@@ -95,7 +95,7 @@ function Sidebar() {
                     className={({ isActive }) =>
                       `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200 ${
                         isActive
-                          ? "bg-teal-50 text-teal-700 shadow-sm"
+                          ? "bg-blue-50 text-blue-700 shadow-sm"
                           : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                       }`
                     }
@@ -107,7 +107,7 @@ function Sidebar() {
                           strokeWidth={isActive ? 2.4 : 2}
                           className={
                             isActive
-                              ? "text-teal-600"
+                              ? "text-blue-600"
                               : "text-slate-400 group-hover:text-slate-600"
                           }
                         />
@@ -125,7 +125,7 @@ function Sidebar() {
                         {isActive && (
                           <ChevronRight
                             size={15}
-                            className="text-teal-500"
+                            className="text-blue-500"
                           />
                         )}
                       </>
@@ -145,7 +145,7 @@ function Sidebar() {
           className={({ isActive }) =>
             `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
               isActive
-                ? "bg-teal-50 text-teal-700"
+                ? "bg-blue-50 text-blue-700"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
             }`
           }
@@ -163,7 +163,7 @@ function Sidebar() {
           className={({ isActive }) =>
             `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
               isActive
-                ? "bg-teal-50 text-teal-700"
+                ? "bg-blue-50 text-blue-700"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
             }`
           }

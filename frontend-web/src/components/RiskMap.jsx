@@ -130,12 +130,12 @@ function RiskMap() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
             <Layers3 size={18} />
           </div>
 
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-teal-600">
+            <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-blue-600">
               REGIONAL INTELLIGENCE
             </p>
 
@@ -156,7 +156,7 @@ function RiskMap() {
             onClick={fetchRegions}
             disabled={loading}
             title="Refresh map data"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-50"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
           >
             <RefreshCw
               size={16}
@@ -168,7 +168,7 @@ function RiskMap() {
             type="button"
             title="Fullscreen"
             onClick={handleFullscreen}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
           >
             <Maximize2 size={16} />
           </button>
@@ -186,7 +186,7 @@ function RiskMap() {
 
               <button
                 onClick={fetchRegions}
-                className="mt-3 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700"
+                className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
               >
                 Try again
               </button>

@@ -45,7 +45,7 @@ function AlertDetails({ alert, onClose }) {
               </div>
 
               <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-teal-600">
+                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-blue-600">
                   EARLY WARNING
                 </p>
 
@@ -126,7 +126,7 @@ function AlertDetails({ alert, onClose }) {
 
             <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-teal-600 shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm">
                 <MapPin size={18} />
               </div>
 
@@ -157,7 +157,7 @@ function AlertDetails({ alert, onClose }) {
 
               <div className="flex items-center gap-2">
 
-                <Languages size={16} className="text-teal-600" />
+                <Languages size={16} className="text-blue-600" />
 
                 <h3 className="text-sm font-extrabold text-slate-800">
                   Local Warning
@@ -165,7 +165,7 @@ function AlertDetails({ alert, onClose }) {
 
               </div>
 
-              <span className="rounded-full bg-teal-50 px-3 py-1.5 text-[10px] font-extrabold uppercase text-teal-700">
+              <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-extrabold uppercase text-blue-700">
                 {alert.local_language}
               </span>
 
@@ -237,7 +237,7 @@ function AlertDetails({ alert, onClose }) {
 
           <button
             onClick={onClose}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-teal-700 hover:shadow-lg hover:shadow-teal-700/20 active:scale-[0.98]"
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-700/20 active:scale-[0.98]"
           >
             Close Alert
           </button>

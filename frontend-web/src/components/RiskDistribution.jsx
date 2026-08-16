@@ -126,7 +126,7 @@ function RiskDistribution() {
       {/* Header */}
       <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-teal-600">
+          <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-blue-600">
             CURRENT SITUATION
           </p>
 
@@ -145,7 +145,7 @@ function RiskDistribution() {
           onClick={fetchRegions}
           disabled={loading}
           title="Refresh risk distribution"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw
             size={15}
@@ -158,7 +158,7 @@ function RiskDistribution() {
       {loading && (
         <div className="flex min-h-[250px] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-teal-500" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-blue-500" />
 
             <p className="text-xs font-semibold text-slate-500">
               Loading risk distribution...
@@ -182,7 +182,7 @@ function RiskDistribution() {
             <button
               type="button"
               onClick={fetchRegions}
-              className="mt-3 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700"
+              className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
             >
               Try again
             </button>

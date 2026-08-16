@@ -64,7 +64,7 @@ function RiskOverview() {
       {/* Section heading */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[1.8px] text-teal-600">
+          <p className="text-[11px] font-extrabold uppercase tracking-[1.8px] text-blue-600">
             CURRENT SITUATION
           </p>
 
