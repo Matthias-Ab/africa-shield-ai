@@ -5,6 +5,154 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — Aligned language coverage with the African Union's official languages; fixed a live Mozambique bug
+
+### Completed
+- Team decision: expand language coverage to match the African Union's
+  6 official languages (Arabic, English, French, Portuguese, Spanish,
+  Kiswahili), substituting Amharic for Spanish per the organizer's own
+  guidance (Spanish isn't relevant to our flood-risk regions). Target
+  set: English, Arabic, French, Portuguese, Swahili, Amharic — plus
+  Somali, kept as a 7th since it predates this alignment and is already
+  reviewed/live via Mogadishu. Followed the exact same pattern used for
+  the French addition earlier the same day: real translated templates
+  (flagged unreviewed where they are), country→language mapping, an
+  explicit ambiguous-country skip list, doc/mock-data regeneration, and
+  testing against the running server.
+- **Checked Maputo's mapping first, as a priority, before adding
+  anything — and found the same bug DRC had before the French fix.**
+  `LOCAL_LANGUAGE_BY_COUNTRY["mozambique"]` was `"English"`. This
+  wasn't a hidden bug exactly — the code comment already said
+  "Mozambique's real primary language is Portuguese, not covered here"
+  — but the *live output* for Maputo, one of our 9 sample cities and the
+  team's most real-data-validated one (the Dec 2025-Jan 2026 flood
+  event confirmed in the real-training-data investigation), was still
+  wrong every time `/api/regions` or `/api/risk-check` was called for
+  it. Fixed to `"Portuguese"`.
+- **Added Portuguese**, real (non-machine-translated-and-forgotten)
+  templates, flagged AI-drafted/unreviewed same as French:
+  - `ALERT_TEMPLATES["Portuguese"]` — high/medium/low, standard
+    post-1990-orthographic-reform spelling (shared across Portugal and
+    Lusophone Africa/Brazil, not a Brazil-vs-Portugal split).
+  - Mapped Mozambique (the bug fix above) plus Angola, Guinea-Bissau,
+    Cabo Verde (both "cabo verde" and "cape verde" keys, since it's
+    called both in English), São Tomé and Príncipe (both the accented
+    and plain-ASCII spelling, since `country_from_location()` doesn't
+    strip accents before lowercasing — verified Python's exact `.lower()`
+    output for the accented form before adding the key, not assumed),
+    and Equatorial Guinea.
+  - **Equatorial Guinea is a deliberate inclusion, not a guess** —
+    Spanish and French are also co-official there, but the team
+    explicitly named it as one of the countries to map to Portuguese in
+    this session's instructions. Documented in code as "not a guess made
+    by whoever last edited this file," to distinguish it from the
+    genuinely-skipped ambiguous cases below.
+  - City names: only Maputo is currently live, and "Maputo" is already
+    its Portuguese name — no `LOCALIZED_CITY_NAMES` entries needed for
+    Portuguese yet.
+- **Added Amharic** — Ethiopia's official language:
+  - `ALERT_TEMPLATES["Amharic"]` — high/medium/low, written in Ge'ez
+    script. **Flagged explicitly, more strongly than any other language
+    in this file, as the least confident draft** — Amharic is
+    linguistically further from the team's other languages than
+    French/Portuguese are from English, and this was drafted with less
+    confidence than the others. `docs/translation-review/amharic-review.txt`
+    repeats this warning for whoever reviews it.
+  - `LOCALIZED_CITY_NAMES["Amharic"]["Addis Ababa"] = "አዲስ አበባ"` — added
+    even though no sample city is in Ethiopia yet, so the mapping is
+    complete and ready rather than discovered missing later.
+  - **No sample city in `regions.json` is in Ethiopia — Amharic is NOT
+    exercised by `GET /api/regions` today.** Tested it via a manual
+    `POST /api/risk-check` call for "Addis Ababa, Ethiopia" instead (see
+    Findings below for the recommendation on whether to add a real
+    sample city for this).
+- **Skipped as genuinely ambiguous, per the same discipline the French
+  addition used** (Congo-Brazzaville, Djibouti):
+  - Djibouti (still skipped) — Arabic, French, and Somali all plausible.
+  - Comoros — French and Arabic co-official; ambiguous between two of
+    our seven languages.
+  - Eritrea — none of our seven languages is actually its primary one
+    (Tigrinya is, which isn't in our set); Arabic and English are both
+    used administratively there but neither is clearly "the" answer, so
+    left unmapped (falls back to English) rather than picking one.
+- **Verified against the running server, not just by reading the diff:**
+  `GET /api/regions`'s Maputo entry now returns `"local_language":
+  "Portuguese"` with real Portuguese text; a manual risk-check for
+  "Luanda, Angola" (not a sample city, a mapping-only check) correctly
+  resolved to Portuguese; a manual risk-check for "Addis Ababa, Ethiopia"
+  correctly resolved to Amharic with the city name localized to
+  "አዲስ አበባ" inside the sentence.
+- Regenerated `docs/mock-data.json`'s Maputo entry to match the live
+  output exactly. Updated `docs/api-contract.md`, `docs/architecture.md`,
+  `backend/README.md`, and `docs/frontend-feature-spec.md` everywhere
+  they said "five languages" or otherwise undercounted the language set
+  — corrected to accurately say 7 languages total (6 AU-aligned + Somali),
+  not "six," after catching that exact inconsistency in this session's
+  own first draft of the wording.
+- Added `docs/translation-review/portuguese-review.txt` and
+  `amharic-review.txt` (demo city Maputo and Addis Ababa respectively),
+  matching the existing packet format.
+
+### In Progress / Partially Done
+- Nothing left half-finished — both languages work end-to-end
+  (Portuguese live via Maputo, Amharic reachable via manual risk-check).
+
+### Not Yet Started
+- **Native-speaker review of Portuguese and Amharic** — both unreviewed
+  AI drafts, same status French is in. Amharic should be treated as the
+  most likely of the two (of all 7 languages, really) to need real
+  correction — see the explicit warning in its review packet.
+- **Whether to add an Ethiopian sample city to `regions.json` — an open
+  decision, not made in this session.** Told the team plainly: without
+  one, Amharic is invisible on the live dashboard and only reachable via
+  a manual API call, which undercuts demoing it as a real feature.
+  Adding one is a small, contained change (one more entry in
+  `regions.json`, matching the existing 9-city format) but touches the
+  "9 sample cities" framing referenced throughout the docs, so it's a
+  team call, not something to do silently.
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Maputo's bug was a real, live-output problem, not just a stale
+  comment** — worth stating plainly since it could have been an
+  embarrassing live-demo moment (a judge asking about the "most
+  validated" city and getting an English message when Portuguese was
+  expected). Treated as a priority fix per the team's explicit framing,
+  fixed before any new language was added, not after.
+- **Chose to verify the exact `.lower()` output for "São Tomé and
+  Príncipe" before adding it as a dict key**, rather than assume ASCII
+  folding — Python's `.lower()` preserves and lowercases accented
+  characters rather than stripping them, so `country_from_location()`'s
+  lookup needs the accented lowercase form to match. Added both the
+  accented and a plain-ASCII fallback key to cover a caller who types it
+  either way.
+- **Caught and fixed an internal inconsistency before it reached the
+  docs:** an early draft of this session's docstring said "six agreed
+  languages" while listing seven names. Corrected everywhere (code
+  comments, `api-contract.md`, `architecture.md`, `backend/README.md`)
+  to consistently say 7 total, explaining the 6-AU-aligned-plus-Somali
+  split, rather than leaving a number that doesn't match its own list.
+- **Did not re-audit Rwanda/Burundi's existing French mapping** even
+  though both have significant Swahili use — out of scope for this
+  session (which was about adding Portuguese/Amharic and fixing
+  Mozambique, not re-opening the French list), and neither is currently
+  ambiguous in a way this session's instructions asked to check.
+
+### Flags for the Team
+- **Portuguese and Amharic still need native-speaker review** —
+  `docs/translation-review/portuguese-review.txt` (demo: Maputo) and
+  `amharic-review.txt` (demo: Addis Ababa, flagged as the highest-risk
+  draft of all 7 languages) are ready to hand off.
+- **Decide on an Ethiopian sample city.** Without one, Amharic support
+  is real but invisible in any live demo of the dashboard — flagging
+  this as a decision point, not deciding it here.
+- **If Maputo's old (wrong) English output was referenced anywhere
+  outside this repo** (screenshots, prior pitch materials, a PDF export)
+  **it's now stale** — same caveat as the DRC/French fix from earlier
+  today.
+
+---
+
 ## 2026-08-17 — Translation review: Swahili/Arabic/Somali confirmed, city names localized, French added
 
 ### Completed

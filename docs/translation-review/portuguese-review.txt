@@ -1,0 +1,94 @@
+AFRICA SHIELD AI — PORTUGUESE TRANSLATION REVIEW
+===================================================
+
+Status: AI-written, NEVER reviewed by a native/fluent Portuguese speaker.
+Added 2026-08-17, to match the African Union's official languages and
+fix a real bug: Mozambique/Maputo had been incorrectly defaulting to
+English (Portuguese is Mozambique's actual official language).
+Source file: backend/app/models/translations.py (Portuguese block in
+ALERT_TEMPLATES).
+Used for: SMS alerts, USSD "check flood risk" reply, and voice call
+text-to-speech (spoken aloud when someone answers a voice alert).
+
+Demo city used below: Maputo, Mozambique — one of our 9 sample cities,
+and the team's most real-data-validated city (a real flood event was
+confirmed there in our Dec 2025-Jan 2026 real-data investigation). This
+is a high-stakes one to get right.
+
+City names are NOT renamed for Portuguese in this app — "Maputo" is
+already its Portuguese name, so no localization mapping was needed
+(unlike Arabic/Somali/Amharic, where the city name changes).
+
+--------------------------------------------------
+1. HIGH RISK
+--------------------------------------------------
+Portuguese (as sent):
+O risco de inundação é ALTO em Maputo. Desloque-se para um terreno mais
+elevado e evite as margens do rio.
+
+Intended meaning (English gloss, for reference only — not the source
+text, just what we think it says):
+"Flood risk is HIGH in Maputo. Move to higher ground and avoid
+riverbanks."
+
+--------------------------------------------------
+2. MEDIUM RISK
+--------------------------------------------------
+Portuguese (as sent):
+O risco de inundação é MÉDIO em Maputo. Mantenha-se alerta e siga as
+atualizações locais.
+
+Intended meaning (English gloss):
+"Flood risk is MEDIUM in Maputo. Stay alert and follow local updates."
+
+--------------------------------------------------
+3. LOW RISK
+--------------------------------------------------
+Portuguese (as sent):
+O risco de inundação é BAIXO em Maputo. Nenhuma ação é necessária neste
+momento.
+
+Intended meaning (English gloss):
+"Flood risk is LOW in Maputo. No action is necessary at this time."
+
+
+WHAT WE NEED FROM YOU
+======================
+1. Is the grammar/wording natural for each of the 3 messages above?
+2. Do "ALTO" / "MÉDIO" / "BAIXO" read clearly as HIGH / MEDIUM / LOW
+   risk levels, or is there a more natural way to phrase the severity?
+3. Is the tone right for an emergency/safety alert?
+4. This same wording will be reused for any other Portuguese-mapped
+   country (Angola, Guinea-Bissau, Cabo Verde, São Tomé and Príncipe,
+   Equatorial Guinea) — flag if anything reads as too
+   European-Portuguese/not-regionally-neutral for African Portuguese
+   (Mozambican/Angolan Portuguese in particular).
+
+
+ADDITIONAL MESSAGES — NOT YET TRANSLATED AT ALL
+=================================================
+These only exist in English today, regardless of which local language a
+region is mapped to. We have NOT decided yet whether to translate these
+— flagging them now so you can tell us whether they're worth localizing
+too, and if so, we'll come back with drafts for review. No action needed
+unless you want to weigh in.
+
+USSD menu (what someone sees when they dial in on any phone):
+  "Welcome to Africa Shield AI
+   1. Check flood risk
+   2. Subscribe to alerts
+   3. Unsubscribe from alerts"
+
+  "Select a region:" (shown after picking option 1 or 2)
+
+  "You are now subscribed to flood alerts for {region}." (after
+  subscribing)
+
+  "You have been unsubscribed from all flood alerts." (after
+  unsubscribing)
+
+  "Invalid selection." (bad input)
+
+Voice call fallback line (spoken only if something goes wrong and no
+alert message was found for the call):
+  "This is Africa Shield AI. No specific alert was found for this call."

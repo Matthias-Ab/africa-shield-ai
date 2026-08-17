@@ -105,6 +105,38 @@ Presentation & Pitch 5.
       unreviewed AI draft, same status Arabic/Swahili/Somali were in
       before this session. Whoever finds a French speaker next should
       use the same `docs/translation-review/` packet pattern.
+- [x] **Fixed a real live bug: Maputo/Mozambique was defaulting to
+      English (2026-08-17).** Portuguese is Mozambique's actual official
+      language — corrected, same category of bug the DRC/French fix
+      caught. Maputo is the team's most real-data-validated city (a real
+      confirmed flood event from the Dec 2025-Jan 2026 investigation),
+      so this was a priority fix, not a routine addition.
+- [x] **Added Portuguese and Amharic (2026-08-17)**, completing
+      alignment with the African Union's 6 official languages (Amharic
+      substituted for Spanish per the organizer's guidance) — English,
+      Arabic, French, Portuguese, Swahili, Amharic, plus Somali kept as
+      a 7th from before that alignment. Portuguese also mapped to
+      Angola, Guinea-Bissau, Cabo Verde, São Tomé and Príncipe, and
+      Equatorial Guinea (explicit team call despite Spanish/French also
+      being co-official there) ahead of having sample cities in them.
+      Skipped as genuinely ambiguous: Djibouti (Arabic/French/Somali all
+      plausible), Comoros (French/Arabic co-official), Eritrea (none of
+      our 7 languages is actually its primary one — Tigrinya is).
+- [ ] **Decide whether to add an Ethiopian sample city (e.g. Addis
+      Ababa) to `regions.json`.** Amharic is mapped and tested via a
+      manual `POST /api/risk-check` call, but with no Ethiopian sample
+      city, it's NOT exercised by the live dashboard (`GET /api/regions`)
+      the way French/Portuguese are via Kinshasa/Maputo — a judge
+      browsing the dashboard would never see it. This is a real decision
+      to make, not done automatically — adding a 10th sample city
+      touches the "9 sample cities" framing used throughout the docs.
+- [ ] **Native-speaker review of Portuguese and Amharic alert wording**
+      — both unreviewed AI drafts, same status French is in. **Amharic
+      especially needs review** — it's the least confident draft of all
+      7 languages (different script, linguistically furthest from the
+      team's other languages) — see
+      `docs/translation-review/amharic-review.txt`'s explicit warning.
+      Portuguese packet: `docs/translation-review/portuguese-review.txt`.
 - [ ] Automatic threshold-triggered alerts (a scheduled job firing
       `/api/alerts/send` when a region crosses into `high`), instead of
       only on-demand sending.

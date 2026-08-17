@@ -39,13 +39,17 @@
    `POST /api/sensor-reading`. See [`api-contract.md`](api-contract.md)
    for exact shapes. **All real.**
 3. **Alert/translation layer** (`backend/app/models/translations.py`)
-   turns a risk level into a human-readable message in English plus one
-   of Swahili/Arabic/Somali/French by country, with the city name itself
-   localized too (e.g. "Cairo" → "القاهرة"). **Real** — see
+   turns a risk level into a human-readable message in one of 7
+   languages by country — English, Swahili, Arabic, Somali, French,
+   Portuguese, Amharic (6 of these match the African Union's official
+   languages, Amharic standing in for Spanish per the organizer's
+   guidance; Somali is a 7th, kept from before that alignment) — with
+   the city name itself localized too (e.g. "Cairo" → "القاهرة",
+   "Addis Ababa" → "አዲስ አበባ"). **Real** — see
    [`progress-log.md`](progress-log.md) for the country mapping.
    Swahili, Arabic, and Somali are reviewed and confirmed correct by
-   native speakers (2026-08-17); French is still an AI-drafted,
-   unreviewed addition.
+   native speakers (2026-08-17); French, Portuguese, and Amharic are
+   still AI-drafted, unreviewed additions.
 4. **Real SMS/voice send** (`backend/app/models/sms_gateway.py` and
    `voice_gateway.py`, wrapping Africa's Talking): `POST /api/alerts/send`
    messages every subscriber registered for a region, by text or by a
@@ -154,9 +158,12 @@ As of 2026-08-17, `/api/alerts` is no longer just a simulated stub.
   not required for the demo.
 - **Not yet verified:** whether Africa's Talking's voice `<Say>`
   text-to-speech actually renders non-English text (Arabic/Swahili/
-  Somali/French) acceptably — only tested locally against the callback logic
-  itself, not against the real sandbox's speech synthesis. Confirm before
-  relying on it for a non-English region live.
+  Somali/French/Portuguese/Amharic) acceptably — only tested locally
+  against the callback logic itself, not against the real sandbox's
+  speech synthesis. Amharic (Ge'ez script) is the least likely of these
+  to be well-supported by a general-purpose TTS engine — confirm before
+  relying on any non-English region live, but treat Amharic as the one
+  most likely to need a fallback plan.
 
 ## IoT sensor ingestion
 

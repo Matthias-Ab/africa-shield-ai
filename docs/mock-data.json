@@ -144,8 +144,8 @@
       "river_level_m": 1.0,
       "risk_level": "low",
       "alert_message_en": "Flood risk is LOW in Maputo. No action needed at this time.",
-      "alert_message_local": "Flood risk is LOW in Maputo. No action needed at this time.",
-      "local_language": "English",
+      "alert_message_local": "O risco de inundação é BAIXO em Maputo. Nenhuma ação é necessária neste momento.",
+      "local_language": "Portuguese",
       "population_estimate": 1100000,
       "risk_score_breakdown": {
         "rainfall_mm_24h": 15,

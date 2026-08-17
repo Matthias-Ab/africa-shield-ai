@@ -22,6 +22,18 @@ ESP32 flood sensor (currently a Wokwi simulation — see
 `POST /api/risk-check` does. Additive; no existing endpoint's shape
 changed. See that endpoint's section below.
 
+**Status (as of 2026-08-17): language coverage expanded to 7, and a
+Mozambique bug fixed.** Portuguese and Amharic added (see
+`local_language`'s field note below); DRC's French fix from earlier the
+same day exposed the same bug in Mozambique's mapping, which was
+silently returning English instead of Mozambique's actual official
+language, Portuguese — now corrected. **This is a value change on an
+existing live field for an existing region (Maputo), not just an
+additive one** — flagged per standing instructions not to change
+existing behavior without saying so; see `docs/progress-log.md`'s
+2026-08-17 entry for the full reasoning. No field was renamed, removed,
+or retyped.
+
 **Contract change (additive, non-breaking):** both `POST /api/risk-check`
 and `GET /api/regions` gained a new `risk_score_breakdown` field (for a
 "why this score" explainability view), and `GET /api/regions` gained
@@ -140,7 +152,7 @@ mapping used.
 | `risk_score`           | float  | 0.0–1.0 — **rules-based, primary**        |
 | `alert_message_en`     | string | Human-readable alert, English            |
 | `alert_message_local`  | string | Same alert, translated to `local_language`, **with the city name also localized** where the local name differs from English (e.g. "Cairo" → "القاهرة") — see `backend/app/models/translations.py`'s `LOCALIZED_CITY_NAMES`. **Right-to-left when `local_language` is `"Arabic"`** — the frontend must handle RTL display; this field is a plain string with no directionality markers. |
-| `local_language`       | string | One of the team's five agreed languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"`, `"French"` |
+| `local_language`       | string | One of 7 languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"`, `"French"`, `"Portuguese"`, `"Amharic"`. 6 of these match the African Union's official languages (Amharic substituted for Spanish, per the organizer's guidance — Spanish isn't relevant to our flood-risk regions); Somali is kept as a 7th, predating that alignment. |
 | `timestamp`            | string | ISO 8601, UTC                            |
 | `risk_score_breakdown` | object | Explainability data for a "why this score" UI — see below. |
 | `ml_risk_level`        | string | `"low"` \| `"medium"` \| `"high"` — the trained ML model's second opinion, bucketed with the same thresholds as the rules-based score (see `risk_score_breakdown.high_threshold`/`medium_threshold`). |

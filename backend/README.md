@@ -124,12 +124,24 @@ shapes. Summary:
 ## Translations
 
 `app/models/translations.py` hardcodes English plus one of
-Swahili/Arabic/Somali/French per alert (mapped by country, see that file
-for the mapping and fallback rules), with the city name itself localized
-too where it differs from English (e.g. "Cairo" → "القاهرة" — see
-`LOCALIZED_CITY_NAMES` in that file). Swahili, Arabic, and Somali are
-reviewed and confirmed correct by native speakers (2026-08-17). French
-(added the same day) is still an AI-drafted placeholder — see the module
+Swahili/Arabic/Somali/French/Portuguese/Amharic per alert (mapped by
+country, see that file for the mapping and fallback rules), with the
+city name itself localized too where it differs from English (e.g.
+"Cairo" → "القاهرة", "Addis Ababa" → "አዲስ አበባ" — see
+`LOCALIZED_CITY_NAMES` in that file). 6 of these 7 languages
+(English, Arabic, French, Portuguese, Swahili, Amharic) match the
+African Union's official languages — Amharic substitutes for Spanish
+per the organizer's guidance, since Spanish isn't relevant to our
+flood-risk regions; Somali is a 7th, kept from before that alignment
+since it's already reviewed and live via Mogadishu.
+
+Swahili, Arabic, and Somali are reviewed and confirmed correct by
+native speakers (2026-08-17). French, Portuguese, and Amharic (all
+added 2026-08-17) are still AI-drafted placeholders — see the module
 docstring and `docs/progress-log.md` for the team's decision to ship
 unreviewed languages as-is for the hackathon rather than block on a
-review pass.
+review pass. **Mozambique's mapping was corrected from English to
+Portuguese the same day** — it was a real bug (Portuguese is
+Mozambique's actual official language), not just a new addition; Maputo
+is a live sample city, so this changed real output, not just added a
+new option.

@@ -2,17 +2,27 @@
 
 # TODO: integrate a real translation API (e.g. Google Translate, or an
 # Africa-focused NLP/MT model) eventually. For now this is a hardcoded
-# lookup across the team's five agreed languages: English, Swahili,
-# Arabic, Somali, French.
+# lookup across 7 languages: English, Swahili, Arabic, Somali, French,
+# Portuguese, Amharic. 6 of these (English, Arabic, French, Portuguese,
+# Swahili, Amharic) deliberately match the African Union's 6 official
+# languages, with Amharic substituted for Spanish per the organizer's
+# own guidance, since Spanish isn't relevant to our flood-risk regions.
+# Somali is the 7th, kept alongside the AU-6 rather than dropped —
+# it predates the AU-alignment decision and is already reviewed, live,
+# and demoed via Mogadishu.
 #
 # FLAG FOR THE TEAM: **Swahili, Arabic, and Somali were all reviewed and
 # confirmed correct by native speakers on 2026-08-17** — no longer
-# flagged as unreviewed AI drafts. Only French (added 2026-08-17) is
-# still an AI-written draft, unreviewed by a native speaker — same
-# caveat the other three used to carry, until someone checks it. Team
-# decision (2026-08-10): ship unreviewed languages as the working
-# translations for the hackathon demo rather than block on a review
-# pass; flag any wording that looks off if you notice.
+# flagged as unreviewed AI drafts. **French, Portuguese, and Amharic are
+# still AI-written drafts, unreviewed by a native speaker** — same
+# caveat the other three used to carry, until someone checks each of
+# them. Amharic in particular is a bigger leap of faith than the other
+# two: it's linguistically further from this project's other languages
+# and was drafted with less confidence — treat it as the most likely of
+# the three to need correction. Team decision (2026-08-10): ship
+# unreviewed languages as the working translations for the hackathon
+# demo rather than block on a review pass; flag any wording that looks
+# off if you notice.
 #
 # ARABIC IS RIGHT-TO-LEFT. This module returns Arabic alert text as a
 # plain string in `alert_message_local` — it does not add any RTL
@@ -32,8 +42,9 @@
 
 # Which local language to use per country, keyed by lowercase country
 # name (parsed from the end of "City, Country" in location_name). Only
-# the five agreed languages appear as values: English, Swahili, Arabic,
-# Somali, French. Countries not listed fall back to DEFAULT_LOCAL_LANGUAGE.
+# the six agreed languages appear as values: English, Swahili, Arabic,
+# Somali, French, Portuguese, Amharic. Countries not listed fall back to
+# DEFAULT_LOCAL_LANGUAGE.
 #
 # Yoruba has been removed — it was an earlier draft language choice
 # before the team locked the final language set.
@@ -44,18 +55,46 @@
 # already one of the 9 sample cities in app/data/regions.json, so this
 # is exercised live by /api/regions, not just a hypothetical.
 #
-# Nigeria, Ghana, and Mozambique still don't cleanly map to any of the
-# five agreed languages (Mozambique's real primary language is
-# Portuguese, not covered here), so they stay mapped to English rather
-# than guessing.
+# **Mozambique corrected from English to Portuguese (2026-08-17) — this
+# was a real, live bug, not just a documentation gap.** Portuguese is
+# Mozambique's actual official language; the earlier English mapping was
+# only ever an arbitrary fallback for a language outside the
+# then-agreed set, exactly the same category of bug the DRC/French fix
+# corrected. Maputo is one of our 9 sample cities and is the team's most
+# real-data-validated city (the Dec 2025-Jan 2026 flood event), so this
+# was flagged as a priority fix, not a routine addition — see
+# docs/progress-log.md's 2026-08-17 entry for the "don't silently change
+# the contract" flag this correction requires.
 #
-# The extra French-speaking countries below aren't in
+# Nigeria and Ghana correctly map to English — that genuinely is each
+# country's official language, unlike Mozambique's old (wrong) mapping.
+#
+# Ethiopia is mapped to Amharic, its official language — but note NO
+# sample city in app/data/regions.json is in Ethiopia, so this mapping
+# is not exercised by /api/regions today, only reachable via a manual
+# POST /api/risk-check call with an Ethiopian location_name. See
+# docs/progress-log.md's 2026-08-17 entry for the team decision on
+# whether to add an Ethiopian sample city.
+#
+# The extra French/Portuguese-speaking countries below aren't in
 # app/data/regions.json yet — added ahead of time so the mapping is
-# ready the moment a French-speaking sample city is, same reasoning the
-# team used when adding Somalia to this table before Mogadishu was a
-# sample city. Deliberately excludes Congo-Brazzaville/Republic of the
-# Congo — its country name is too easily confused with DRC ("Congo") to
-# add safely without a real example to test against.
+# ready the moment a sample city there is, same reasoning the team used
+# when adding Somalia to this table before Mogadishu was a sample city.
+#
+# Deliberately skipped as ambiguous, per team discipline of not guessing:
+# - Congo-Brazzaville/Republic of the Congo: country name too easily
+#   confused with DRC ("Congo") to add safely without a real example.
+# - Djibouti: Arabic, French, and Somali are all plausible official
+#   languages there; guessing wrong is worse than the English default.
+# - Comoros: French and Arabic are co-official; genuinely ambiguous
+#   between two of our six languages.
+# - Eritrea: none of our six languages is actually its primary one
+#   (Tigrinya is, which isn't in our set) — Arabic and English are both
+#   used administratively, but neither is "the" answer, so left
+#   unmapped rather than picking one.
+# - Equatorial Guinea is INCLUDED, not skipped, despite Spanish/French
+#   also being co-official there — mapped to Portuguese per an explicit
+#   team decision (not a guess made by whoever last edited this file).
 LOCAL_LANGUAGE_BY_COUNTRY = {
     "kenya": "Swahili",
     "tanzania": "Swahili",
@@ -64,7 +103,7 @@ LOCAL_LANGUAGE_BY_COUNTRY = {
     "somalia": "Somali",
     "nigeria": "English",
     "ghana": "English",
-    "mozambique": "English",
+    "mozambique": "Portuguese",
     "drc": "French",
     "senegal": "French",
     "mali": "French",
@@ -82,6 +121,14 @@ LOCAL_LANGUAGE_BY_COUNTRY = {
     "central african republic": "French",
     "rwanda": "French",
     "burundi": "French",
+    "angola": "Portuguese",
+    "guinea-bissau": "Portuguese",
+    "cabo verde": "Portuguese",
+    "cape verde": "Portuguese",
+    "são tomé and príncipe": "Portuguese",
+    "sao tome and principe": "Portuguese",
+    "equatorial guinea": "Portuguese",
+    "ethiopia": "Amharic",
 }
 
 # Changed from "Swahili" to "English": any country not explicitly listed
@@ -128,6 +175,22 @@ ALERT_TEMPLATES = {
         "medium": "Le risque d'inondation est MOYEN à {location}. Restez vigilant et suivez les mises à jour locales.",
         "low": "Le risque d'inondation est FAIBLE à {location}. Aucune action n'est nécessaire pour le moment.",
     },
+    # AI-written, unreviewed by a native speaker — added 2026-08-17.
+    "Portuguese": {
+        "high": "O risco de inundação é ALTO em {location}. Desloque-se para um terreno mais elevado e evite as margens do rio.",
+        "medium": "O risco de inundação é MÉDIO em {location}. Mantenha-se alerta e siga as atualizações locais.",
+        "low": "O risco de inundação é BAIXO em {location}. Nenhuma ação é necessária neste momento.",
+    },
+    # AI-written, unreviewed by a native speaker — added 2026-08-17.
+    # Treat this one as the LEAST confident draft in this file — Amharic
+    # is linguistically further from the team's other languages than
+    # French/Portuguese are from English, so this is a bigger leap of
+    # faith than the other unreviewed entries. Written in Ge'ez script.
+    "Amharic": {
+        "high": "የጎርፍ አደጋ በ{location} ከፍተኛ ነው። ወደ ከፍታ ቦታ ይሂዱ እና የወንዝ ዳርቻዎችን ያስወግዱ።",
+        "medium": "የጎርፍ አደጋ በ{location} መካከለኛ ነው። ንቁ ይሁኑ እና የአካባቢ ዝማኔዎችን ይከታተሉ።",
+        "low": "የጎርፍ አደጋ በ{location} ዝቅተኛ ነው። በአሁኑ ጊዜ እርምጃ አያስፈልግም።",
+    },
 }
 
 # City names as they're written in the local language, for
@@ -135,10 +198,18 @@ ALERT_TEMPLATES = {
 # English name from `location_name`. Only cities whose local name
 # actually differs need an entry here; most don't (e.g. "Nairobi",
 # "Kampala", and "Dar es Salaam" are already their Swahili names, and
-# "Kinshasa" is already its French name) — see module docstring.
+# "Kinshasa" and "Maputo" are already their French/Portuguese names) —
+# see module docstring.
+#
+# "Addis Ababa" is included even though no sample city is in Ethiopia
+# yet (see LOCAL_LANGUAGE_BY_COUNTRY's Amharic note) — added now so the
+# mapping is complete and ready the moment a manual risk-check or a
+# future sample city exercises it, rather than being discovered missing
+# later.
 LOCALIZED_CITY_NAMES = {
     "Arabic": {"Cairo": "القاهرة"},
     "Somali": {"Mogadishu": "Muqdisho"},
+    "Amharic": {"Addis Ababa": "አዲስ አበባ"},
 }
 
 
