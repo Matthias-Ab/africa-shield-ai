@@ -8,18 +8,20 @@ internet. **Scoped hackathon demo:** "Last-Mile Alert AI" — flooding
 only, working end-to-end: a rules-based flood risk score shown alongside
 a genuine trained ML model as a second opinion, an API that turns the
 result into a human-readable alert, translation into a local African
-language, and real SMS/voice-call alerts (with USSD self-service to check
+language, real SMS/voice-call alerts (with USSD self-service to check
 risk or subscribe) via Africa's Talking — voice covering people a
-text-only channel doesn't reach — all shown on a simple web dashboard.
-**Future:** expand to the other hazards, train the ML model on real
-historical data instead of synthetic data, and an offline-first mobile
-app (see [Future Improvements](#future-improvements) below).
+text-only channel doesn't reach — and a live IoT sensor ingestion
+endpoint, demoed via a Wokwi ESP32 simulation, all shown on a simple web
+dashboard. **Future:** expand to the other hazards, train the ML model on
+real historical data instead of synthetic data, real ESP32 hardware
+instead of the Wokwi simulation, and an offline-first mobile app (see
+[Future Improvements](#future-improvements) below).
 
 Built for the **"AI for All Hackathon: Building Inclusive Solutions for
 Early Warning and Disaster Resilience,"** organized by the African Youth
 Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 
-## Status: backend + frontend both real, alerts now send for real (updated 2026-08-17)
+## Status: backend + frontend both real, alerts send for real, IoT ingestion live (updated 2026-08-17)
 
 - **Backend risk scoring and translation are real**, not stubbed.
   `POST /api/risk-check` and `GET /api/regions` compute live from the
@@ -44,6 +46,12 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   alerts" section.
 - **Frontend dashboard** (Habiba, Farid, Thompson) merged 2026-08-15 —
   live in `frontend-web/`, pulling real data from `GET /api/regions`.
+- **IoT device ingestion is live.** `POST /api/sensor-reading` accepts a
+  reading from a registered ESP32 flood sensor and scores it exactly like
+  `POST /api/risk-check` — currently demoed via a Wokwi simulation
+  (`hardware/wokwi-flood-sensor/`), since no real hardware exists yet.
+  See [`docs/architecture.md`](docs/architecture.md)'s "IoT sensor
+  ingestion" section.
 - The API contract only ever gained fields, never changed existing ones —
   anything built against earlier shapes still works unmodified. See
   [`docs/api-contract.md`](docs/api-contract.md) for the current, complete
@@ -64,6 +72,8 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   trained on synthetic data — see `backend/app/models/train_ml_model.py`
 - **Frontend:** React + Vite
 - **Alerts:** Africa's Talking (SMS + USSD + Voice)
+- **IoT:** ESP32, simulated in Wokwi (rain + water level sensors) — see
+  `hardware/wokwi-flood-sensor/`
 - **Data:** JSON files for the hackathon demo (no database — see Future
   Improvements)
 
@@ -74,6 +84,10 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   (`/docs` for interactive API docs).
 - Frontend: see [`frontend-web/README.md`](frontend-web/README.md) —
   `npm install && npm run dev`, runs at `http://localhost:5173`.
+- IoT simulation: see
+  [`hardware/wokwi-flood-sensor/README.md`](hardware/wokwi-flood-sensor/README.md) —
+  runs in the browser at wokwi.com, needs a tunnel to reach a locally
+  running backend.
 
 ## Docs
 
@@ -83,7 +97,7 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   roadmap. Good starting point for anyone new to the project (including
   judges/reviewers), no technical background assumed.
 - [`docs/api-contract.md`](docs/api-contract.md) — exact request/response
-  shapes for all 3 endpoints. Living source of truth.
+  shapes for every endpoint. Living source of truth.
 - [`docs/API-Schema-Reference.pdf`](docs/API-Schema-Reference.pdf) —
   frontend-facing PDF snapshot of the exact schema (same content as
   `api-contract.md`, formatted to hand directly to a teammate).
@@ -121,8 +135,9 @@ Beyond the hackathon demo, the roadmap includes:
 - Add a community-reporting feature so people can report on-the-ground
   conditions (e.g., "river rising near my village") to improve prediction
   accuracy.
-- Add low-cost IoT sensor integration (water level sensors, rain gauges)
-  as a future hardware track expansion.
+- Move from the Wokwi simulation to real ESP32 hardware with real rain/
+  water-level sensors (backend ingestion already built — see
+  `hardware/wokwi-flood-sensor/`).
 - Add user authentication and role-based access for local disaster
   management authorities to manage/verify alerts before they go out.
 - Add an analytics/impact dashboard tracking alerts sent, regions

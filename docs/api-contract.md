@@ -15,6 +15,13 @@ returns real send history once anything has gone through
 `POST /api/alerts/send`, falling back to the original hardcoded list on a
 fresh clone where nothing has been sent yet — see that endpoint's section.
 
+**Status (as of 2026-08-17): device ingestion is real.** A new endpoint,
+`POST /api/sensor-reading`, accepts a live reading from a registered
+ESP32 flood sensor (currently a Wokwi simulation — see
+`hardware/wokwi-flood-sensor/`) and scores it exactly the way
+`POST /api/risk-check` does. Additive; no existing endpoint's shape
+changed. See that endpoint's section below.
+
 **Contract change (additive, non-breaking):** both `POST /api/risk-check`
 and `GET /api/regions` gained a new `risk_score_breakdown` field (for a
 "why this score" explainability view), and `GET /api/regions` gained
@@ -153,6 +160,55 @@ mapping used.
 | `medium_threshold`       | float  | Currently `0.4` — `risk_score` at/above this is `"medium"` |
 | `risk_level`             | string | Same value as the top-level `risk_level` (duplicated here for convenience) |
 | `risk_score`             | float  | Same value as the top-level `risk_score` (duplicated here for convenience) |
+
+---
+
+## `POST /api/sensor-reading`
+
+Ingests a live reading from a registered ESP32 flood sensor — currently a
+Wokwi simulation (`hardware/wokwi-flood-sensor/`), since no real hardware
+exists yet — and scores it exactly the way `POST /api/risk-check` does.
+Internally, this is a thin wrapper: it resolves `device_id` to a region
+via `backend/app/data/devices.json`, then calls the same scoring function
+`/api/risk-check` uses (`build_risk_check_response()` in
+`backend/app/routes/risk.py`) — not a reimplementation.
+
+### Request
+
+```json
+{
+  "device_id": "esp32-demo-01",
+  "rainfall_mm_24h": 85.0,
+  "river_level_m": 3.2,
+  "timestamp": "2026-08-17T09:00:00Z"
+}
+```
+
+| Field             | Type   | Notes                                                        |
+|-------------------|--------|------------------------------------------------------------------|
+| `device_id`       | string | Must match a `device_id` in `backend/app/data/devices.json` — 404 otherwise. |
+| `rainfall_mm_24h` | float  | Same `allow_inf_nan=False` constraint as `/api/risk-check` — a NaN/Infinity reading gets a clean 422, not a crash. |
+| `river_level_m`   | float  | Same constraint as above.                                         |
+| `timestamp`       | string | The device's own clock (e.g. Wokwi's simulated NTP time). Accepted and validated, but not echoed in the response — see below. |
+
+### Response
+
+**Identical shape to `POST /api/risk-check`'s response** (see above) —
+`location_name`/`country`/`latitude`/`longitude` come from the device's
+registry entry, not the request body; `timestamp` in the response is the
+time this score was computed, not the device-reported `timestamp` from
+the request (same meaning as everywhere else `timestamp` appears in this
+API). This is deliberate: the frontend can render a device-originated
+reading with the exact same code path as a manual risk-check, with zero
+special-casing.
+
+### Device registry
+
+`backend/app/data/devices.json` maps `device_id` → `{location_name,
+latitude, longitude}`. Seeded with one demo entry
+(`"esp32-demo-01"` → `"Lagos, Nigeria"`) for the Wokwi simulation. Add
+entries by hand for additional simulated/real devices — there's no
+device-provisioning flow yet.
 
 ---
 

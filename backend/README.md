@@ -2,8 +2,9 @@
 
 FastAPI service for the "Last-Mile Alert AI" flood demo: real rules-based
 flood risk scoring, a genuine trained ML model as a second opinion,
-multi-language alert generation, and real SMS/USSD/voice alerts via
-Africa's Talking.
+multi-language alert generation, real SMS/USSD/voice alerts via Africa's
+Talking, and live IoT sensor ingestion (currently a Wokwi ESP32
+simulation — see `../hardware/wokwi-flood-sensor/`).
 
 ## Setup
 
@@ -54,6 +55,11 @@ shapes. Summary:
 - `POST /api/voice/callback` — real. Africa's Talking Voice webhook,
   called when a `channel: "voice"` alert is answered; responds with the
   queued alert text as speech. See `app/routes/voice.py`.
+- `POST /api/sensor-reading` — real. Ingests a reading from a registered
+  ESP32 flood sensor (`app/data/devices.json` resolves `device_id` to a
+  region) and scores it exactly like `POST /api/risk-check` — same
+  underlying function, same input validation, identical response shape.
+  See `app/routes/sensors.py` and `../hardware/wokwi-flood-sensor/`.
 
 ## How the two risk scores work
 
@@ -97,6 +103,23 @@ shapes. Summary:
   configuration — see `POST /api/alerts/send`, `POST /api/ussd`, and
   `POST /api/voice/callback` in
   [`../docs/api-contract.md`](../docs/api-contract.md).
+
+## IoT sensor ingestion
+
+- `app/routes/sensors.py` (`POST /api/sensor-reading`) is a thin route:
+  it resolves `device_id` → region via `app/data/devices.json`, then
+  calls `build_risk_check_response()` (`app/routes/risk.py`) — the exact
+  same function `POST /api/risk-check` calls — so a device reading and a
+  manual risk-check are scored identically, by one code path, not two.
+- `app/data/devices.json` maps `device_id` → `{location_name, latitude,
+  longitude}`. Seeded with one demo device (`"esp32-demo-01"` →
+  "Lagos, Nigeria"). Add entries by hand for more simulated/real devices.
+- No real hardware exists yet — `../hardware/wokwi-flood-sensor/` is a
+  Wokwi (browser-based) ESP32 simulation with two potentiometers standing
+  in for a rain sensor and a water level sensor. See that folder's
+  README for how to run it against this backend (needs a tunnel — Wokwi
+  can't reach `localhost`, same constraint as the USSD/voice sandbox
+  testing above).
 
 ## Translations
 

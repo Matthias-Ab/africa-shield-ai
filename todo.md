@@ -38,6 +38,10 @@ Presentation & Pitch 5.
       (Arabic/Swahili/Somali) acceptably — untested. If it doesn't, decide
       a fallback (e.g. speak English instead of `alert_message_local` for
       those regions) before the demo, not during it.
+- [ ] **Run the Wokwi ESP32 simulation against a real, locally running
+      backend** (`hardware/wokwi-flood-sensor/`) — needs a tunnel (e.g.
+      `ngrok http 8000`) since Wokwi can't reach `localhost`. Only tested
+      so far with `curl` standing in for the device.
 
 ## Social Impact & Inclusion (20 pts) — currently the weakest-covered criterion
 
@@ -66,6 +70,11 @@ Presentation & Pitch 5.
 
 ## Innovation & Creativity (15 pts) / Appropriate Use of AI & Tech (10 pts)
 
+- [x] IoT sensor ingestion (`POST /api/sensor-reading` + a Wokwi ESP32
+      simulation with rain/water-level sensors) — built 2026-08-17,
+      directly targets the scorecard's explicit "IoT & Sensors"
+      sub-criterion. No real hardware yet — see Critical above for the
+      Wokwi-against-real-backend test still needed.
 - [ ] Train the ML risk model on real historical rainfall/river-level/
       flood-outcome data instead of synthetic data (see
       `backend/app/models/train_ml_model.py`'s docstring for the isolated
@@ -107,7 +116,8 @@ Presentation & Pitch 5.
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
 - [ ] Community-reporting feature (on-the-ground condition reports).
-- [ ] Low-cost IoT sensor integration (water level sensors, rain gauges).
+- [ ] Move from the Wokwi simulation to real ESP32 hardware with real
+      rain/water-level sensors (backend ingestion already built).
 - [ ] User authentication / role-based access for disaster-management
       authorities.
 - [ ] Analytics/impact dashboard (alerts sent, regions covered, estimated

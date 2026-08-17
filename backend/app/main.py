@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routes import alerts, regions, risk, ussd, voice
+from app.routes import alerts, regions, risk, sensors, ussd, voice
 
 app = FastAPI(
     title="Africa Shield AI - Last-Mile Alert API",
@@ -17,7 +17,9 @@ app = FastAPI(
         ".env.example), and clearly labels the send as simulated otherwise. "
         "POST /api/ussd is a USSD webhook (check risk / subscribe / unsubscribe); "
         "POST /api/voice/callback is the webhook Africa's Talking calls when a "
-        "voice alert is answered, to read the alert aloud."
+        "voice alert is answered, to read the alert aloud. POST /api/sensor-reading "
+        "ingests a live reading from a registered ESP32 flood sensor (or its Wokwi "
+        "simulation) and scores it the same way /api/risk-check does."
     ),
     version="0.1.0",
 )
@@ -35,6 +37,7 @@ app.include_router(regions.router)
 app.include_router(alerts.router)
 app.include_router(ussd.router)
 app.include_router(voice.router)
+app.include_router(sensors.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -66,5 +69,6 @@ def root() -> dict:
             "/api/alerts/send",
             "/api/ussd",
             "/api/voice/callback",
+            "/api/sensor-reading",
         ],
     }

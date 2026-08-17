@@ -5,6 +5,175 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — IoT sensor ingestion: POST /api/sensor-reading + Wokwi ESP32 simulation
+
+### Completed
+- Team lead specced an IoT/hardware addition: an ESP32-WROOM-32 (chosen
+  over Arduino Uno for built-in WiFi) with exactly two analog sensors —
+  a rain sensor (YL-83/FC-37 style) and a water level sensor — chosen
+  deliberately minimal because they map directly onto the risk model's
+  two existing inputs (`rainfall_mm_24h`, `river_level_m`). No real
+  hardware exists yet; this session built the backend ingestion path and
+  a Wokwi (browser-based ESP32 simulator) simulation to demo it, per
+  explicit instructions not to touch the frontend or change
+  `/api/risk-check`, `/api/regions`, or `/api/alerts`.
+- **Design decision: reused `/api/risk-check`'s scoring logic via a
+  shared function, not a duplicate implementation.** Refactored
+  `backend/app/routes/risk.py` to extract `build_risk_check_response()`
+  — the exact same computation `POST /api/risk-check` already did, just
+  no longer inlined in that route handler. `risk_check()` itself now
+  just calls it. Verified this refactor changed nothing observable: same
+  Cairo/Egypt example (`risk_score: 0.42`, Arabic alert text) came back
+  identical before and after, tested against the running server, not
+  just read from the diff.
+- **New `backend/app/routes/sensors.py`** (`POST /api/sensor-reading`):
+  accepts `{device_id, rainfall_mm_24h, river_level_m, timestamp}`,
+  resolves `device_id` → region via the new `backend/app/data/devices.json`
+  (404 on an unregistered device rather than guessing a location), then
+  calls `build_risk_check_response()` — so a device reading is scored by
+  exactly the same code path as a manual risk-check, not a second
+  implementation that could drift from the first. `rainfall_mm_24h`/
+  `river_level_m` reuse the identical `allow_inf_nan=False` field
+  constraint `RiskCheckRequest` uses, so they're rejected by the same
+  `RequestValidationError` handler in `app/main.py` that already fixes
+  the NaN/Infinity-crash bug — confirmed by sending a literal `NaN` and
+  getting a clean 422, not a 500.
+- **Decided this needed a genuinely separate route, not a bare alias**,
+  because the request shapes differ in a real way: `/api/risk-check`
+  takes a human-provided `location_name`/`latitude`/`longitude` directly;
+  a device only knows its own `device_id` and must have its location
+  resolved server-side. An alias would have forced the ESP32 firmware to
+  know and send its own human-readable location, which doesn't match how
+  a real IoT fleet is provisioned (the backend knows where a device is
+  installed, not the device itself).
+- **New `backend/app/data/devices.json`**: a device-to-region registry
+  (`device_id` → `location_name`/`latitude`/`longitude`), same
+  seed-by-hand pattern as `subscribers.json`. Seeded with one demo entry,
+  `"esp32-demo-01"` → `"Lagos, Nigeria"` — a deliberate default since the
+  team's spec didn't include a location field in the device payload (by
+  design, per the request), not a silent guess: flagging it explicitly
+  here and in the docs in case a different demo region was intended.
+- **New `hardware/wokwi-flood-sensor/`**: a Wokwi (wokwi.com, browser-based,
+  no local toolchain needed) ESP32 simulation.
+  - `sketch.ino`: reads two simulated analog sensors (potentiometers
+    standing in for the rain/water-level sensors' voltage output on
+    GPIO34/GPIO35 — input-only ADC pins, chosen to avoid conflicting with
+    WiFi), converts each 0–4095 raw ADC reading onto the same scale the
+    backend expects (0–100mm rainfall, 0–4m river level — matching
+    `risk_model.py`'s caps), syncs real UTC time over NTP (Wokwi's
+    simulated network supports it), and POSTs a JSON reading to
+    `/api/sensor-reading` every 15 seconds, printing what it sends (and
+    the backend's response) to Serial. No external libraries beyond the
+    ESP32 core's built-in `WiFi.h`/`HTTPClient.h` — kept dependency-free
+    and readable per the instruction that whoever demos this may have
+    never touched embedded code before.
+  - `diagram.json`: ESP32 devkit + two potentiometers wired to
+    GPIO34/GPIO35, each with a `label` attr naming which real sensor it
+    simulates. Not run through the actual Wokwi simulator to confirm
+    pixel-perfect part/pin names (no access to Wokwi's simulator from
+    this environment) — flagged as unverified below.
+  - `README.md`: setup + the exact answer to "how do I test this
+    end-to-end" — see Findings below, since this had a real, specific
+    constraint (Wokwi can't reach `localhost`) that needed a concrete
+    workaround, not a hand-wave.
+- Updated `docs/api-contract.md` (new `POST /api/sensor-reading` section),
+  `docs/architecture.md` (diagram + a new "IoT sensor ingestion" section,
+  updated the stale "Add low-cost IoT sensor integration" Future
+  Improvements line), both top-level `README.md`s, and `todo.md` (marked
+  the IoT-ingestion item done, added the still-open "test Wokwi against a
+  real backend" item under Critical).
+
+### In Progress / Partially Done
+- The backend half is complete and tested end-to-end (`curl` standing in
+  for the ESP32: happy path, unknown device → 404, NaN → clean 422, and
+  output verified byte-for-byte identical to `/api/risk-check` for the
+  same inputs). The Wokwi half exists as files but **has not been run
+  inside Wokwi's actual simulator** — this environment has no browser/
+  Wokwi access, so `sketch.ino`/`diagram.json` are written correctly
+  against Wokwi's documented conventions (confirmed from prior knowledge
+  of their format, not verified live) but unverified end-to-end.
+
+### Not Yet Started
+- **Actually running the Wokwi simulation** (open it at wokwi.com, paste
+  in these two files, verify the diagram wires cleanly with no red
+  error markers, watch the Serial Monitor) — needs a human with browser
+  access, which this environment doesn't have.
+- **Testing the full loop against a real locally-running backend** —
+  needs `ngrok` (or similar) to expose `localhost:8000` publicly, since
+  Wokwi's simulated ESP32 cannot reach `localhost` (that address means
+  "the Wokwi simulator itself" from inside the simulation, not the host
+  computer). Documented as the primary answer to "how do I test this,"
+  not just a footnote — see `hardware/wokwi-flood-sensor/README.md`.
+- Real ESP32 hardware — this was never in scope for this session (Wokwi
+  simulation only, per the plan as given).
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Answering "how do I test this end-to-end," the specific ask this
+  session's instructions called out:** run the backend locally
+  (`uvicorn app.main:app --reload`), run `ngrok http 8000` in a second
+  terminal to get a public URL, paste that URL (the `http://`, not
+  `https://`, form — ngrok exposes both — to avoid TLS/certificate
+  handling in the sketch) into `SERVER_URL` in `sketch.ino`, then run the
+  Wokwi simulation. This is the standard, documented way to bridge
+  Wokwi's simulated network to a real local server — Wokwi's own
+  "Wokwi-GUEST" WiFi network gives the simulated ESP32 real internet
+  access, but "real internet" still doesn't include a developer's own
+  `localhost`.
+- **What won't work as expected, flagged rather than discovered live:**
+  (1) hardcoding `http://localhost:8000` in the sketch — Wokwi will
+  resolve "localhost" to itself, not the host machine, so every request
+  will fail silently or time out; (2) HTTPS without either using ngrok's
+  plain-http forwarding or adding `WiFiClientSecure`/`setInsecure()` to
+  the sketch — chose the ngrok-http-URL route specifically to avoid
+  needing certificate-skipping code in a sketch meant to be read by
+  someone new to embedded work.
+- **Chose NTP time sync over `millis()`-since-boot for the device's
+  `timestamp` field** — Wokwi's simulated internet supports it with
+  ~10 lines of standard ESP32 code, and a fake relative timestamp would
+  have been actively misleading in a field meant to carry a real clock
+  reading, inconsistent with this project's pattern of not faking data
+  that looks real. (The response's own `timestamp` field, per the
+  response-shape-must-match-`/api/risk-check` requirement, is still
+  server-computed at scoring time, same meaning as everywhere else that
+  field appears — the device's reported timestamp is accepted/validated
+  but not part of what's returned.)
+- **`docs/api-contract.md`'s per-endpoint "3 endpoints" reference was
+  already stale** (there are 7 now, after this week's SMS/USSD/voice
+  additions) — corrected in the top-level `README.md` while already
+  editing that section; not a change introduced by this session's work,
+  just a pre-existing inaccuracy fixed in passing.
+
+### Flags for the Team
+- **The device-to-region mapping is a real design decision worth a
+  second look, not an obvious default.** The spec's minimum payload
+  (`device_id`, `rainfall_mm_24h`, `river_level_m`, `timestamp`) doesn't
+  include a location, so `devices.json` resolves it server-side — this
+  is the standard IoT-fleet pattern (a backend registry knows where a
+  device is installed; the device itself just knows its own ID), but if
+  a different design was intended (e.g. the ESP32 sending its own
+  location), that's a small, contained change to `sensors.py`, not a
+  rewrite.
+- **The demo device (`"esp32-demo-01"`) was mapped to Lagos, Nigeria by
+  default** — arbitrary, since nothing in the spec named a region. Change
+  `backend/app/data/devices.json` (and `DEVICE_ID`/the pin-to-sensor
+  comments in `sketch.ino` if the region matters for the demo narrative)
+  if a different city fits the pitch better.
+- **`hardware/wokwi-flood-sensor/diagram.json` has not been visually
+  confirmed inside Wokwi's editor** — Wokwi part/pin names
+  (`wokwi-esp32-devkit-v1`, `wokwi-potentiometer`, pin names like `D34`/
+  `GND.1`) were written from established convention, not verified
+  against a live Wokwi session. If Wokwi's editor shows a wiring error on
+  open, it's very likely a minor pin-name mismatch, fixable by dragging
+  the wire to the correct pin in Wokwi's visual editor — not a sign the
+  underlying approach is wrong.
+- **This is additive and isolated** — `/api/risk-check`, `/api/regions`,
+  and `/api/alerts` are unchanged in behavior (the risk.py edit was a
+  pure refactor, verified before/after), and the frontend wasn't touched,
+  per this session's explicit instructions.
+
+---
+
 ## 2026-08-17 — Voice alerts (Social Impact & Inclusion): read jury scorecard, added Africa's Talking voice calls
 
 ### Completed

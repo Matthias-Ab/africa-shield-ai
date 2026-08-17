@@ -3,10 +3,10 @@
 ## Today's demo slice: "Last-Mile Alert AI" (flooding only)
 
 ```
- [Sensor / weather data]        [Frontend dashboard]
-   rainfall, river level                 ^
-          |                              |
-          v                              |
+ [ESP32 + rain/water         [Frontend dashboard]
+  sensors — Wokwi sim]                ^
+          |                           |
+          v  POST /api/sensor-reading |
   +----------------+   POST /api/risk-check
   |  Risk model    |------------------->  +----------------+
   |  (rules-based) |   GET  /api/regions  |  FastAPI backend|
@@ -35,8 +35,9 @@
    comparison — see "Two risk scores, on purpose" below.
 2. **Backend API** (`backend/app/main.py` + `app/routes/`) exposes
    `POST /api/risk-check`, `GET /api/regions`, `GET /api/alerts`,
-   `POST /api/alerts/send`, `POST /api/ussd`, `POST /api/voice/callback`.
-   See [`api-contract.md`](api-contract.md) for exact shapes. **All real.**
+   `POST /api/alerts/send`, `POST /api/ussd`, `POST /api/voice/callback`,
+   `POST /api/sensor-reading`. See [`api-contract.md`](api-contract.md)
+   for exact shapes. **All real.**
 3. **Alert/translation layer** (`backend/app/models/translations.py`)
    turns a risk level into a human-readable message in English plus one
    of Swahili/Arabic/Somali by country. **Real** — see
@@ -55,6 +56,11 @@
    (Habiba, Farid, Thompson), merged 2026-08-15. Renders regions
    color-coded by risk from live `GET /api/regions` data, plus a map,
    region/alert detail views, and an alert history feed.
+7. **IoT device ingestion** (`backend/app/routes/sensors.py`):
+   `POST /api/sensor-reading` lets a real (or, for now, Wokwi-simulated)
+   ESP32 flood sensor feed live rainfall/river-level readings straight
+   into the same scoring pipeline as a manual risk-check — see "IoT
+   sensor ingestion" below.
 
 ## Two risk scores, on purpose
 
@@ -149,6 +155,46 @@ As of 2026-08-17, `/api/alerts` is no longer just a simulated stub.
   itself, not against the real sandbox's speech synthesis. Confirm before
   relying on it for a non-English region live.
 
+## IoT sensor ingestion
+
+Added 2026-08-17, on request, alongside the team's Wokwi ESP32
+simulation plan (`hardware/wokwi-flood-sensor/`).
+
+- **`POST /api/sensor-reading`** accepts a live reading (`device_id`,
+  `rainfall_mm_24h`, `river_level_m`, `timestamp`) from a registered
+  flood sensor and scores it exactly the way `POST /api/risk-check` does
+  — both routes call the same `build_risk_check_response()` function
+  (`backend/app/routes/risk.py`), factored out specifically so this
+  didn't require duplicating the scoring logic. `risk-check` itself is
+  unchanged in behavior; this was a pure refactor, verified by comparing
+  its output before and after against the documented Cairo example.
+- **Device → region mapping** (`backend/app/data/devices.json`): a
+  device only knows its own `device_id`, not a human-readable location —
+  this small registry resolves one to the other, the same
+  seed-by-hand-for-now pattern as `subscribers.json`. An unregistered
+  `device_id` gets a 404, not a guessed location.
+- **Same input validation as `/api/risk-check`**, not a reimplementation:
+  `rainfall_mm_24h`/`river_level_m` use the identical `allow_inf_nan=False`
+  field constraint, so a NaN/Infinity reading from a device hits the same
+  `RequestValidationError` handler in `app/main.py` that already fixes
+  the crash-on-non-finite-float bug for `/api/risk-check`.
+- **Response shape is identical to `/api/risk-check`'s** — deliberately,
+  so the frontend (not touched this session, per instructions) can render
+  a device-originated reading with zero special-casing whenever it's
+  wired up. The device's own reported `timestamp` is accepted/validated
+  but not echoed back; the response `timestamp` is when the score was
+  computed, same as everywhere else that field appears.
+- **No hardware exists yet.** `hardware/wokwi-flood-sensor/` is an
+  ESP32 + two-potentiometer Wokwi simulation standing in for a rain
+  sensor (YL-83/FC-37 style) and a water level sensor — deliberately just
+  those two, since they map directly onto the risk model's two existing
+  inputs. See that folder's README for how to run it against a real
+  locally-running backend (needs a tunnel — Wokwi can't reach
+  `localhost`).
+- **Not yet done:** nobody has run the Wokwi simulation against a real
+  running backend yet (only tested with `curl` standing in for the
+  device). Real hardware validation is further out still.
+
 ## Future Improvements (post-hackathon roadmap)
 
 - Train the ML risk model on real historical flood/rainfall/river-level
@@ -169,8 +215,9 @@ As of 2026-08-17, `/api/alerts` is no longer just a simulated stub.
 - Add a community-reporting feature so people can report on-the-ground
   conditions (e.g., "river rising near my village") to improve prediction
   accuracy.
-- Add low-cost IoT sensor integration (water level sensors, rain gauges) as
-  a future hardware track expansion, feeding real-time data into the model.
+- Move from the Wokwi simulation to real ESP32 hardware with real rain/
+  water-level sensors (see "IoT sensor ingestion" above for what's
+  already built on the backend side, ready for real devices to use).
 - Add user authentication and role-based access for local disaster
   management authorities to manage/verify alerts before they go out.
 - Add an analytics/impact dashboard tracking alerts sent, regions covered,
