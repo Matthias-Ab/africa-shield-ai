@@ -12,18 +12,20 @@
   |  (rules-based) |   GET  /api/regions  |  FastAPI backend|
   +----------------+<-------------------  |                |
           |            GET  /api/alerts   +----------------+
-          v                                       ^
-  +----------------+                              |
-  | Translation /  |------------------------------+
-  | alert message  |
-  +----------------+
-          |
-          v
-  +----------------+
-  | Simulated send |  ("message sent" screen — no real
-  | (SMS/USSD/     |   gateway wired up yet)
-  |  WhatsApp)     |
-  +----------------+
+          v                                    ^        ^
+  +----------------+                           |        |
+  | Translation /  |---------------------------+        |
+  | alert message  |                                    |
+  +----------------+                                    |
+          |                                              |
+          v                                              |
+  +----------------+   POST /api/alerts/send    +-----------------+
+  | Africa's       |<---------------------------| subscribers.json |
+  | Talking SMS    |    (subscribers per region) +-----------------+
+  +----------------+                                    ^
+          ^                                              |
+          |  POST /api/ussd (check risk / subscribe /   |
+          +-----------------  unsubscribe, self-service)-+
 ```
 
 1. **Risk model** (`backend/app/models/risk_model.py`) takes rainfall +
@@ -32,19 +34,26 @@
    and working.** A second, ML-based model now runs alongside it as a
    comparison — see "Two risk scores, on purpose" below.
 2. **Backend API** (`backend/app/main.py` + `app/routes/`) exposes
-   `POST /api/risk-check`, `GET /api/regions`, `GET /api/alerts`. See
-   [`api-contract.md`](api-contract.md) for exact shapes. **Real** for the
-   first two; `GET /api/alerts` stays an intentional simulated stub.
+   `POST /api/risk-check`, `GET /api/regions`, `GET /api/alerts`,
+   `POST /api/alerts/send`, `POST /api/ussd`. See
+   [`api-contract.md`](api-contract.md) for exact shapes. **All real.**
 3. **Alert/translation layer** (`backend/app/models/translations.py`)
    turns a risk level into a human-readable message in English plus one
    of Swahili/Arabic/Somali by country. **Real** — see
    [`progress-log.md`](progress-log.md) for the country mapping and the
    caveat that the wording is AI-drafted, not yet native-speaker reviewed.
-4. **Simulated send**: no real SMS/USSD/WhatsApp gateway — the dashboard
-   just displays what would have been sent (see `GET /api/alerts`).
-5. **Frontend dashboard** (`frontend-web/`) — being built separately by
-   the frontend team (Habiba, Farid, Thompson). Will render regions
-   color-coded by risk, alert message detail, and the alert history feed.
+4. **Real SMS send** (`backend/app/models/sms_gateway.py`, wrapping
+   Africa's Talking): `POST /api/alerts/send` messages every subscriber
+   registered for a region. Falls back to a clearly labeled simulation
+   when `AT_USERNAME`/`AT_API_KEY` aren't configured, or a region has no
+   subscribers yet — see "Real SMS/USSD alerts" below.
+5. **USSD self-service** (`backend/app/routes/ussd.py`): a webhook for
+   Africa's Talking's USSD sandbox letting any phone — no smartphone or
+   data needed — check a region's risk or subscribe/unsubscribe.
+6. **Frontend dashboard** (`frontend-web/`) — built by the frontend team
+   (Habiba, Farid, Thompson), merged 2026-08-15. Renders regions
+   color-coded by risk from live `GET /api/regions` data, plus a map,
+   region/alert detail views, and an alert history feed.
 
 ## Two risk scores, on purpose
 
@@ -96,14 +105,44 @@ meteorological services), retrain, and everything downstream (the
 synthetic-data step is intentionally isolated so swapping it out later is
 a contained change, not a rewrite.
 
+## Real SMS/USSD alerts
+
+As of 2026-08-17, `/api/alerts` is no longer just a simulated stub.
+
+- **`POST /api/alerts/send`** looks up a region's current risk (same
+  rules-based model as everywhere else), finds its subscribers in
+  `backend/app/data/subscribers.json`, and sends the local-language alert
+  text via Africa's Talking (`backend/app/models/sms_gateway.py`). If
+  `AT_USERNAME`/`AT_API_KEY` aren't set (see `backend/.env.example`), or a
+  region has zero subscribers, it sends nothing and labels the log entry
+  `"SMS (simulated)"` instead — the endpoint is safe to call either way,
+  so a demo never breaks for lack of credentials.
+- **`POST /api/ussd`** is the self-service counterpart: a webhook for
+  Africa's Talking's USSD sandbox that lets any phone check a region's
+  risk or subscribe/unsubscribe, no smartphone or SMS credit needed to
+  initiate. Subscribing writes to the same `subscribers.json` that
+  `/api/alerts/send` reads from.
+- **`GET /api/alerts`** now returns real send history
+  (`backend/app/data/alert_log.json`) once anything has gone through
+  `/api/alerts/send`, falling back to the original hardcoded
+  `mock-data.json` list when nothing has been sent yet.
+- **What's still a deliberate shortcut:** subscribers are seeded by hand
+  or via the USSD flow, not through any real-world outreach/registration
+  process; there's no automatic trigger (a background job re-scoring
+  regions and firing sends on a threshold crossing) — sends are
+  on-demand, from `POST /api/alerts/send`. Both are reasonable next steps,
+  not required for the demo.
+
 ## Future Improvements (post-hackathon roadmap)
 
 - Train the ML risk model on real historical flood/rainfall/river-level
   data (e.g. NASA/ESA satellite archives, national meteorological
   services) instead of the synthetic data it uses today — see "Two risk
   scores, on purpose" above.
-- Integrate a real SMS/USSD gateway (e.g., Africa's Talking, Twilio) instead
-  of simulating sends.
+- Automatically trigger `/api/alerts/send` when a region's risk crosses
+  into `high` (a scheduled job), instead of requiring an on-demand call.
+- Real subscriber self-registration/outreach at scale, instead of a
+  hand-seeded or USSD-only subscriber list.
 - Expand beyond flooding to droughts, heatwaves, wildfires, cyclones, and
   earthquakes, each with their own risk factors and thresholds.
 - Build an offline-first Flutter mobile app for areas with poor

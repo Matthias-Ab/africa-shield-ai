@@ -2,7 +2,8 @@
 
 FastAPI service for the "Last-Mile Alert AI" flood demo: real rules-based
 flood risk scoring, a genuine trained ML model as a second opinion,
-multi-language alert generation, and a simulated alert-history stub.
+multi-language alert generation, and real SMS/USSD alerts via Africa's
+Talking.
 
 ## Setup
 
@@ -13,7 +14,12 @@ python -m venv .venv
 # Windows (PowerShell): .venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env  # fill in AT_USERNAME/AT_API_KEY to send real SMS — optional, see below
 ```
+
+Without a filled-in `.env`, everything still runs — `POST /api/alerts/send`
+just labels every send as simulated instead of calling Africa's Talking.
+Get free sandbox credentials at https://account.africastalking.com/.
 
 ## Run
 
@@ -34,9 +40,16 @@ shapes. Summary:
   plus a translated alert message.
 - `GET /api/regions` — real. Computes both scores live for the 9 sample
   cities in `app/data/regions.json`.
-- `GET /api/alerts` — **intentionally stubbed.** Returns the hardcoded
-  alert history from `../docs/mock-data.json`; no real SMS/USSD/WhatsApp
-  gateway is wired up yet (documented future improvement, not an oversight).
+- `GET /api/alerts` — real send history (`app/data/alert_log.json`) once
+  something has been sent via `POST /api/alerts/send`; falls back to the
+  hardcoded list in `../docs/mock-data.json` before that.
+- `POST /api/alerts/send` — real. Sends a region's alert via Africa's
+  Talking SMS to its subscribers (`app/data/subscribers.json`); simulates
+  the send (clearly labeled) if `AT_USERNAME`/`AT_API_KEY` aren't set or
+  the region has no subscribers yet.
+- `POST /api/ussd` — real. Africa's Talking USSD webhook: check a
+  region's risk, or subscribe/unsubscribe a phone number, no smartphone
+  needed. See `app/routes/ussd.py`.
 
 ## How the two risk scores work
 
@@ -54,6 +67,23 @@ shapes. Summary:
   it directly to retrain: `python -m app.models.train_ml_model`.
 - See [`../docs/architecture.md`](../docs/architecture.md)'s "Two risk
   scores, on purpose" section for why both are kept side by side.
+
+## SMS/USSD alerts
+
+- `app/models/sms_gateway.py` wraps the `africastalking` SDK behind
+  `is_configured()`/`send_sms()`. Set `AT_USERNAME`/`AT_API_KEY` in `.env`
+  (free sandbox account at https://account.africastalking.com/) to send
+  real SMS; leave them unset to keep everything running in simulated mode.
+- `app/data/subscribers.json` is the recipient list —
+  `{"phone_number": ..., "location_name": ...}` pairs. Starts empty; add
+  entries by hand for testing, or use the USSD subscribe flow below.
+- To test the USSD side without a real telecom, use Africa's Talking's
+  USSD simulator in their sandbox dashboard, pointed at your locally
+  running server's `/api/ussd` (needs a public URL — e.g. `ngrok http 8000`
+  — since Africa's Talking calls this endpoint from their servers).
+- Both endpoints are additive and safe to call with no configuration —
+  see `POST /api/alerts/send` and `POST /api/ussd` in
+  [`../docs/api-contract.md`](../docs/api-contract.md).
 
 ## Translations
 

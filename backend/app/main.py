@@ -5,15 +5,18 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routes import alerts, regions, risk
+from app.routes import alerts, regions, risk, ussd
 
 app = FastAPI(
     title="Africa Shield AI - Last-Mile Alert API",
     description=(
-        "Flood risk scoring and simulated early-warning alerts for the AI for All "
-        "Hackathon demo. Risk scoring and translation are real (rules-based, not "
-        "ML) — see docs/architecture.md. /api/alerts is still a simulated stub, "
-        "by design (no real SMS/USSD gateway this week)."
+        "Flood risk scoring and early-warning alerts for the AI for All Hackathon "
+        "demo. Risk scoring and translation are real (rules-based, not ML) — see "
+        "docs/architecture.md. POST /api/alerts/send sends a real SMS via Africa's "
+        "Talking when AT_USERNAME/AT_API_KEY are configured (see .env.example), "
+        "and clearly labels the send as simulated otherwise. POST /api/ussd is a "
+        "USSD webhook (check risk / subscribe / unsubscribe) for Africa's "
+        "Talking's USSD sandbox."
     ),
     version="0.1.0",
 )
@@ -29,6 +32,7 @@ app.add_middleware(
 app.include_router(risk.router)
 app.include_router(regions.router)
 app.include_router(alerts.router)
+app.include_router(ussd.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -53,5 +57,11 @@ def root() -> dict:
     return {
         "service": "Africa Shield AI backend",
         "docs": "/docs",
-        "endpoints": ["/api/risk-check", "/api/regions", "/api/alerts"],
+        "endpoints": [
+            "/api/risk-check",
+            "/api/regions",
+            "/api/alerts",
+            "/api/alerts/send",
+            "/api/ussd",
+        ],
     }

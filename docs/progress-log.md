@@ -5,6 +5,159 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — Real SMS/USSD alerts via Africa's Talking
+
+### Completed
+- Team decision: since the real deadline is now known to be 2026-09-17 to
+  2026-09-19 (see the entry below), not 2026-08-29, chose to build real
+  SMS/USSD alerts now rather than leave them simulated — this is the
+  single highest-leverage remaining item against the "Appropriate Use of
+  AI/Technology" judging criterion identified in the docs review below.
+- **New `backend/app/config.py`**: centralized env config (`AT_USERNAME`,
+  `AT_API_KEY`, `AT_SENDER_ID`), loaded via `python-dotenv` from a `.env`
+  file. **New `backend/.env.example`** documents the keys; `.env` itself
+  was already gitignored (`.env.*` pattern, `.env.example` excluded) from
+  the original skeleton session, so no gitignore change was needed.
+- **New `backend/app/models/sms_gateway.py`**: wraps the `africastalking`
+  SDK behind `is_configured()`/`send_sms()`. Verified the exact SDK
+  version installed (`africastalking==2.0.3`) exposes `initialize(username,
+  api_key)` and `SMS.send(message, recipients, sender_id=...)` by reading
+  its source directly rather than assuming API shape from memory/docs.
+- **New `backend/app/data/subscribers.json`**: recipient list
+  (`{"phone_number", "location_name"}` pairs), starts empty (`[]`).
+  Populated by the new USSD subscribe flow, or by hand for testing.
+- **Rewrote `backend/app/routes/alerts.py`**: `GET /api/alerts` now
+  returns real send history from `app/data/alert_log.json` (created on
+  first send) once anything exists there, falling back to the original
+  hardcoded `mock-data.json` list otherwise — so the endpoint is never
+  empty on a fresh clone. **New `POST /api/alerts/send`**: looks up a
+  region, computes its current risk + local-language alert text (same
+  functions the other endpoints already use), finds its subscribers, and
+  sends via Africa's Talking if configured and there's at least one
+  subscriber — otherwise logs a clearly labeled `"SMS (simulated)"` entry
+  instead. Every call appends to `alert_log.json`, real or simulated.
+- **New `backend/app/routes/ussd.py`** (`POST /api/ussd`): Africa's
+  Talking USSD webhook implementing a 3-option menu — check a region's
+  flood risk, subscribe this phone number to a region's alerts (writes to
+  `subscribers.json`), or unsubscribe from all regions. No smartphone or
+  SMS credit needed to use it, which is the point of USSD for this
+  project's "last-mile" framing.
+- `backend/app/main.py`: registered the new `ussd` router, updated the
+  app description and root endpoint list to include both new routes.
+- `backend/requirements.txt`: added `africastalking>=2.0`,
+  `python-multipart>=0.0.9` (needed for FastAPI to parse USSD's
+  form-encoded webhook body), `python-dotenv>=1.0`.
+- **Verified end-to-end with the server running locally**, not just by
+  reading the code: `GET /api/alerts` correctly falls back to the mock
+  list on a clean state; `POST /api/alerts/send` for Lagos correctly
+  returns `"channel": "SMS (simulated)"` and `"recipients": 0` with zero
+  subscribers (no `AT_API_KEY` set in this session's test); walked the
+  full USSD menu tree via raw form-encoded POSTs (welcome → check risk →
+  region list → Lagos risk result; welcome → subscribe → region list →
+  Lagos subscribe confirmation) and confirmed `subscribers.json` was
+  written correctly; re-sent the Lagos alert and confirmed `recipients`
+  went from 0 to 1, reflecting the new subscriber. Test-generated
+  `subscribers.json`/`alert_log.json` entries were reset to empty/deleted
+  before committing — they're runtime state, not seed data.
+- Updated `docs/api-contract.md` (new sections for both endpoints, updated
+  `GET /api/alerts` section to describe the log/fallback behavior and the
+  new `recipients` field), `docs/architecture.md` (diagram + a new "Real
+  SMS/USSD alerts" section, moved the old "integrate a real SMS/USSD
+  gateway" line out of Future Improvements), `README.md`, and
+  `backend/README.md` (setup instructions for `.env`, new endpoints,
+  a "SMS/USSD alerts" how-to-test section).
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's scope — both endpoints
+  work end-to-end in simulated mode; only real Africa's Talking sandbox
+  credentials are needed to flip sends from simulated to real, and that's
+  a config step (`.env`), not a code change.
+
+### Not Yet Started
+- **Nobody has actually created an Africa's Talking sandbox account yet**
+  — `AT_USERNAME`/`AT_API_KEY` are unset in this environment, so every
+  send so far has been simulated. Whoever owns this next should sign up
+  at https://account.africastalking.com/ (free), fill in `backend/.env`,
+  and send one real test SMS to their own phone before the pitch.
+- USSD hasn't been tested against Africa's Talking's actual USSD
+  simulator/sandbox (only tested locally via raw form-encoded curl
+  requests standing in for their webhook call) — needs a public URL
+  (e.g. `ngrok`) pointed at a running server and a sandbox USSD channel
+  configured to call it.
+- Automatic threshold-triggered sends (a scheduled job firing
+  `/api/alerts/send` when a region crosses into `high`) — this session
+  only built on-demand sending.
+- Real subscriber registration/outreach at scale — today's subscriber
+  list is either hand-seeded or grown one USSD session at a time.
+- Everything else already listed as Not Yet Started in prior entries
+  (real historical ML training data, native-speaker translation review,
+  pitch deck, Innovation Canvas, sustainability/scalability narrative).
+
+### Findings & Decisions
+- **Chose on-demand sending (`POST /api/alerts/send`, called manually or
+  from a dashboard button) over automatic threshold-triggered sending**
+  for this pass — far less to build and demo, and equally convincing for
+  a judge ("here's a real SMS arriving on my phone") without needing a
+  background scheduler. Automatic triggering is a documented next step,
+  not abandoned.
+- **Both SMS and the USSD risk-check screen send `alert_message_local`,
+  not `alert_message_en`** — consistent with the whole project's
+  "last-mile, local-language" framing. (First draft of the USSD handler
+  used `message_en` for that screen; caught and fixed before this entry,
+  not left as a known inconsistency.)
+- **USSD region menu uses each city's short name only** (e.g. "Lagos",
+  not "Lagos, Nigeria") to keep each screen short — USSD screens have a
+  tight length limit on many carriers, and 9 full "City, Country" lines
+  risked overflowing it. Not verified against a real carrier's exact
+  limit this session; flagged as a real risk if regions expand.
+
+### Flags for the Team
+- **`docs/mock-data.json`'s alert examples don't have a `recipients`
+  field** — that field only appears on entries created by the new
+  `/api/alerts/send` log, not the old hardcoded fallback list. Frontend:
+  if you display `recipients`, handle it being absent/undefined on
+  fallback entries.
+- **Nobody has real Africa's Talking credentials configured yet** — see
+  Not Yet Started above. Don't be surprised every alert still says
+  `"(simulated)"` until someone completes that step.
+- **`backend/app/data/subscribers.json` and `alert_log.json` are runtime
+  state, not seed data** — they'll change as people test locally. Check
+  `git diff` before committing either file; don't commit test phone
+  numbers or fake send history.
+
+---
+
+## 2026-08-17 — Frontend PR review + corrected the real hackathon deadline
+
+### Completed
+- Reviewed Habiba's frontend dashboard PR (#1 "habiba-frontend", merged as `152343f`: `RiskOverview`, `RiskMap`, `RiskDistribution`, `RegionTable`, `RecentAlerts`, `AlertCard`/`AlertDetails`/`RegionDetails`, `Sidebar`/`Topbar`/`StatCard`, plus stub pages for Alerts/Analytics/Regions/Reports/HelpSupport/Settings). Verified her "complete dashboard with real API data" claim against the actual code rather than taking it at face value.
+- Confirmed **4 of 5 widgets genuinely fetch live from `GET /api/regions`** (`RiskOverview`, `RiskMap`, `RiskDistribution`, `RegionTable`) and correctly handle both the flat and `risk_score_breakdown`-nested score fields on the right 0–1 scale — the backend/frontend contract is working as designed.
+- Read the entire `docs/` folder, including the hackathon organizers' materials (`docs/helpfull-from-the-online-session/AYAB DRR AI for All Hackathon_Ideation deck.pdf` and `AI 4 All Hackathon information brief_AYAB_DRR.pdf`), to check the team's plan against the actual program structure.
+
+### In Progress / Partially Done
+- Nothing half-finished from this session — this was a review + planning pass, no code was changed (frontend was explicitly left untouched per team-lead instruction; backend needed no fix).
+
+### Not Yet Started
+- Fixing the frontend issues found in this review (see Findings) — deliberately left to the frontend team, not done this session.
+- Pitch deck (`docs/pitch-notes.md` is still a placeholder).
+- An Innovation Canvas artifact (problem/AI solution/tech & data sources/partners/impact/risks/scalability) — implied as expected deliverable by the organizers' ideation deck, not started.
+- A "Sustainability & Resource Efficiency" / scalability narrative — not addressed anywhere in current docs, and it's one of the official judging criteria.
+- Real SMS/USSD gateway (`/api/alerts` is still an intentional stub) — flagged again here specifically because Africa's Talking integration is the most direct way to score on the "Appropriate Use of AI/Technology" criterion.
+
+### Findings & Decisions
+- **Frontend review findings (not fixed this session, left for the frontend team):** `http://localhost:8000` is hardcoded as a literal API base URL in 4 separate files (`RegionTable.jsx`, `RiskMap.jsx`, `RiskOverview.jsx`, `RiskDistribution.jsx`) — will break on any non-local deployment; `src/data/mockData.js` (~290 lines) is dead code, not imported anywhere; `RecentAlerts.jsx` uses a hardcoded local array rather than `GET /api/alerts` (defensible given that endpoint is a deliberate stub, but should be labeled as such in the UI rather than blending in with the live widgets); `Dashboard.jsx` has a stray `py-` Tailwind class (likely a typo/no-op); the same fetch/loading/error boilerplate is copy-pasted across 4 components instead of one shared hook. New dependencies added (`leaflet`, `react-leaflet`, `framer-motion`, `lucide-react`, `react-router-dom`) are all reasonable, low-risk choices.
+- **⚠️ Deadline correction — this is the important one.** `docs/progress-log.md` and `docs/api-contract.md` have been treating **2026-08-29** as *the* hackathon deadline. Per the official 2026 AYAB DRR / AI for All Hackathon brief, that date is only the end of the **Innovation Labs** build sprint. The actual program has three phases: Virtual Boot Camp (2026-08-14 to 2026-08-15, done), Innovation Labs (2026-08-15 to 2026-08-29, in progress now), and **Regional Hackathon & Demo Days (2026-09-17 to 2026-09-19)** — the real judged event, where only **5 of 12 teams** advance to pitch live to an international jury. Winner receives €1000 to finish the prototype. None of our docs currently reflect a plan for making that cut or preparing for a live jury Q&A.
+- **Official judging criteria** (2026 brief, supersedes any older/generic weighting): Problem & DRR Relevance, Innovation & Creativity, Social Impact & Inclusion, Functionality & Prototype, Feasibility & Scalability, Appropriate Use of AI/Technology (incl. Robotics/IoT/GIS), Sustainability & Resource Efficiency, Presentation & Pitch. No published weights.
+- Backend work to date maps well onto "Appropriate Use of AI" (real rules-based scoring + a genuinely trained, honestly-caveated ML second opinion, per the 2026-08-10 entries below) — the weaker criteria right now are Sustainability & Resource Efficiency and Feasibility & Scalability, neither of which any doc currently addresses.
+- The rest of `docs/helpfull-from-the-online-session/` (Flutter, Robotics, Web-Dev-AI-session, Nour Said session slides) is generic training material, not hackathon-specific requirements. `Project's building tools.pdf` is a useful non-mandatory free-tooling cheat sheet (GDACS, ReliefWeb, Africa's Talking, etc.) worth revisiting when scoping the SMS/USSD gateway.
+
+### Flags for the Team
+- **Aug 29 is not the finish line — treat it as an internal milestone, not the deadline.** The real judged demo is 2026-09-17 to 2026-09-19, and only 5 of 12 teams get a pitch slot. Anyone planning around "we're done Aug 29" should replan around a pitch-ready state by mid-September instead.
+- **Frontend team:** the API-URL/mock-data/typo issues above are yours whenever convenient — nothing broken today, just tech debt worth cleaning up before a real deployment or before Sept.
+- **No one owns the pitch deck or Innovation Canvas yet** — both are effectively blank as of this entry and both map directly to judging criteria ("Presentation & Pitch," and the canvas covers several others at once). Worth assigning owners soon given the real deadline is now known to be further out but with a harder cut (top-5) at the end of it.
+
+---
+
 ## 2026-08-10 — API enrichment: closed 4 gaps a frontend teammate flagged
 
 ### Completed

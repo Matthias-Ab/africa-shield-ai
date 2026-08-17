@@ -4,8 +4,16 @@
 `POST /api/risk-check` and `GET /api/regions` now compute live from the
 rules-based model in `backend/app/models/risk_model.py` and the
 translation dictionary in `backend/app/models/translations.py` — see
-[`progress-log.md`](progress-log.md) for details. `GET /api/alerts` is
-still an intentional simulated stub (no real SMS/USSD gateway this week).
+[`progress-log.md`](progress-log.md) for details.
+
+**Status (as of 2026-08-17): SMS/USSD alerts are real.** Two new
+endpoints, `POST /api/alerts/send` and `POST /api/ussd`, send real SMS via
+Africa's Talking and serve a USSD self-service menu, respectively — see
+their sections below and `docs/progress-log.md`'s 2026-08-17 entry. Both
+are additive; no existing endpoint's shape changed. `GET /api/alerts` now
+returns real send history once anything has gone through
+`POST /api/alerts/send`, falling back to the original hardcoded list on a
+fresh clone where nothing has been sent yet — see that endpoint's section.
 
 **Contract change (additive, non-breaking):** both `POST /api/risk-check`
 and `GET /api/regions` gained a new `risk_score_breakdown` field (for a
@@ -212,12 +220,13 @@ underlying sensor inputs and population figures.
 
 ## `GET /api/alerts`
 
-Mock list of recently "sent" alerts (simulated — no real SMS/USSD/WhatsApp
-provider), for the dashboard's alert history view.
+Alert history, for the dashboard's alert history view.
 
-**Current status:** stubbed, intentionally — returns the hardcoded list
-from `mock-data.json`. No real SMS/USSD/WhatsApp gateway this week; see
-`docs/architecture.md`'s Future Improvements.
+**Current status:** real once something has been sent — returns
+`backend/app/data/alert_log.json`, appended to by every call to
+`POST /api/alerts/send`. On a fresh clone/demo where nothing has been sent
+yet, that log is empty, so this falls back to the original hardcoded list
+from `mock-data.json` instead of returning nothing.
 
 ### Response
 
@@ -228,7 +237,8 @@ from `mock-data.json`. No real SMS/USSD/WhatsApp gateway this week; see
     "risk_level": "high",
     "message_sent": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
     "channel": "SMS (simulated)",
-    "timestamp": "2026-08-07T09:15:00Z"
+    "recipients": 1,
+    "timestamp": "2026-08-17T07:47:30Z"
   }
 ]
 ```
@@ -237,6 +247,77 @@ from `mock-data.json`. No real SMS/USSD/WhatsApp gateway this week; see
 |------------------|--------|--------------------------------------------------|
 | `location_name`  | string |                                                  |
 | `risk_level`     | string | `"low"` \| `"medium"` \| `"high"`              |
-| `message_sent`   | string | The exact text that "was sent"                  |
-| `channel`        | string | e.g. `"SMS (simulated)"`, `"USSD (simulated)"`, `"WhatsApp (simulated)"` |
+| `message_sent`   | string | The exact text that was (or would have been) sent, in the region's local language |
+| `channel`        | string | `"SMS"` when actually sent via Africa's Talking, `"SMS (simulated)"` when not (no credentials configured, or zero subscribers for that region) — see `POST /api/alerts/send` |
+| `recipients`     | int    | **New, only present on real-send-log entries.** Number of subscribers the message went to (0 for a simulated send). Absent on the older hardcoded `mock-data.json` entries returned as a fallback — don't assume it's always present. |
 | `timestamp`      | string | ISO 8601, UTC                                   |
+
+---
+
+## `POST /api/alerts/send`
+
+Sends a flood alert for one monitored region to every subscriber
+registered for it, via Africa's Talking SMS. Real when
+`AT_USERNAME`/`AT_API_KEY` are configured (see `backend/.env.example`) and
+the region has at least one subscriber; otherwise falls back to a clearly
+labeled simulation so this is always safe to call.
+
+### Request
+
+```json
+{
+  "location_name": "Lagos, Nigeria"
+}
+```
+
+| Field           | Type   | Notes                                                        |
+|-----------------|--------|----------------------------------------------------------------|
+| `location_name` | string | Must exactly match a `location_name` in `backend/app/data/regions.json` — 404 otherwise. |
+
+### Response
+
+Same shape as one entry of `GET /api/alerts`, above (includes `recipients`).
+
+Recipients come from `backend/app/data/subscribers.json` — a list of
+`{"phone_number": ..., "location_name": ...}` pairs, populated by
+`POST /api/ussd`'s subscribe flow (or seeded by hand for testing).
+
+---
+
+## `POST /api/ussd`
+
+Africa's Talking USSD webhook — point a sandbox USSD channel's callback
+URL at this endpoint. Lets a subscriber, from any phone (no smartphone or
+data connection needed), check a region's flood risk or subscribe/
+unsubscribe to SMS alerts for it. This is the "last-mile" self-service
+counterpart to `POST /api/alerts/send`'s push side.
+
+### Request
+
+Form-encoded (not JSON) — this is Africa's Talking's contract, not ours:
+
+| Field         | Type   | Notes                                                              |
+|---------------|--------|-----------------------------------------------------------------------|
+| `sessionId`   | string | Required by Africa's Talking; unused by our handler.                 |
+| `serviceCode` | string | Required by Africa's Talking; unused by our handler.                 |
+| `phoneNumber` | string | The caller's phone number — used as the subscriber key.              |
+| `text`        | string | `*`-separated choices accumulated over the session so far (e.g. `"2*1"`). Empty string on the first request. |
+
+### Response
+
+Plain text (not JSON), prefixed `CON ` to keep the session open for
+another screen, or `END ` to close it:
+
+```
+CON Welcome to Africa Shield AI
+1. Check flood risk
+2. Subscribe to alerts
+3. Unsubscribe from alerts
+```
+
+Menu tree: `1` → pick a region → risk level + score + local-language alert
+text (same `alert_message_local` used by SMS, so Arabic regions reply in
+Arabic, etc. — plain text, no RTL markup, same caveat as everywhere else
+this field appears) (`END`). `2` → pick a region → subscribes
+`phoneNumber` to that region in `subscribers.json` (`END`). `3` → removes
+`phoneNumber` from every region it was subscribed to (`END`).

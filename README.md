@@ -8,17 +8,17 @@ internet. **Scoped hackathon demo:** "Last-Mile Alert AI" — flooding
 only, working end-to-end: a rules-based flood risk score shown alongside
 a genuine trained ML model as a second opinion, an API that turns the
 result into a human-readable alert, translation into a local African
-language, and a simulated SMS/USSD/WhatsApp send, all shown on a simple
-web dashboard. **Future:** expand to the other hazards, train the ML
-model on real historical data instead of synthetic data, a real SMS
-gateway, and an offline-first mobile app (see
-[Future Improvements](#future-improvements) below).
+language, and a real SMS send (with USSD self-service to check risk or
+subscribe) via Africa's Talking, all shown on a simple web dashboard.
+**Future:** expand to the other hazards, train the ML model on real
+historical data instead of synthetic data, and an offline-first mobile
+app (see [Future Improvements](#future-improvements) below).
 
 Built for the **"AI for All Hackathon: Building Inclusive Solutions for
 Early Warning and Disaster Resilience,"** organized by the African Youth
 Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 
-## Status: backend logic real, frontend in progress (updated 2026-08-10)
+## Status: backend + frontend both real, alerts now send for real (updated 2026-08-17)
 
 - **Backend risk scoring and translation are real**, not stubbed.
   `POST /api/risk-check` and `GET /api/regions` compute live from the
@@ -32,14 +32,18 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   synthetic data standing in for real historical flood data. See
   [`docs/architecture.md`](docs/architecture.md)'s "Two risk scores, on
   purpose" section for why both are kept.
-- `GET /api/alerts` is **still an intentional simulated stub** — no real
-  SMS/USSD gateway this week (documented future improvement, not an
-  oversight).
-- **Frontend** (Habiba, Farid, Thompson building) is in progress in
-  `frontend-web/` — see that folder for current state.
-- The API contract (request/response shapes) hasn't changed since the
-  skeleton — the frontend team's work against `docs/mock-data.json` is
-  still valid.
+- **Alerts now send for real.** `POST /api/alerts/send` messages every
+  subscriber for a region via Africa's Talking SMS (falls back to a
+  clearly labeled simulation without sandbox credentials); `POST /api/ussd`
+  is a USSD self-service menu to check risk or subscribe/unsubscribe from
+  any phone. See [`docs/architecture.md`](docs/architecture.md)'s "Real
+  SMS/USSD alerts" section.
+- **Frontend dashboard** (Habiba, Farid, Thompson) merged 2026-08-15 —
+  live in `frontend-web/`, pulling real data from `GET /api/regions`.
+- The API contract only ever gained fields, never changed existing ones —
+  anything built against earlier shapes still works unmodified. See
+  [`docs/api-contract.md`](docs/api-contract.md) for the current, complete
+  shape of every endpoint.
 
 ## Team
 
@@ -55,8 +59,9 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 - **ML model:** scikit-learn (`StandardScaler` + `LogisticRegression`),
   trained on synthetic data — see `backend/app/models/train_ml_model.py`
 - **Frontend:** React + Vite
-- **Data:** hardcoded/mock JSON for the hackathon demo (no database, no
-  real SMS gateway — see Future Improvements)
+- **Alerts:** Africa's Talking (SMS + USSD)
+- **Data:** JSON files for the hackathon demo (no database — see Future
+  Improvements)
 
 ## Running it locally
 
@@ -98,8 +103,10 @@ Beyond the hackathon demo, the roadmap includes:
 - Train the ML risk model on real historical flood/rainfall/river-level
   data (e.g. NASA/ESA satellite archives, national meteorological
   services) instead of the synthetic data it uses today.
-- Integrate a real SMS/USSD gateway (e.g., Africa's Talking, Twilio)
-  instead of simulating sends.
+- Automatically trigger alerts when a region's risk crosses into `high`,
+  instead of requiring an on-demand `POST /api/alerts/send` call.
+- Real subscriber self-registration/outreach at scale, instead of a
+  hand-seeded or USSD-only subscriber list.
 - Expand beyond flooding to droughts, heatwaves, wildfires, cyclones, and
   earthquakes, each with their own risk factors and thresholds.
 - Build an offline-first Flutter mobile app for areas with poor
