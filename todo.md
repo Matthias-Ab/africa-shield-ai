@@ -75,10 +75,20 @@ Presentation & Pitch 5.
       directly targets the scorecard's explicit "IoT & Sensors"
       sub-criterion. No real hardware yet — see Critical above for the
       Wokwi-against-real-backend test still needed.
-- [ ] Train the ML risk model on real historical rainfall/river-level/
-      flood-outcome data instead of synthetic data (see
-      `backend/app/models/train_ml_model.py`'s docstring for the isolated
-      swap point).
+- [x] **Investigated real training data — not cleanly feasible, don't
+      force it.** Checked 2026-08-17: EM-DAT (registration-gated),
+      ICPAC (categorical, no raw-data API), NASA EONET (effectively
+      empty for Africa) all ruled out. GDACS + Open-Meteo (rainfall +
+      river-discharge) actually work, and `backend/app/models/
+      fetch_real_training_data.py` assembles real data from them — but
+      only 14 of 41,355 assembled rows (0.03%) carry a real confirmed
+      label, 7 of 9 cities got zero real positive examples, and GDACS's
+      river-flood events are partly auto-derived from the same discharge
+      series used as the feature (a real leakage risk, not just
+      imbalance). Kept the synthetic-trained model; recommend citing
+      real GDACS/rainfall data as external validation in the pitch
+      instead of a training-data swap. See `docs/progress-log.md`'s
+      2026-08-17 entry for the full investigation.
 - [ ] Native-speaker review of the Swahili/Arabic/Somali alert wording
       (currently AI-drafted, shipped as-is per an earlier team decision —
       still worth doing if time allows).

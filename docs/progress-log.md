@@ -5,6 +5,135 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — Investigated real ML training data; found it doesn't cleanly support a retrain
+
+### Completed
+- Team lead asked to investigate replacing `train_ml_model.py`'s synthetic
+  training data with real historical data, explicitly permitting an
+  honest "not feasible cleanly" outcome rather than forcing a retrain.
+  Scoped strictly to ML training data — no other files touched beyond
+  what's listed below.
+- Confirmed the "intentionally isolated, contained swap" claim in
+  `docs/architecture.md` is accurate: `generate_synthetic_training_data()`
+  returns `(X, y)` and everything downstream (the `Pipeline`, the
+  train/test split, the save step) doesn't care where `X`/`y` came from.
+  The blocker turned out to be data availability, not code structure.
+- **Checked 4 sources, actually querying each live (not from memory),
+  via 5 parallel research passes:**
+  - **EM-DAT** (emdat.be): registration-gated even for the public query
+    tool — confirmed by hitting the live page, not just reading their
+    docs. An open HDX mirror exists but is aggregated to country/year
+    counts, no city granularity. Ruled out: not usable in this timeframe.
+  - **ICPAC East Africa Hazards Watch**: no documented raw-data API —
+    the Floods Watch layer shows categorical High/Medium/Low discharge
+    buckets, not measured mm/m values, and only covers 4 of our 9 cities
+    (the IGAD region) to begin with. Ruled out: wrong data shape even if
+    accessible.
+  - **NASA EONET**: genuinely free, no key — confirmed with a real
+    successful call. But its "floods" category returned essentially
+    nothing for Africa (0 events across every query tried), and every
+    returned event's `sources` field pointed back to GDACS — it's a thin
+    GDACS mirror, not independent data. Ruled out: empty.
+  - **GDACS** (gdacs.org): genuinely free, no key, real historical depth
+    (confirmed events back to 2010+). This one actually works.
+  - **Bonus check, not in the original source list:** Open-Meteo's
+    Historical Weather API (ERA5 reanalysis, free, keyless, to 1950) and
+    Flood API (GloFAS reanalysis, free, keyless, 1984–2022) both work —
+    confirmed with real successful calls returning real daily values for
+    our cities. This closes the "no free river-adjacent data exists"
+    assumption from the original brief, with a caveat: GloFAS gives river
+    **discharge in m³/s**, not **level in meters** — a different
+    quantity, not a drop-in substitute for `river_level_m`.
+- **Built and actually ran `backend/app/models/fetch_real_training_data.py`**
+  end-to-end against the live APIs (not just written and left untested):
+  pulls real daily rainfall + real daily discharge for all 9 cities from
+  `regions.json` (2010-01-01 to 2022-07-31, the window GloFAS's July 2022
+  cutoff forces), and labels each day using real GDACS flood events
+  within 150km and ±3 days, defaulting everything else to "low."
+  - Hit and fixed two real bugs while running it: GDACS returns an empty
+    204 body (not JSON) for a country with zero matching events (crashed
+    the first run on Egypt), and Open-Meteo's flood-api endpoint
+    occasionally resets the connection under rapid repeated calls (added
+    retry/backoff + a 1-second pace between requests).
+  - **Actual result: 41,355 (city, date) rows written to
+    `backend/app/data/real_training_data.csv`. Only 14 of them (0.034%)
+    carry a real GDACS-confirmed elevated-risk label — 7 days each for
+    Maputo and Mogadishu, the only 2 of 9 cities with any matching event
+    at all.** The other 7 cities, including Cairo (zero GDACS flood
+    events in the entire window — consistent with the Nile being
+    dam-regulated), got zero real positive labels. Several of the
+    *closest* real events for other cities (e.g. Nairobi, Dar es Salaam)
+    turned out to date from 2023–2024 — just past GloFAS's July 2022
+    cutoff, so the best available real evidence for those cities isn't
+    even in the usable window.
+  - **Found a second, more serious problem while inspecting a live GDACS
+    response, not from the coverage numbers alone:** many GDACS river
+    flood events carry `"source": "GLOFAS"` — the event label is itself
+    partly auto-generated from a GloFAS discharge threshold crossing.
+    Since discharge is also this dataset's proposed input feature, using
+    GDACS-GloFAS events as the label risks real leakage/circularity, not
+    just class imbalance — a model could partly re-derive the label from
+    the same series it's handed as input, rather than learning a genuine
+    relationship.
+- **Decision: did not retrain or touch `train_ml_model.py`/`ml_risk_model.pkl`.**
+  Both problems found (severe label scarcity/imbalance — 7 of 9 cities
+  with zero real positive examples — and the discharge/label leakage
+  risk) are real data-quality issues, not solvable with more engineering
+  time. Forcing a retrain on this data would produce a model that looks
+  more "validated" than it actually is, which cuts against this project's
+  established pattern of flagging what's real vs. simulated/synthetic
+  rather than overstating it.
+
+### In Progress / Partially Done
+- Nothing left half-finished — the investigation reached a clear,
+  evidence-backed conclusion, not an inconclusive stopping point.
+
+### Not Yet Started
+- Nothing new opened by this session. The underlying "train on real data"
+  item in `todo.md` is updated to reflect this finding rather than left
+  as if it were still simply undone.
+
+### Findings & Decisions
+- **Recommendation: keep the synthetic-trained model for the demo, and
+  cite the real sources as external validation/context instead of a
+  training-data replacement.** E.g., a pitch slide showing real rainfall
+  + real GDACS-confirmed flood dates for Nairobi or Dar es Salaam,
+  annotated with what the rules-based/ML thresholds would have said on
+  those real days, is honest, uses real external data, and doesn't carry
+  the leakage/imbalance problems a forced retrain would.
+- `backend/app/data/real_training_data.csv` (41,355 rows, generated
+  2026-08-17) is left in place as a real, inspectable artifact — useful
+  for that pitch-slide idea above — but is explicitly NOT wired into
+  `train_ml_model.py`. Regenerate by rerunning the fetch script rather
+  than hand-editing it; it will change slightly run-to-run only if
+  Open-Meteo's or GDACS's underlying data is revised.
+- `backend/requirements.txt` gained one line, `requests>=2.30` — the new
+  fetch script's only new dependency (it was already installed
+  transitively via the `africastalking` SDK, but wasn't declared
+  directly until now).
+
+### Flags for the Team
+- **If anyone is tempted to "just retrain on the CSV anyway" for a bigger
+  pitch claim: don't, without addressing the leakage issue first.** A
+  judge asking "is this trained on real flood data?" deserves the honest
+  answer this session arrived at — real data was seriously investigated
+  and partially assembled, but doesn't yet support a clean retrain — not
+  a technically-true-but-misleading "yes."
+- **The 150km/±3-day event-matching radius in `fetch_real_training_data.py`
+  is a judgment call, clearly marked as one in the code** (`EVENT_RADIUS_KM`,
+  `EVENT_WINDOW_DAYS`) — loosening it would manufacture more positive
+  labels without addressing why they're scarce (few real GDACS-logged
+  events near most of our cities in this specific window), so it's not a
+  quick fix for the imbalance problem, just a way to hide it.
+- **`docs/architecture.md`'s "Two risk scores, on purpose" section's
+  documented upgrade path ("swap out `generate_synthetic_training_data()`
+  for a real dataset loader") was correct about the code being a
+  contained swap** — the barrier turned out to be real-world data
+  availability, not the codebase. Worth knowing before anyone assumes
+  this is still just an engineering task waiting to be picked up.
+
+---
+
 ## 2026-08-17 — IoT sensor ingestion: POST /api/sensor-reading + Wokwi ESP32 simulation
 
 ### Completed
