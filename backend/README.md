@@ -2,8 +2,8 @@
 
 FastAPI service for the "Last-Mile Alert AI" flood demo: real rules-based
 flood risk scoring, a genuine trained ML model as a second opinion,
-multi-language alert generation, and real SMS/USSD alerts via Africa's
-Talking.
+multi-language alert generation, and real SMS/USSD/voice alerts via
+Africa's Talking.
 
 ## Setup
 
@@ -14,7 +14,7 @@ python -m venv .venv
 # Windows (PowerShell): .venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # fill in AT_USERNAME/AT_API_KEY to send real SMS — optional, see below
+cp .env.example .env  # fill in AT_USERNAME/AT_API_KEY (+ AT_VOICE_NUMBER for voice) — optional, see below
 ```
 
 Without a filled-in `.env`, everything still runs — `POST /api/alerts/send`
@@ -44,12 +44,16 @@ shapes. Summary:
   something has been sent via `POST /api/alerts/send`; falls back to the
   hardcoded list in `../docs/mock-data.json` before that.
 - `POST /api/alerts/send` — real. Sends a region's alert via Africa's
-  Talking SMS to its subscribers (`app/data/subscribers.json`); simulates
-  the send (clearly labeled) if `AT_USERNAME`/`AT_API_KEY` aren't set or
-  the region has no subscribers yet.
+  Talking to its subscribers (`app/data/subscribers.json`), by SMS
+  (default) or voice call (`"channel": "voice"`); simulates the send
+  (clearly labeled) if the matching credentials aren't set or the region
+  has no subscribers yet.
 - `POST /api/ussd` — real. Africa's Talking USSD webhook: check a
   region's risk, or subscribe/unsubscribe a phone number, no smartphone
   needed. See `app/routes/ussd.py`.
+- `POST /api/voice/callback` — real. Africa's Talking Voice webhook,
+  called when a `channel: "voice"` alert is answered; responds with the
+  queued alert text as speech. See `app/routes/voice.py`.
 
 ## How the two risk scores work
 
@@ -68,21 +72,30 @@ shapes. Summary:
 - See [`../docs/architecture.md`](../docs/architecture.md)'s "Two risk
   scores, on purpose" section for why both are kept side by side.
 
-## SMS/USSD alerts
+## SMS/USSD/Voice alerts
 
 - `app/models/sms_gateway.py` wraps the `africastalking` SDK behind
   `is_configured()`/`send_sms()`. Set `AT_USERNAME`/`AT_API_KEY` in `.env`
   (free sandbox account at https://account.africastalking.com/) to send
   real SMS; leave them unset to keep everything running in simulated mode.
-- `app/data/subscribers.json` is the recipient list —
-  `{"phone_number": ..., "location_name": ...}` pairs. Starts empty; add
-  entries by hand for testing, or use the USSD subscribe flow below.
-- To test the USSD side without a real telecom, use Africa's Talking's
-  USSD simulator in their sandbox dashboard, pointed at your locally
-  running server's `/api/ussd` (needs a public URL — e.g. `ngrok http 8000`
-  — since Africa's Talking calls this endpoint from their servers).
-- Both endpoints are additive and safe to call with no configuration —
-  see `POST /api/alerts/send` and `POST /api/ussd` in
+- `app/models/voice_gateway.py` does the same for voice calls
+  (`place_call()`), needs `AT_VOICE_NUMBER` too (your sandbox app's Voice
+  number). A voice call reads the alert aloud when answered — for
+  recipients a text-only channel doesn't reach (can't read, or the local
+  script, or are visually impaired). `POST /api/alerts/send` with
+  `"channel": "voice"` uses this path instead of SMS.
+- `app/data/subscribers.json` is the shared recipient list (used by both
+  SMS and voice) — `{"phone_number": ..., "location_name": ...}` pairs.
+  Starts empty; add entries by hand for testing, or use the USSD
+  subscribe flow below.
+- To test USSD or voice without a real telecom, use Africa's Talking's
+  sandbox simulators, pointed at your locally running server's
+  `/api/ussd` or `/api/voice/callback` (needs a public URL — e.g.
+  `ngrok http 8000` — since Africa's Talking calls these endpoints from
+  their servers, not the other way around).
+- All three endpoints are additive and safe to call with no
+  configuration — see `POST /api/alerts/send`, `POST /api/ussd`, and
+  `POST /api/voice/callback` in
   [`../docs/api-contract.md`](../docs/api-contract.md).
 
 ## Translations

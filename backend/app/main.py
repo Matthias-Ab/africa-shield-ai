@@ -5,18 +5,19 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routes import alerts, regions, risk, ussd
+from app.routes import alerts, regions, risk, ussd, voice
 
 app = FastAPI(
     title="Africa Shield AI - Last-Mile Alert API",
     description=(
         "Flood risk scoring and early-warning alerts for the AI for All Hackathon "
         "demo. Risk scoring and translation are real (rules-based, not ML) — see "
-        "docs/architecture.md. POST /api/alerts/send sends a real SMS via Africa's "
-        "Talking when AT_USERNAME/AT_API_KEY are configured (see .env.example), "
-        "and clearly labels the send as simulated otherwise. POST /api/ussd is a "
-        "USSD webhook (check risk / subscribe / unsubscribe) for Africa's "
-        "Talking's USSD sandbox."
+        "docs/architecture.md. POST /api/alerts/send sends a real SMS or voice call "
+        "via Africa's Talking when the matching credentials are configured (see "
+        ".env.example), and clearly labels the send as simulated otherwise. "
+        "POST /api/ussd is a USSD webhook (check risk / subscribe / unsubscribe); "
+        "POST /api/voice/callback is the webhook Africa's Talking calls when a "
+        "voice alert is answered, to read the alert aloud."
     ),
     version="0.1.0",
 )
@@ -33,6 +34,7 @@ app.include_router(risk.router)
 app.include_router(regions.router)
 app.include_router(alerts.router)
 app.include_router(ussd.router)
+app.include_router(voice.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -63,5 +65,6 @@ def root() -> dict:
             "/api/alerts",
             "/api/alerts/send",
             "/api/ussd",
+            "/api/voice/callback",
         ],
     }

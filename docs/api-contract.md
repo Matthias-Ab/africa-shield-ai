@@ -247,8 +247,8 @@ from `mock-data.json` instead of returning nothing.
 |------------------|--------|--------------------------------------------------|
 | `location_name`  | string |                                                  |
 | `risk_level`     | string | `"low"` \| `"medium"` \| `"high"`              |
-| `message_sent`   | string | The exact text that was (or would have been) sent, in the region's local language |
-| `channel`        | string | `"SMS"` when actually sent via Africa's Talking, `"SMS (simulated)"` when not (no credentials configured, or zero subscribers for that region) — see `POST /api/alerts/send` |
+| `message_sent`   | string | The exact text that was (or would have been) sent/said, in the region's local language |
+| `channel`        | string | `"SMS"` / `"Voice call"` when actually sent via Africa's Talking, `"SMS (simulated)"` / `"Voice call (simulated)"` when not (no credentials configured, or zero subscribers for that region) — see `POST /api/alerts/send` |
 | `recipients`     | int    | **New, only present on real-send-log entries.** Number of subscribers the message went to (0 for a simulated send). Absent on the older hardcoded `mock-data.json` entries returned as a fallback — don't assume it's always present. |
 | `timestamp`      | string | ISO 8601, UTC                                   |
 
@@ -257,8 +257,11 @@ from `mock-data.json` instead of returning nothing.
 ## `POST /api/alerts/send`
 
 Sends a flood alert for one monitored region to every subscriber
-registered for it, via Africa's Talking SMS. Real when
-`AT_USERNAME`/`AT_API_KEY` are configured (see `backend/.env.example`) and
+registered for it, via Africa's Talking — SMS or a voice call that reads
+the alert aloud (`channel: "voice"`; see `POST /api/voice/callback`
+below), the latter for recipients a text-only channel doesn't reach
+(can't read, or the local script, or are visually impaired). Real when
+the matching credentials are configured (see `backend/.env.example`) and
 the region has at least one subscriber; otherwise falls back to a clearly
 labeled simulation so this is always safe to call.
 
@@ -266,13 +269,15 @@ labeled simulation so this is always safe to call.
 
 ```json
 {
-  "location_name": "Lagos, Nigeria"
+  "location_name": "Lagos, Nigeria",
+  "channel": "sms"
 }
 ```
 
 | Field           | Type   | Notes                                                        |
 |-----------------|--------|----------------------------------------------------------------|
 | `location_name` | string | Must exactly match a `location_name` in `backend/app/data/regions.json` — 404 otherwise. |
+| `channel`       | string | `"sms"` (default) or `"voice"`. |
 
 ### Response
 
@@ -321,3 +326,42 @@ Arabic, etc. — plain text, no RTL markup, same caveat as everywhere else
 this field appears) (`END`). `2` → pick a region → subscribes
 `phoneNumber` to that region in `subscribers.json` (`END`). `3` → removes
 `phoneNumber` from every region it was subscribed to (`END`).
+
+---
+
+## `POST /api/voice/callback`
+
+Africa's Talking Voice webhook — point a sandbox Voice number's callback
+URL at this endpoint. Fires when a call placed by `POST /api/alerts/send`
+(`channel: "voice"`) connects, and again when it ends. This endpoint is
+never called directly by the frontend or a user — only by Africa's
+Talking, as the second half of a voice alert.
+
+### Request
+
+Form-encoded (not JSON) — Africa's Talking's contract:
+
+| Field               | Type   | Notes                                                          |
+|---------------------|--------|--------------------------------------------------------------------|
+| `sessionId`         | string | Required by Africa's Talking; unused by our handler.              |
+| `isActive`          | string | `"1"` when the call just connected, `"0"` when it ended. We respond the same way regardless — Africa's Talking ignores the body once the call has ended. |
+| `destinationNumber` | string | The number that was called — used to look up the message queued by `place_call()` right before the call was placed. |
+| `callerNumber`      | string | Unused by our handler.                                             |
+
+### Response
+
+XML ("Voice Actions" format), not JSON:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response><Say voice="woman" playBeep="false">Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.</Say></Response>
+```
+
+If no message is queued for `destinationNumber` (e.g. a retried callback,
+or an unrelated inbound call), reads a generic fallback line instead of
+silently saying nothing.
+
+**Caveat, not yet verified:** Africa's Talking's `<Say>` text-to-speech
+language/accent support hasn't been tested against non-English alert
+text (Arabic/Swahili/Somali) — confirm this works as expected against the
+real sandbox before relying on it for a non-English region in the demo.

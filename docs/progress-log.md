@@ -5,6 +5,130 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — Voice alerts (Social Impact & Inclusion): read jury scorecard, added Africa's Talking voice calls
+
+### Completed
+- Read the actual jury scorecard (`AI_for_All_Hackathon_Jury_Evaluation_Scorecard.docx`,
+  provided by the team lead) — this has the **exact point weights** per
+  criterion, which weren't known before (the earlier docs review only had
+  the criteria names, not weights): Problem & DRR Relevance 15, Innovation
+  & Creativity 15, **Social Impact & Inclusion 20**, **Functionality &
+  Prototype 20**, Feasibility & Scalability 10, Appropriate Use of
+  AI/Technology 10, Sustainability & Resource Efficiency 5, Presentation &
+  Pitch 5. Also read `AYAB-DRR_Training_Evaluation_Forms.docx` — confirmed
+  it's a training-satisfaction survey (Kirkpatrick Level 1), not relevant
+  to project features.
+- **Identified Social Impact & Inclusion (tied for the largest single
+  category, 20/100) as the weakest-covered criterion.** The scorecard
+  explicitly names "people with disabilities, women, children, elderly
+  people, and underserved groups." USSD already helps the
+  no-smartphone/underserved angle, but nothing addressed disability or
+  literacy access specifically.
+- **Added voice alerts** as the highest points-per-effort fix, reusing
+  the Africa's Talking account/credentials already set up for SMS/USSD
+  rather than a new integration:
+  - **New `backend/app/models/voice_gateway.py`**: wraps
+    `africastalking.Voice.call()` behind `is_configured()`/`place_call()`,
+    same pattern as `sms_gateway.py`. Outbound voice calls are two-step in
+    Africa's Talking's model — `place_call()` starts the call, then
+    Africa's Talking calls back once answered, expecting XML instructions.
+    Since that callback carries no memory of *why* the call was placed,
+    added a `_pending_messages` dict keyed by phone number, written by
+    `place_call()` and read (and cleared) by the callback — confirmed
+    this bridging approach against the SDK's actual `Voice.call()`
+    signature (`callFrom, callTo`) by reading its source directly.
+  - **New `backend/app/routes/voice.py`** (`POST /api/voice/callback`):
+    the webhook Africa's Talking calls when a voice alert connects.
+    Returns Africa's Talking's XML "Voice Actions" format (`<Say>`), not
+    JSON — `xml.sax.saxutils.escape()` used on the message to avoid
+    malformed XML if a message ever contains `&`/`<`/`>`. Falls back to a
+    generic spoken line if no message is queued for that number, rather
+    than saying nothing.
+  - `backend/app/routes/alerts.py`: `SendAlertRequest` gained a
+    `channel: Literal["sms", "voice"] = "sms"` field (additive, default
+    preserves old behavior exactly). `channel="voice"` calls
+    `voice_gateway.place_call()` instead of `sms_gateway.send_sms()`,
+    logging `"Voice call"` / `"Voice call (simulated)"` instead of the
+    SMS equivalents — same subscriber list, same fallback-when-
+    unconfigured-or-no-subscribers safety as the SMS path.
+  - `backend/app/config.py`: added `AT_VOICE_NUMBER` (the sandbox app's
+    Voice number — separate from the SMS sender, per Africa's Talking's
+    account model). `backend/.env.example` documents it.
+  - `backend/app/main.py`: registered the new `voice` router, updated app
+    description and root endpoint list.
+- **Verified end-to-end with the server running locally**: confirmed
+  `POST /api/alerts/send` with `"channel": "voice"` correctly returns
+  `"channel": "Voice call (simulated)"` (no `AT_VOICE_NUMBER` configured
+  in this environment); confirmed `POST /api/voice/callback` returns
+  well-formed `<Say>` XML with the correct fallback line when no message
+  is queued (the actual "message queued then read back" path can't be
+  tested without real Africa's Talking credentials placing a real call —
+  see Not Yet Started). Test-generated `alert_log.json` entries were
+  deleted before committing, same discipline as the previous session.
+- Updated `docs/api-contract.md` (new `POST /api/voice/callback` section,
+  updated `/api/alerts/send`'s request/response to cover `channel`),
+  `docs/architecture.md` ("Real SMS/USSD alerts" renamed "Real
+  SMS/USSD/Voice alerts", with the Social-Impact rationale explained),
+  both `README.md`s, and this entry.
+
+### In Progress / Partially Done
+- Nothing left half-finished in the code — the voice channel works
+  end-to-end in simulated mode, same as SMS did before its first real
+  test.
+
+### Not Yet Started
+- **Real end-to-end voice test** — nobody has placed an actual Africa's
+  Talking sandbox voice call yet. Needs `AT_VOICE_NUMBER` set, a public
+  callback URL (e.g. `ngrok`) pointed at `/api/voice/callback`, and a
+  real test call to confirm the `_pending_messages` handoff works against
+  Africa's Talking's real timing/behavior, not just the logic in isolation.
+- **Non-English `<Say>` text-to-speech is unverified** — flagged
+  explicitly in `docs/architecture.md` and `api-contract.md`. If Africa's
+  Talking's voice synthesis doesn't handle Arabic/Swahili/Somali well,
+  the fallback for those regions would need to be an English voice
+  message rather than `alert_message_local` — a one-line change in
+  `alerts.py` if needed, but shouldn't be assumed fine without testing.
+- Everything listed as Not Yet Started in the entry below (real AT
+  credentials for SMS too, USSD real-sandbox test, automatic
+  threshold-triggered sends, real subscriber outreach at scale, ML
+  real-data training, translation review, pitch deck, Innovation Canvas,
+  sustainability/scalability narrative) — consolidated into a new
+  top-level `todo.md` this session so they're tracked in one place
+  instead of scattered across log entries.
+
+### Findings & Decisions
+- **Chose voice over other Social-Impact options** (e.g. a
+  vulnerability/accessibility indicator per region, community reporting)
+  because it reuses infrastructure already built this week (same Africa's
+  Talking account, same subscriber list, same alert-text generation) —
+  highest points-per-effort given the real deadline is Sep 17–19, not a
+  rebuild of the recipient/messaging model.
+- **Voice and SMS share one subscriber list** (`subscribers.json`) rather
+  than a per-channel preference — a subscriber added via USSD gets both
+  channels available to send to, since USSD's subscribe flow doesn't ask
+  which channel they want. Simple for a hackathon demo; a real product
+  would let someone choose SMS-only vs. voice-only.
+- Learning the scorecard's exact weights changes prioritization concretely:
+  Social Impact & Inclusion and Functionality & Prototype are tied for
+  the largest categories (20 each, 40% of the total combined) — this is
+  why voice (Social Impact) was chosen as this session's build, over e.g.
+  a Sustainability-focused change (worth only 5 points).
+
+### Flags for the Team
+- **Whoever sets up the real Africa's Talking sandbox account (still not
+  done — see previous entry) should also grab the Voice number while
+  they're in the dashboard** and add `AT_VOICE_NUMBER` to `.env` alongside
+  `AT_USERNAME`/`AT_API_KEY` — one signup covers all three channels.
+- **Test a real voice call to your own phone before the pitch**, same as
+  the SMS flag from the previous entry — don't find out live that the
+  `_pending_messages` handoff or Africa's Talking's TTS doesn't behave as
+  expected.
+- **`todo.md` (new, repo root) now tracks every open item across both
+  sessions in one place** — check there instead of scanning old
+  progress-log entries for what's left.
+
+---
+
 ## 2026-08-17 — Real SMS/USSD alerts via Africa's Talking
 
 ### Completed

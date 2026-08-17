@@ -1,13 +1,15 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.models.risk_model import risk_score_breakdown
-from app.models.sms_gateway import is_configured, send_sms
+from app.models.sms_gateway import is_configured as is_sms_configured, send_sms
 from app.models.translations import build_alert_messages
+from app.models.voice_gateway import is_configured as is_voice_configured, place_call
 
 router = APIRouter()
 
@@ -19,6 +21,7 @@ ALERT_LOG_FILE = Path(__file__).resolve().parent.parent / "data" / "alert_log.js
 
 class SendAlertRequest(BaseModel):
     location_name: str
+    channel: Literal["sms", "voice"] = "sms"
 
 
 class SendAlertResponse(BaseModel):
@@ -58,16 +61,21 @@ def get_alerts() -> list[dict]:
 
 @router.post("/api/alerts/send", response_model=SendAlertResponse)
 def send_alert(payload: SendAlertRequest) -> SendAlertResponse:
-    """Sends a real SMS via Africa's Talking for one of the monitored
+    """Sends a real alert via Africa's Talking for one of the monitored
     regions in `app/data/regions.json`, to every subscriber registered for
     that region in `app/data/subscribers.json` (subscribers are added via
     `POST /api/ussd`, or seeded by hand for testing).
 
-    Falls back to a clearly labeled simulation — same behavior as the old
-    stub — when `AT_USERNAME`/`AT_API_KEY` aren't configured yet, or when
-    the region has zero subscribers. This makes the endpoint safe to call
-    in any environment, not just a fully configured one, so a demo never
-    breaks for lack of credentials."""
+    `channel="sms"` (default) sends a text message. `channel="voice"`
+    places a phone call that reads the alert aloud when answered (see
+    `app/models/voice_gateway.py` and `app/routes/voice.py`) — for
+    recipients a text-only channel doesn't reach (can't read, or the
+    local script, or are visually impaired).
+
+    Either channel falls back to a clearly labeled simulation when its
+    Africa's Talking credentials aren't configured yet, or when the
+    region has zero subscribers, so this endpoint is always safe to call,
+    not just in a fully configured environment."""
     regions = _read_json(REGIONS_FILE, [])
     region = next((r for r in regions if r["location_name"] == payload.location_name), None)
     if region is None:
@@ -84,11 +92,18 @@ def send_alert(payload: SendAlertRequest) -> SendAlertResponse:
         s["phone_number"] for s in subscribers if s["location_name"] == payload.location_name
     ]
 
-    if is_configured() and phone_numbers:
-        send_sms(phone_numbers, message_local)
-        channel = "SMS"
+    if payload.channel == "voice":
+        if is_voice_configured() and phone_numbers:
+            place_call(phone_numbers, message_local)
+            channel = "Voice call"
+        else:
+            channel = "Voice call (simulated)"
     else:
-        channel = "SMS (simulated)"
+        if is_sms_configured() and phone_numbers:
+            send_sms(phone_numbers, message_local)
+            channel = "SMS"
+        else:
+            channel = "SMS (simulated)"
 
     entry = {
         "location_name": payload.location_name,

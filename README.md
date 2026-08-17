@@ -8,8 +8,9 @@ internet. **Scoped hackathon demo:** "Last-Mile Alert AI" — flooding
 only, working end-to-end: a rules-based flood risk score shown alongside
 a genuine trained ML model as a second opinion, an API that turns the
 result into a human-readable alert, translation into a local African
-language, and a real SMS send (with USSD self-service to check risk or
-subscribe) via Africa's Talking, all shown on a simple web dashboard.
+language, and real SMS/voice-call alerts (with USSD self-service to check
+risk or subscribe) via Africa's Talking — voice covering people a
+text-only channel doesn't reach — all shown on a simple web dashboard.
 **Future:** expand to the other hazards, train the ML model on real
 historical data instead of synthetic data, and an offline-first mobile
 app (see [Future Improvements](#future-improvements) below).
@@ -32,12 +33,15 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   synthetic data standing in for real historical flood data. See
   [`docs/architecture.md`](docs/architecture.md)'s "Two risk scores, on
   purpose" section for why both are kept.
-- **Alerts now send for real.** `POST /api/alerts/send` messages every
-  subscriber for a region via Africa's Talking SMS (falls back to a
-  clearly labeled simulation without sandbox credentials); `POST /api/ussd`
-  is a USSD self-service menu to check risk or subscribe/unsubscribe from
-  any phone. See [`docs/architecture.md`](docs/architecture.md)'s "Real
-  SMS/USSD alerts" section.
+- **Alerts now send for real, by SMS or voice call.** `POST /api/alerts/send`
+  messages every subscriber for a region via Africa's Talking, as SMS or
+  a voice call that reads the alert aloud (`"channel": "voice"` — for
+  recipients who can't read, or the local script, or are visually
+  impaired), falling back to a clearly labeled simulation without sandbox
+  credentials. `POST /api/ussd` is a USSD self-service menu to check risk
+  or subscribe/unsubscribe from any phone. See
+  [`docs/architecture.md`](docs/architecture.md)'s "Real SMS/USSD/Voice
+  alerts" section.
 - **Frontend dashboard** (Habiba, Farid, Thompson) merged 2026-08-15 —
   live in `frontend-web/`, pulling real data from `GET /api/regions`.
 - The API contract only ever gained fields, never changed existing ones —
@@ -59,7 +63,7 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
 - **ML model:** scikit-learn (`StandardScaler` + `LogisticRegression`),
   trained on synthetic data — see `backend/app/models/train_ml_model.py`
 - **Frontend:** React + Vite
-- **Alerts:** Africa's Talking (SMS + USSD)
+- **Alerts:** Africa's Talking (SMS + USSD + Voice)
 - **Data:** JSON files for the hackathon demo (no database — see Future
   Improvements)
 
