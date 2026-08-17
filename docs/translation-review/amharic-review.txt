@@ -16,13 +16,12 @@ ALERT_TEMPLATES).
 Used for: SMS alerts, USSD "check flood risk" reply, and voice call
 text-to-speech (spoken aloud when someone answers a voice alert).
 
-IMPORTANT CONTEXT: no city in Ethiopia is currently one of our 9 sample
-cities in app/data/regions.json, so this language is NOT exercised by
-the live dashboard (GET /api/regions) today — only reachable by manually
-calling POST /api/risk-check with an Ethiopian location. The team is
-deciding whether to add an Ethiopian sample city (e.g. Addis Ababa) to
-actually demo this. Demo city used below (Addis Ababa) is illustrative,
-not necessarily final.
+UPDATE (2026-08-17, later the same day): Addis Ababa was added as our
+10th sample city in app/data/regions.json specifically so Amharic would
+be exercised live by the dashboard (GET /api/regions), not just
+reachable via a manual API call. Sample inputs: 65mm rainfall/24h, 2.6m
+river level -> MEDIUM risk (score 0.65). Demo city below is now the
+real, live one, not just illustrative.
 
 City name: "Addis Ababa" is localized to "አዲስ አበባ" (its Amharic name,
 written in Ge'ez script) inside the Amharic sentence — please also

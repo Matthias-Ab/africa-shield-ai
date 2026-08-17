@@ -5,6 +5,96 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — Added Addis Ababa as a 10th sample city, so Amharic is exercised live
+
+### Completed
+- Closed the gap flagged in the immediately preceding entry: with no
+  Ethiopian sample city, Amharic was mapped and correctly reachable via
+  a manual `POST /api/risk-check` call, but invisible on the live
+  dashboard (`GET /api/regions`) — unlike every other language, which
+  has at least one real sample city exercising it. Team decided to add
+  one rather than leave the gap.
+- Added `"Addis Ababa, Ethiopia"` to `backend/app/data/regions.json`
+  (lat 9.0320, lon 38.7469, rainfall 65mm/24h, river 2.6m, population
+  estimate 5,200,000) — the sample set is now 10 cities, not 9.
+  Inputs chosen (same "tuned to look sane for the demo, not derived from
+  real hydrological data" methodology used for every other sample city)
+  to land in the `medium` bucket (score 0.65), keeping the risk-level
+  spread a reasonable 3 high / 4 medium / 3 low across all 10 — not a
+  perfectly even split (10 doesn't divide by 3), but not lopsided either.
+- Verified end-to-end against the running server: `GET /api/regions`
+  now returns 10 entries; Addis Ababa's entry has `"local_language":
+  "Amharic"`, the city name correctly localized to "አዲስ አበባ" inside
+  `alert_message_local`, and the ML model independently agrees on the
+  bucket (`ml_risk_level: "medium"`, `ml_risk_score: 0.66` vs. the
+  rules-based 0.65) — same "second opinion, not a contradiction"
+  pattern every other sample city already showed.
+- Updated every place that said "9 sample cities" as a live claim:
+  `backend/app/models/risk_model.py`'s sanity-check docstring (added
+  Addis Ababa's score, updated the spread from 3/3/3 to 3/4/3),
+  `backend/app/models/translations.py` (several comments, including
+  removing the now-stale "not exercised by /api/regions" caveat on the
+  Amharic mapping), `docs/api-contract.md`, `docs/architecture.md`,
+  `docs/frontend-feature-spec.md`, `backend/README.md`, and both
+  `docs/translation-review/amharic-review.txt` (rewrote the "not
+  reachable live" context note — it's live now) and `portuguese-review.txt`
+  (simple count fix).
+- **Also caught and fixed a real, separate gap while regenerating
+  `docs/mock-data.json` for this change: Mogadishu's entry there still
+  said "Mogadishu" in the Somali text, not "Muqdisho."** The live API
+  has correctly said "Muqdisho" since the city-name-localization session
+  earlier today — `mock-data.json` was just never updated for that one
+  entry at the time. Fixed now, verified against live output rather than
+  assumed. Also added the new Addis Ababa entry to `mock-data.json`'s
+  `regions` list, pulled from a live server response, not hand-typed.
+
+### In Progress / Partially Done
+- Nothing left half-finished.
+
+### Not Yet Started
+- **`docs/Africa-Shield-AI-Overview.pdf` and `docs/API-Schema-Reference.pdf`
+  are now stale** (still describe 9 regions and the pre-fix language
+  mappings) — per existing project convention, these are snapshots
+  regenerated on request from an HTML source not committed to the repo,
+  not automatically kept in sync with every data change. Flagging as
+  due for a refresh before any pitch/judge-facing use, not fixing
+  automatically here.
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Chose Addis Ababa specifically** (not some other Ethiopian city) —
+  it's the capital, largest city, and the same choice already used
+  throughout this session's Amharic work (`LOCALIZED_CITY_NAMES`, the
+  review packet, testing), so adding it as the sample city kept
+  everything consistent rather than introducing a second Ethiopian city
+  name to track.
+- **Chose inputs landing in `medium` rather than re-tuning for an exact
+  3/3/3-equivalent split** — 10 cities can't split evenly into 3
+  buckets, and `medium` (4 cities) was judged a fine place for the
+  4th, being reused, non-extreme bucket; not a finding that needed deep
+  analysis, just a demo-plausibility call same as every prior sample
+  city's inputs.
+- **Finding the stale Mogadishu entry in `mock-data.json` while doing
+  this work is a useful reminder for the team:** the "verify against
+  the live server, not just the diff" discipline this project uses
+  caught it. If a doc-regeneration step is ever skipped for one entry
+  while updating others, it's easy to miss silently — worth a quick
+  `mock-data.json`-vs-live diff pass periodically, not just when a
+  specific field is being touched.
+
+### Flags for the Team
+- **The sample-city count is 10 now, not 9** — anything outside this
+  repo (pitch deck drafts, slides, prior conversation notes) that says
+  "9 sample cities" is now stale.
+- **Regenerate `docs/Africa-Shield-AI-Overview.pdf` and
+  `docs/API-Schema-Reference.pdf`** before handing either to a judge —
+  both still reflect the pre-this-week state.
+- **Amharic and Portuguese are both live and demoable now** (Addis
+  Ababa and Maputo respectively) but both still need native-speaker
+  review — see `docs/translation-review/`.
+
+---
+
 ## 2026-08-17 — Aligned language coverage with the African Union's official languages; fixed a live Mozambique bug
 
 ### Completed

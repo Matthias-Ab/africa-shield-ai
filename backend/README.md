@@ -39,7 +39,7 @@ shapes. Summary:
 - `POST /api/risk-check` — real. Computes the rules-based risk level/score
   and the ML model's second opinion from the posted rainfall/river level,
   plus a translated alert message.
-- `GET /api/regions` — real. Computes both scores live for the 9 sample
+- `GET /api/regions` — real. Computes both scores live for the 10 sample
   cities in `app/data/regions.json`.
 - `GET /api/alerts` — real send history (`app/data/alert_log.json`) once
   something has been sent via `POST /api/alerts/send`; falls back to the

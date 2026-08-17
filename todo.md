@@ -122,14 +122,14 @@ Presentation & Pitch 5.
       Skipped as genuinely ambiguous: Djibouti (Arabic/French/Somali all
       plausible), Comoros (French/Arabic co-official), Eritrea (none of
       our 7 languages is actually its primary one — Tigrinya is).
-- [ ] **Decide whether to add an Ethiopian sample city (e.g. Addis
-      Ababa) to `regions.json`.** Amharic is mapped and tested via a
-      manual `POST /api/risk-check` call, but with no Ethiopian sample
-      city, it's NOT exercised by the live dashboard (`GET /api/regions`)
-      the way French/Portuguese are via Kinshasa/Maputo — a judge
-      browsing the dashboard would never see it. This is a real decision
-      to make, not done automatically — adding a 10th sample city
-      touches the "9 sample cities" framing used throughout the docs.
+- [x] **Added Addis Ababa, Ethiopia as a 10th sample city (2026-08-17).**
+      Amharic is now exercised live by `GET /api/regions`, not just
+      reachable via a manual `POST /api/risk-check` call — closes the gap
+      flagged earlier the same day. Inputs (65mm rainfall, 2.6m river
+      level) chosen to land in `medium` (score 0.65, ML model
+      independently agrees at 0.66), keeping the 10-city distribution a
+      reasonable 3 high / 4 medium / 3 low. Updated every doc/comment
+      that said "9 sample cities."
 - [ ] **Native-speaker review of Portuguese and Amharic alert wording**
       — both unreviewed AI drafts, same status French is in. **Amharic
       especially needs review** — it's the least confident draft of all

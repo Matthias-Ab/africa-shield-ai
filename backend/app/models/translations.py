@@ -42,7 +42,7 @@
 
 # Which local language to use per country, keyed by lowercase country
 # name (parsed from the end of "City, Country" in location_name). Only
-# the six agreed languages appear as values: English, Swahili, Arabic,
+# the seven agreed languages appear as values: English, Swahili, Arabic,
 # Somali, French, Portuguese, Amharic. Countries not listed fall back to
 # DEFAULT_LOCAL_LANGUAGE.
 #
@@ -52,7 +52,7 @@
 # DRC is mapped to French (added 2026-08-17) — French is DRC's actual
 # official language, correcting the earlier English-fallback placeholder
 # used before French was one of the agreed languages. Kinshasa is
-# already one of the 9 sample cities in app/data/regions.json, so this
+# already one of the 10 sample cities in app/data/regions.json, so this
 # is exercised live by /api/regions, not just a hypothetical.
 #
 # **Mozambique corrected from English to Portuguese (2026-08-17) — this
@@ -60,7 +60,7 @@
 # Mozambique's actual official language; the earlier English mapping was
 # only ever an arbitrary fallback for a language outside the
 # then-agreed set, exactly the same category of bug the DRC/French fix
-# corrected. Maputo is one of our 9 sample cities and is the team's most
+# corrected. Maputo is one of our 10 sample cities and is the team's most
 # real-data-validated city (the Dec 2025-Jan 2026 flood event), so this
 # was flagged as a priority fix, not a routine addition — see
 # docs/progress-log.md's 2026-08-17 entry for the "don't silently change
@@ -69,12 +69,13 @@
 # Nigeria and Ghana correctly map to English — that genuinely is each
 # country's official language, unlike Mozambique's old (wrong) mapping.
 #
-# Ethiopia is mapped to Amharic, its official language — but note NO
-# sample city in app/data/regions.json is in Ethiopia, so this mapping
-# is not exercised by /api/regions today, only reachable via a manual
-# POST /api/risk-check call with an Ethiopian location_name. See
-# docs/progress-log.md's 2026-08-17 entry for the team decision on
-# whether to add an Ethiopian sample city.
+# Ethiopia is mapped to Amharic, its official language. Addis Ababa was
+# added as a 10th sample city the same day (2026-08-17), specifically so
+# Amharic would be exercised live by /api/regions like every other
+# language here — it briefly wasn't, and that gap was flagged explicitly
+# rather than left as a "looks supported but isn't really demoable" gap.
+# See docs/progress-log.md's 2026-08-17 entries for both the gap and the
+# fix.
 #
 # The extra French/Portuguese-speaking countries below aren't in
 # app/data/regions.json yet — added ahead of time so the mapping is
@@ -201,11 +202,9 @@ ALERT_TEMPLATES = {
 # "Kinshasa" and "Maputo" are already their French/Portuguese names) —
 # see module docstring.
 #
-# "Addis Ababa" is included even though no sample city is in Ethiopia
-# yet (see LOCAL_LANGUAGE_BY_COUNTRY's Amharic note) — added now so the
-# mapping is complete and ready the moment a manual risk-check or a
-# future sample city exercises it, rather than being discovered missing
-# later.
+# "Addis Ababa" is now exercised live by /api/regions — it's one of the
+# 10 sample cities (added 2026-08-17, same day as Amharic itself, so
+# Amharic wouldn't be a mapping that only works in theory).
 LOCALIZED_CITY_NAMES = {
     "Arabic": {"Cairo": "القاهرة"},
     "Somali": {"Mogadishu": "Muqdisho"},

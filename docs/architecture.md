@@ -106,10 +106,11 @@ Gaussian noise before labeling, so the trained model learns a genuinely
 different decision boundary. On held-out synthetic test data, the ML model
 disagreed with the rules-based bucket on about **11%** of samples — real
 variation, not a restatement of the same number under a different name.
-Across the 9 actual sample cities, the two models agree on every
+Across the 10 actual sample cities, the two models agree on every
 risk_level bucket while differing slightly on the underlying score (e.g.
-Lagos: rules 0.82 vs. ML 0.84) — exactly the "second opinion" framing the
-pitch wants, without a confusing on-stage contradiction.
+Lagos: rules 0.82 vs. ML 0.84; Addis Ababa: rules 0.65 vs. ML 0.66) —
+exactly the "second opinion" framing the pitch wants, without a
+confusing on-stage contradiction.
 
 **Documented future upgrade:** replace `generate_synthetic_training_data()`
 in `train_ml_model.py` with a loader for real historical rainfall/river-

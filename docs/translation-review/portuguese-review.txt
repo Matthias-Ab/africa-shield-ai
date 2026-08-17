@@ -10,7 +10,7 @@ ALERT_TEMPLATES).
 Used for: SMS alerts, USSD "check flood risk" reply, and voice call
 text-to-speech (spoken aloud when someone answers a voice alert).
 
-Demo city used below: Maputo, Mozambique — one of our 9 sample cities,
+Demo city used below: Maputo, Mozambique — one of our 10 sample cities,
 and the team's most real-data-validated city (a real flood event was
 confirmed there in our Dec 2025-Jan 2026 real-data investigation). This
 is a high-stakes one to get right.

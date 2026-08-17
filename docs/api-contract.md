@@ -281,7 +281,7 @@ An array of objects. `location_name`, `latitude`, `longitude`, and
 | `ml_risk_level`         | string | Same meaning as in `POST /api/risk-check` — the trained ML model's second opinion for this region's sample rainfall/river data. |
 | `ml_risk_score`         | float  | Same meaning as in `POST /api/risk-check`. |
 
-Currently 9 regions — see `backend/app/data/regions.json` for the
+Currently 10 regions — see `backend/app/data/regions.json` for the
 underlying sensor inputs and population figures.
 
 ---

@@ -225,7 +225,7 @@
       "river_level_m": 2.6,
       "risk_level": "medium",
       "alert_message_en": "Flood risk is MEDIUM in Mogadishu. Stay alert and monitor local updates.",
-      "alert_message_local": "Khatarta daadka ee Mogadishu waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah.",
+      "alert_message_local": "Khatarta daadka ee Muqdisho waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah.",
       "local_language": "Somali",
       "population_estimate": 2600000,
       "risk_score_breakdown": {
@@ -242,6 +242,33 @@
       },
       "ml_risk_level": "medium",
       "ml_risk_score": 0.59
+    },
+    {
+      "location_name": "Addis Ababa, Ethiopia",
+      "country": "Ethiopia",
+      "latitude": 9.032,
+      "longitude": 38.7469,
+      "rainfall_mm_24h": 65,
+      "river_level_m": 2.6,
+      "risk_level": "medium",
+      "alert_message_en": "Flood risk is MEDIUM in Addis Ababa. Stay alert and monitor local updates.",
+      "alert_message_local": "የጎርፍ አደጋ በአዲስ አበባ መካከለኛ ነው። ንቁ ይሁኑ እና የአካባቢ ዝማኔዎችን ይከታተሉ።",
+      "local_language": "Amharic",
+      "population_estimate": 5200000,
+      "risk_score_breakdown": {
+        "rainfall_mm_24h": 65,
+        "river_level_m": 2.6,
+        "normalized_rainfall": 0.65,
+        "normalized_river_level": 0.65,
+        "rainfall_cap_mm": 100.0,
+        "river_level_cap_m": 4.0,
+        "high_threshold": 0.7,
+        "medium_threshold": 0.4,
+        "risk_level": "medium",
+        "risk_score": 0.65
+      },
+      "ml_risk_level": "medium",
+      "ml_risk_score": 0.66
     }
   ],
   "alerts": [
