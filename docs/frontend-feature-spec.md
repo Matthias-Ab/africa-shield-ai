@@ -82,10 +82,12 @@ risk" button (or auto-submit on slider release with debounce). Show the
 resulting risk-level chip + both alert messages updating live.
 
 **Note:** any `location_name` works — the backend parses the country from
-the string after the last comma (`"City, Country"`) to pick a language. If
-you type a location whose country isn't Nigeria/Kenya/Egypt/Tanzania/
-Uganda/Ghana/Mozambique/DRC/Somalia, it'll fall back to English. That's
-expected, not a bug.
+the string after the last comma (`"City, Country"`) to pick a language.
+DRC now maps to French (corrected 2026-08-17 — French is DRC's actual
+official language), not English. If you type a location whose country
+isn't explicitly mapped (see `LOCAL_LANGUAGE_BY_COUNTRY` in
+`backend/app/models/translations.py` for the full list), it'll fall back
+to English. That's expected, not a bug.
 
 ---
 

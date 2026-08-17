@@ -89,9 +89,22 @@ Presentation & Pitch 5.
       real GDACS/rainfall data as external validation in the pitch
       instead of a training-data swap. See `docs/progress-log.md`'s
       2026-08-17 entry for the full investigation.
-- [ ] Native-speaker review of the Swahili/Arabic/Somali alert wording
-      (currently AI-drafted, shipped as-is per an earlier team decision —
-      still worth doing if time allows).
+- [x] **Native-speaker review of Swahili, Arabic, and Somali alert
+      wording — all 3 confirmed correct (2026-08-17).** Also added
+      city-name localization per the reviewers' feedback (e.g. "Cairo" →
+      "القاهرة", "Mogadishu" → "Muqdisho") — see `LOCALIZED_CITY_NAMES`
+      in `backend/app/models/translations.py`.
+- [x] **Added French as a 5th language (2026-08-17)** to reach more
+      Francophone African countries — DRC corrected from an English
+      fallback to French (its actual official language; Kinshasa is a
+      live sample city), plus 15 more Francophone countries mapped ahead
+      of having a sample city there yet (same pattern used for Somalia
+      before Mogadishu was added). Deliberately excluded
+      Congo-Brazzaville — too easily confused with DRC by country name.
+- [ ] **Native-speaker review of the new French alert wording** —
+      unreviewed AI draft, same status Arabic/Swahili/Somali were in
+      before this session. Whoever finds a French speaker next should
+      use the same `docs/translation-review/` packet pattern.
 - [ ] Automatic threshold-triggered alerts (a scheduled job firing
       `/api/alerts/send` when a region crosses into `high`), instead of
       only on-demand sending.

@@ -63,7 +63,7 @@
       "river_level_m": 2.0,
       "risk_level": "medium",
       "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
-      "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
+      "alert_message_local": "خطر الفيضانات متوسط في القاهرة. توخَّ الحذر وتابع التحديثات المحلية.",
       "local_language": "Arabic",
       "population_estimate": 10000000,
       "risk_score_breakdown": {
@@ -198,8 +198,8 @@
       "river_level_m": 1.5,
       "risk_level": "low",
       "alert_message_en": "Flood risk is LOW in Kinshasa. No action needed at this time.",
-      "alert_message_local": "Flood risk is LOW in Kinshasa. No action needed at this time.",
-      "local_language": "English",
+      "alert_message_local": "Le risque d'inondation est FAIBLE à Kinshasa. Aucune action n'est nécessaire pour le moment.",
+      "local_language": "French",
       "population_estimate": 15000000,
       "risk_score_breakdown": {
         "rainfall_mm_24h": 25,
@@ -291,7 +291,7 @@
     "risk_level": "medium",
     "risk_score": 0.42,
     "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
-    "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
+    "alert_message_local": "خطر الفيضانات متوسط في القاهرة. توخَّ الحذر وتابع التحديثات المحلية.",
     "local_language": "Arabic",
     "timestamp": "2026-08-07T12:00:00Z",
     "risk_score_breakdown": {

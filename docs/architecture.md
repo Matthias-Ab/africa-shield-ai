@@ -40,9 +40,12 @@
    for exact shapes. **All real.**
 3. **Alert/translation layer** (`backend/app/models/translations.py`)
    turns a risk level into a human-readable message in English plus one
-   of Swahili/Arabic/Somali by country. **Real** — see
-   [`progress-log.md`](progress-log.md) for the country mapping and the
-   caveat that the wording is AI-drafted, not yet native-speaker reviewed.
+   of Swahili/Arabic/Somali/French by country, with the city name itself
+   localized too (e.g. "Cairo" → "القاهرة"). **Real** — see
+   [`progress-log.md`](progress-log.md) for the country mapping.
+   Swahili, Arabic, and Somali are reviewed and confirmed correct by
+   native speakers (2026-08-17); French is still an AI-drafted,
+   unreviewed addition.
 4. **Real SMS/voice send** (`backend/app/models/sms_gateway.py` and
    `voice_gateway.py`, wrapping Africa's Talking): `POST /api/alerts/send`
    messages every subscriber registered for a region, by text or by a
@@ -151,7 +154,7 @@ As of 2026-08-17, `/api/alerts` is no longer just a simulated stub.
   not required for the demo.
 - **Not yet verified:** whether Africa's Talking's voice `<Say>`
   text-to-speech actually renders non-English text (Arabic/Swahili/
-  Somali) acceptably — only tested locally against the callback logic
+  Somali/French) acceptably — only tested locally against the callback logic
   itself, not against the real sandbox's speech synthesis. Confirm before
   relying on it for a non-English region live.
 

@@ -5,6 +5,124 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-17 — Translation review: Swahili/Arabic/Somali confirmed, city names localized, French added
+
+### Completed
+- Prepared and handed off a translation-review packet
+  (`docs/translation-review/{arabic,swahili,somali}-review.txt`) to the
+  team's native speakers — plain-text, demo data filled in instead of
+  the `{location}` placeholder, an English gloss next to each line, and
+  a section listing not-yet-translated UI strings (USSD menu, subscribe/
+  unsubscribe confirmations, voice fallback line) so reviewers could
+  flag whether those are worth localizing too, without us inventing
+  translations for them ahead of a decision.
+- **All three came back confirmed correct** — Swahili, Arabic, and
+  Somali are no longer flagged as unreviewed AI drafts in
+  `backend/app/models/translations.py`'s docstring/comments.
+- **Reviewer feedback: city names should appear in the local language,
+  not the English/Latin name.** Previously every language's message
+  dropped in the plain English city name (e.g. "Cairo" inside an Arabic
+  sentence). Added `LOCALIZED_CITY_NAMES` to `translations.py` —
+  `{"Arabic": {"Cairo": "القاهرة"}, "Somali": {"Mogadishu": "Muqdisho"}}`
+  — and `build_alert_messages()` now looks up the local name for
+  `alert_message_local` only; `alert_message_en` is unaffected. Swahili
+  needed no entries — Nairobi/Dar es Salaam/Kampala are already their
+  Swahili names.
+- **Added French as a 5th agreed language**, to reach more Francophone
+  African countries per the team's request. `ALERT_TEMPLATES["French"]`
+  added (AI-written, unreviewed — same status the other three were in
+  before this session). `LOCAL_LANGUAGE_BY_COUNTRY["drc"]` corrected
+  from `"English"` to `"French"` — French is DRC's actual official
+  language; the old English mapping was only ever an arbitrary fallback
+  for a language outside the previously-agreed four. Kinshasa is a live
+  sample city in `regions.json`, so this is exercised by `/api/regions`
+  immediately, not just a hypothetical.
+  - Also added 15 more Francophone countries not yet in `regions.json`
+    (Senegal, Mali, Côte d'Ivoire, Cameroon, Niger, Chad, Burkina Faso,
+    Benin, Togo, Guinea, Gabon, Madagascar, Central African Republic,
+    Rwanda, Burundi) — same "map ahead of having a sample city there"
+    reasoning the team used for Somalia before Mogadishu was added.
+  - **Deliberately did not add Congo-Brazzaville/Republic of the
+    Congo** — its country name is too easily confused with DRC ("Congo")
+    to add safely without a real example to test the parsing against.
+- Verified all of the above against the running server, not just by
+  reading the diff: `POST /api/risk-check` for Cairo now returns
+  `القاهرة` in `alert_message_local`; Mogadishu returns `Muqdisho`;
+  `GET /api/regions`'s Kinshasa entry now shows `"local_language":
+  "French"` with a real French sentence; a test call for "Dakar,
+  Senegal" (not a real sample city, just a mapping check) correctly
+  resolved to French too.
+- Regenerated `docs/mock-data.json`'s Cairo entries (both the `regions`
+  list and `risk_check_example`) and Kinshasa's `regions` entry to match
+  the live output exactly — same zero-drift discipline as every prior
+  contract-affecting change.
+- Updated `docs/api-contract.md`, `docs/architecture.md`,
+  `backend/README.md`, and `docs/frontend-feature-spec.md` everywhere
+  they listed "four languages" or the old DRC→English mapping.
+- Updated the three existing review packets to say "CONFIRMED CORRECT"
+  instead of "never reviewed," with their demo text updated to the new
+  localized-city-name output — kept as accurate reference material, not
+  left stale now that the review happened. Added
+  `docs/translation-review/french-review.txt` for the next reviewer,
+  using Kinshasa as the demo city and flagging that the wording will be
+  reused across all the newly-added Francophone countries (worth a
+  regional-neutrality check, not just a grammar check).
+
+### In Progress / Partially Done
+- Nothing left half-finished — the language/city-name change is
+  complete and verified end-to-end.
+
+### Not Yet Started
+- **French alert wording is unreviewed** — same status Arabic/Swahili/
+  Somali were in until today. `docs/translation-review/french-review.txt`
+  is ready to hand to a French speaker whenever one's available.
+- City-name localization was only added for Arabic and Somali (the two
+  languages where reviewers actually asked for it) — if a French speaker
+  says a French/francized city name is expected for a specific city
+  (uncommon, but some cities do have distinct French exonyms), that's a
+  small addition to `LOCALIZED_CITY_NAMES`, not a rework.
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Chose to localize the city name only inside `alert_message_local`,
+  never `alert_message_en`.** `alert_message_en` is meant to be readable
+  by anyone regardless of local language (e.g. for team/judge review),
+  so keeping it in plain English city names throughout was an easy,
+  low-risk call — no reviewer asked for this to change, and changing it
+  would arguably reduce clarity for that message's actual purpose.
+  Voice/USSD/SMS purposes reflect `alert_message_local`, so they all
+  benefit from the same fix automatically for both languages.
+- **DRC's language correction (English → French) is a live output
+  change on an existing endpoint field (`local_language`,
+  `alert_message_local` for Kinshasa), not just an additive field.**
+  Flagging this explicitly per the standing "don't change the contract
+  without saying so" instruction — no field was renamed/removed/retyped,
+  but an existing region's *value* changed. This is a deliberate,
+  requested correction (DRC's old English mapping was never claimed to
+  be linguistically correct, just an arbitrary fallback), not drift.
+- **Chose a broad but conservative set of Francophone countries to add
+  ahead of time**, excluding any country name ambiguous enough to
+  misroute (Congo-Brazzaville vs. DRC being the clearest risk) or where
+  French isn't clearly the primary/most natural choice among this app's
+  five languages (e.g. skipped Djibouti — Arabic, French, and Somali are
+  all plausible there, and guessing wrong is worse than leaving it
+  unmapped to the English default).
+
+### Flags for the Team
+- **Only French is left unreviewed now.** Get a French speaker to check
+  `docs/translation-review/french-review.txt` before relying on it in a
+  demo where DRC/Kinshasa (or any other French-mapped country) comes up.
+- **If the team adds a sample city in a newly-mapped French country**
+  (Senegal, Mali, Côte d'Ivoire, etc.) **to `regions.json`, it'll
+  automatically get French alert text** — no code change needed, this
+  was the point of mapping ahead of time.
+- **`docs/mock-data.json` and the live API will now disagree with any
+  screenshot/notes taken before this session** for Cairo (city name) and
+  Kinshasa (whole language) — expected, not a regression, if anyone
+  notices the difference from older material.
+
+---
+
 ## 2026-08-17 — Investigated real ML training data; found it doesn't cleanly support a retrain
 
 ### Completed

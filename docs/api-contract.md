@@ -108,7 +108,7 @@ mapping used.
   "risk_level": "medium",
   "risk_score": 0.42,
   "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
-  "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
+  "alert_message_local": "خطر الفيضانات متوسط في القاهرة. توخَّ الحذر وتابع التحديثات المحلية.",
   "local_language": "Arabic",
   "timestamp": "2026-08-07T12:00:00Z",
   "risk_score_breakdown": {
@@ -139,8 +139,8 @@ mapping used.
 | `risk_level`           | string | `"low"` \| `"medium"` \| `"high"` — **rules-based, primary** |
 | `risk_score`           | float  | 0.0–1.0 — **rules-based, primary**        |
 | `alert_message_en`     | string | Human-readable alert, English            |
-| `alert_message_local`  | string | Same alert, translated to `local_language`. **Right-to-left when `local_language` is `"Arabic"`** — the frontend must handle RTL display; this field is a plain string with no directionality markers. |
-| `local_language`       | string | One of the team's four agreed languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"` |
+| `alert_message_local`  | string | Same alert, translated to `local_language`, **with the city name also localized** where the local name differs from English (e.g. "Cairo" → "القاهرة") — see `backend/app/models/translations.py`'s `LOCALIZED_CITY_NAMES`. **Right-to-left when `local_language` is `"Arabic"`** — the frontend must handle RTL display; this field is a plain string with no directionality markers. |
+| `local_language`       | string | One of the team's five agreed languages: `"English"`, `"Swahili"`, `"Arabic"`, `"Somali"`, `"French"` |
 | `timestamp`            | string | ISO 8601, UTC                            |
 | `risk_score_breakdown` | object | Explainability data for a "why this score" UI — see below. |
 | `ml_risk_level`        | string | `"low"` \| `"medium"` \| `"high"` — the trained ML model's second opinion, bucketed with the same thresholds as the rules-based score (see `risk_score_breakdown.high_threshold`/`medium_threshold`). |
@@ -419,5 +419,6 @@ silently saying nothing.
 
 **Caveat, not yet verified:** Africa's Talking's `<Say>` text-to-speech
 language/accent support hasn't been tested against non-English alert
-text (Arabic/Swahili/Somali) — confirm this works as expected against the
-real sandbox before relying on it for a non-English region in the demo.
+text (Arabic/Swahili/Somali/French) — confirm this works as expected
+against the real sandbox before relying on it for a non-English region
+in the demo.

@@ -124,8 +124,12 @@ shapes. Summary:
 ## Translations
 
 `app/models/translations.py` hardcodes English plus one of
-Swahili/Arabic/Somali per alert (mapped by country, see that file for the
-mapping and fallback rules). These are AI-drafted placeholder translations
-— see the module docstring and `docs/progress-log.md` for the team's
-decision to ship them as-is for the hackathon rather than block on a
-native-speaker review.
+Swahili/Arabic/Somali/French per alert (mapped by country, see that file
+for the mapping and fallback rules), with the city name itself localized
+too where it differs from English (e.g. "Cairo" → "القاهرة" — see
+`LOCALIZED_CITY_NAMES` in that file). Swahili, Arabic, and Somali are
+reviewed and confirmed correct by native speakers (2026-08-17). French
+(added the same day) is still an AI-drafted placeholder — see the module
+docstring and `docs/progress-log.md` for the team's decision to ship
+unreviewed languages as-is for the hackathon rather than block on a
+review pass.
