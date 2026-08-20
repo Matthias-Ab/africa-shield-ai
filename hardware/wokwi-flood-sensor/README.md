@@ -68,3 +68,32 @@ sketch to match. An unregistered `device_id` gets a `404`, not a guess.
   power/connectivity in the field — this is a simulation with
   potentiometers standing in for real analog sensor output. Real
   hardware validation is separate, future work.
+
+## Recommended real sensors (not yet purchased)
+
+No physical sensors have been bought yet — this is a recommendation for
+whoever orders parts, not a decision that's already been made.
+
+- **Water level → JSN-SR04T waterproof ultrasonic sensor (~$4–7).**
+  Mounts above the water pointing down and measures distance to the
+  surface, so the electronics never touch the water. Gives a continuous
+  reading that converts directly to `river_level_m` — unlike a float
+  switch, which only gives an on/off threshold. Wires into the ESP32 the
+  same way the plain HC-SR04 does (trigger/echo pins, e.g. the `NewPing`
+  library), but is actually rated for outdoor/wet use, which the bare
+  HC-SR04 is not.
+- **Rainfall → tipping-bucket rain gauge with reed switch (~$15–25).**
+  Each tip is a fixed, known amount of rain (e.g. 0.2mm), so counting
+  tips over 24h gives a real calibrated `rainfall_mm_24h` — not just a
+  relative wetness signal. The reed switch wires into an ESP32 interrupt
+  pin directly.
+- **Budget fallback for rainfall:** the YL-83/FC-37 resistive rain
+  sensor this simulation is modeled on (~$1–2) is cheaper but only
+  outputs a rough wetness/intensity voltage, not a calibrated mm
+  measurement. Fine as a stopgap, but say so plainly in the pitch if
+  it's what actually ships — don't present it as equivalent to a
+  tipping-bucket reading.
+
+Rough total for one full sensor node: **$20–35** (ESP32 board +
+JSN-SR04T + tipping-bucket gauge) — cheap enough to deploy several for
+a real pilot.
