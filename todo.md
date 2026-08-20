@@ -47,10 +47,17 @@ Presentation & Pitch 5.
 
 - [x] Voice alerts for people a text channel doesn't reach (can't read,
       local script, or visually impaired) — built 2026-08-17.
-- [ ] Consider whether anything else in the scorecard's named groups
-      ("people with disabilities, women, children, elderly people,
-      underserved groups") is still unaddressed — worth a deliberate
-      5-minute team discussion, not just an engineering afterthought.
+- [x] **Women and children — the two named groups nothing had been
+      deliberately designed for — addressed 2026-08-20.** High-risk
+      alerts (all 7 languages) now include a safety-priority line naming
+      children, elderly people, and pregnant/nursing individuals during
+      evacuation — standard humanitarian guidance (the IFRC/UNICEF
+      category), not a new personal-data field. See
+      `backend/app/models/translations.py`.
+- [ ] **Native-speaker review of the new safety-priority clause, in all
+      7 languages — including Swahili, Arabic, and Somali**, whose
+      *original* wording was already reviewed. That review didn't cover
+      this new clause; treat it as unreviewed everywhere until checked.
 
 ## Functionality & Prototype (20 pts)
 

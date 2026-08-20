@@ -30,6 +30,30 @@
 # display themselves (e.g. `dir="rtl"` / CSS) when `local_language` is
 # `"Arabic"`; don't assume that's already handled anywhere in this repo.
 #
+# HIGH-RISK MESSAGES INCLUDE A SAFETY-PRIORITY LINE (added 2026-08-20)
+# naming children, elderly people, and pregnant/nursing individuals —
+# standard humanitarian evacuation guidance (the same category IFRC/
+# UNICEF flood materials use), not a new personal-data field. This
+# directly answers a gap flagged in `todo.md`: the "Social Impact &
+# Inclusion" scorecard criterion names "women" and "children" as groups
+# to address, and until now nothing in the alert content spoke to either
+# — voice alerts and local-language text served disabilities/elderly/
+# underserved communities, but women and children had no deliberate
+# design behind them. This line only fires at "high" risk, alongside the
+# existing evacuation instruction; medium/low have no evacuation step to
+# attach it to.
+#
+# FLAG FOR THE TEAM: this new clause is an AI-drafted, UNREVIEWED
+# translation in ALL SEVEN languages — including Swahili, Arabic, and
+# Somali, whose *existing* wording was already confirmed by native
+# speakers. That review only covered the original sentence; this added
+# clause needs its own native-speaker check in every language before
+# being treated as trustworthy, same as French/Portuguese/Amharic
+# already are. Also note: adding a sentence can push a "high" SMS from
+# one 160-character segment into two, which roughly doubles that
+# message's per-alert send cost — worth knowing before quoting the
+# $0.01-$0.03 figure elsewhere as a flat per-alert number.
+#
 # CITY NAMES ARE LOCALIZED for the local-language message, per a
 # 2026-08-17 team decision (previously every language's message dropped
 # in the plain English/Latin city name, e.g. "Cairo" inside an Arabic
@@ -138,7 +162,7 @@ LOCAL_LANGUAGE_BY_COUNTRY = {
 DEFAULT_LOCAL_LANGUAGE = "English"
 
 _EN_TEMPLATES = {
-    "high": "Flood risk is HIGH in {location}. Move to higher ground and avoid riverbanks.",
+    "high": "Flood risk is HIGH in {location}. Move to higher ground and avoid riverbanks. Prioritize children, elderly people, and pregnant or nursing individuals when evacuating.",
     "medium": "Flood risk is MEDIUM in {location}. Stay alert and monitor local updates.",
     "low": "Flood risk is LOW in {location}. No action needed at this time.",
 }
@@ -152,33 +176,33 @@ ALERT_TEMPLATES = {
     "English": _EN_TEMPLATES,
     # Reviewed and confirmed correct by a native Swahili speaker, 2026-08-17.
     "Swahili": {
-        "high": "Hatari ya mafuriko ni KUBWA katika {location}. Hamia mahali salama na epuka kingo za mto.",
+        "high": "Hatari ya mafuriko ni KUBWA katika {location}. Hamia mahali salama na epuka kingo za mto. Wape kipaumbele watoto, wazee, na wanawake wajawazito au wanaonyonyesha wakati wa kuhama.",
         "medium": "Hatari ya mafuriko ni WASTANI katika {location}. Kuwa macho na fuatilia taarifa za eneo lako.",
         "low": "Hatari ya mafuriko ni NDOGO katika {location}. Hakuna hatua inayohitajika kwa sasa.",
     },
     # Reviewed and confirmed correct by a native Arabic speaker, 2026-08-17.
     # Right-to-left text — see RTL note in module docstring.
     "Arabic": {
-        "high": "خطر الفيضانات مرتفع في {location}. انتقل إلى مكان مرتفع وتجنب ضفاف النهر.",
+        "high": "خطر الفيضانات مرتفع في {location}. انتقل إلى مكان مرتفع وتجنب ضفاف النهر. أعطِ الأولوية للأطفال وكبار السن والنساء الحوامل أو المرضعات عند الإخلاء.",
         "medium": "خطر الفيضانات متوسط في {location}. توخَّ الحذر وتابع التحديثات المحلية.",
         "low": "خطر الفيضانات منخفض في {location}. لا حاجة لاتخاذ إجراء في الوقت الحالي.",
     },
     # Reviewed and confirmed correct by a native Somali speaker, 2026-08-17.
     "Somali": {
-        "high": "Khatarta daadka ee {location} waa SARE. U guuri meel sare kana fogow xeebaha webiga.",
+        "high": "Khatarta daadka ee {location} waa SARE. U guuri meel sare kana fogow xeebaha webiga. Mudnaanta sii carruurta, waayeelka, iyo haweenka uurka leh ama naaska nuujinaya marka la baxayo.",
         "medium": "Khatarta daadka ee {location} waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah.",
         "low": "Khatarta daadka ee {location} waa HOOSE. Wax tallaabo lagama qaadanayo hadda.",
     },
     # AI-written, unreviewed by a native speaker — added 2026-08-17, same
     # caveat as Arabic/Somali until someone checks it.
     "French": {
-        "high": "Le risque d'inondation est ÉLEVÉ à {location}. Déplacez-vous vers un terrain élevé et évitez les berges de la rivière.",
+        "high": "Le risque d'inondation est ÉLEVÉ à {location}. Déplacez-vous vers un terrain élevé et évitez les berges de la rivière. Donnez la priorité aux enfants, aux personnes âgées et aux femmes enceintes ou allaitantes lors de l'évacuation.",
         "medium": "Le risque d'inondation est MOYEN à {location}. Restez vigilant et suivez les mises à jour locales.",
         "low": "Le risque d'inondation est FAIBLE à {location}. Aucune action n'est nécessaire pour le moment.",
     },
     # AI-written, unreviewed by a native speaker — added 2026-08-17.
     "Portuguese": {
-        "high": "O risco de inundação é ALTO em {location}. Desloque-se para um terreno mais elevado e evite as margens do rio.",
+        "high": "O risco de inundação é ALTO em {location}. Desloque-se para um terreno mais elevado e evite as margens do rio. Dê prioridade a crianças, idosos e mulheres grávidas ou lactantes durante a evacuação.",
         "medium": "O risco de inundação é MÉDIO em {location}. Mantenha-se alerta e siga as atualizações locais.",
         "low": "O risco de inundação é BAIXO em {location}. Nenhuma ação é necessária neste momento.",
     },
@@ -188,7 +212,7 @@ ALERT_TEMPLATES = {
     # French/Portuguese are from English, so this is a bigger leap of
     # faith than the other unreviewed entries. Written in Ge'ez script.
     "Amharic": {
-        "high": "የጎርፍ አደጋ በ{location} ከፍተኛ ነው። ወደ ከፍታ ቦታ ይሂዱ እና የወንዝ ዳርቻዎችን ያስወግዱ።",
+        "high": "የጎርፍ አደጋ በ{location} ከፍተኛ ነው። ወደ ከፍታ ቦታ ይሂዱ እና የወንዝ ዳርቻዎችን ያስወግዱ። ሲወጡ ልጆችን፣ አዛውንቶችን እና ነፍሰ ጡር ወይም የሚያጠቡ ሴቶችን አስቀድመው ያስቡ።",
         "medium": "የጎርፍ አደጋ በ{location} መካከለኛ ነው። ንቁ ይሁኑ እና የአካባቢ ዝማኔዎችን ይከታተሉ።",
         "low": "የጎርፍ አደጋ በ{location} ዝቅተኛ ነው። በአሁኑ ጊዜ እርምጃ አያስፈልግም።",
     },

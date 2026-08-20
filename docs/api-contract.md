@@ -34,6 +34,14 @@ existing behavior without saying so; see `docs/progress-log.md`'s
 2026-08-17 entry for the full reasoning. No field was renamed, removed,
 or retyped.
 
+**Status (as of 2026-08-18): alerts can fire automatically, not just on
+demand.** `POST /api/sensor-reading` now auto-sends a real SMS the first
+time a region's risk crosses into `"high"` (see that endpoint's
+"Automatic alerting" section). `GET /api/alerts` gained a new `trigger`
+field (`"manual"` / `"automatic"`) on real-send-log entries — additive,
+no existing field changed. `POST /api/risk-check` is deliberately
+unaffected — see the sensor-reading section for why.
+
 **Contract change (additive, non-breaking):** both `POST /api/risk-check`
 and `GET /api/regions` gained a new `risk_score_breakdown` field (for a
 "why this score" explainability view), and `GET /api/regions` gained
@@ -214,6 +222,23 @@ API). This is deliberate: the frontend can render a device-originated
 reading with the exact same code path as a manual risk-check, with zero
 special-casing.
 
+### Automatic alerting (new, 2026-08-18)
+
+If this reading pushes the device's region into `"high"` risk **for the
+first time** (not just "still high" from the last reading), this
+endpoint also automatically sends a real SMS to every subscriber for
+that region — logged to `GET /api/alerts` with `"trigger": "automatic"`.
+Staying at `"high"` on subsequent readings does not re-send; dropping
+back below `"high"` and rising into it again does. The last-seen level
+per region is tracked in `backend/app/data/region_alert_state.json`.
+
+**`POST /api/risk-check` deliberately does not do this** — it also backs
+a judge/dashboard "what-if" slider demo (see
+`docs/frontend-feature-spec.md`) that has to stay side-effect-free;
+auto-sending a real SMS every time someone drags a demo slider into the
+red would be a bad surprise, not a feature. Automatic alerting only
+exists on the device-ingestion path.
+
 ### Device registry
 
 `backend/app/data/devices.json` maps `device_id` → `{location_name,
@@ -245,8 +270,8 @@ the dashboard's map/list view.
     "rainfall_mm_24h": 85,
     "river_level_m": 3.2,
     "risk_level": "high",
-    "alert_message_en": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
-    "alert_message_local": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
+    "alert_message_en": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks. Prioritize children, elderly people, and pregnant or nursing individuals when evacuating.",
+    "alert_message_local": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks. Prioritize children, elderly people, and pregnant or nursing individuals when evacuating.",
     "local_language": "English",
     "population_estimate": 15000000,
     "risk_score_breakdown": {
@@ -292,9 +317,11 @@ Alert history, for the dashboard's alert history view.
 
 **Current status:** real once something has been sent — returns
 `backend/app/data/alert_log.json`, appended to by every call to
-`POST /api/alerts/send`. On a fresh clone/demo where nothing has been sent
-yet, that log is empty, so this falls back to the original hardcoded list
-from `mock-data.json` instead of returning nothing.
+`POST /api/alerts/send` **and** every automatic send (see that endpoint's
+section, and `POST /api/sensor-reading`, below). On a fresh clone/demo
+where nothing has been sent yet, that log is empty, so this falls back to
+the original hardcoded list from `mock-data.json` instead of returning
+nothing.
 
 ### Response
 
@@ -303,10 +330,11 @@ from `mock-data.json` instead of returning nothing.
   {
     "location_name": "Lagos, Nigeria",
     "risk_level": "high",
-    "message_sent": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.",
+    "message_sent": "Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks. Prioritize children, elderly people, and pregnant or nursing individuals when evacuating.",
     "channel": "SMS (simulated)",
     "recipients": 1,
-    "timestamp": "2026-08-17T07:47:30Z"
+    "timestamp": "2026-08-17T07:47:30Z",
+    "trigger": "manual"
   }
 ]
 ```
@@ -317,8 +345,9 @@ from `mock-data.json` instead of returning nothing.
 | `risk_level`     | string | `"low"` \| `"medium"` \| `"high"`              |
 | `message_sent`   | string | The exact text that was (or would have been) sent/said, in the region's local language |
 | `channel`        | string | `"SMS"` / `"Voice call"` when actually sent via Africa's Talking, `"SMS (simulated)"` / `"Voice call (simulated)"` when not (no credentials configured, or zero subscribers for that region) — see `POST /api/alerts/send` |
-| `recipients`     | int    | **New, only present on real-send-log entries.** Number of subscribers the message went to (0 for a simulated send). Absent on the older hardcoded `mock-data.json` entries returned as a fallback — don't assume it's always present. |
+| `recipients`     | int    | **Only present on real-send-log entries.** Number of subscribers the message went to (0 for a simulated send). Absent on the older hardcoded `mock-data.json` entries returned as a fallback — don't assume it's always present. |
 | `timestamp`      | string | ISO 8601, UTC                                   |
+| `trigger`        | string | **New (2026-08-18).** `"manual"` (a person called `POST /api/alerts/send`) or `"automatic"` (a sensor reading pushed the region into `high` — see `POST /api/sensor-reading`). Only present on real-send-log entries, same caveat as `recipients`. |
 
 ---
 
@@ -349,7 +378,10 @@ labeled simulation so this is always safe to call.
 
 ### Response
 
-Same shape as one entry of `GET /api/alerts`, above (includes `recipients`).
+Same shape as one entry of `GET /api/alerts`, above (includes `recipients`
+and `trigger`). Calling this endpoint directly always logs
+`"trigger": "manual"` — see `POST /api/sensor-reading` for the automatic
+counterpart.
 
 Recipients come from `backend/app/data/subscribers.json` — a list of
 `{"phone_number": ..., "location_name": ...}` pairs, populated by
@@ -422,7 +454,7 @@ XML ("Voice Actions" format), not JSON:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<Response><Say voice="woman" playBeep="false">Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks.</Say></Response>
+<Response><Say voice="woman" playBeep="false">Flood risk is HIGH in Lagos. Move to higher ground and avoid riverbanks. Prioritize children, elderly people, and pregnant or nursing individuals when evacuating.</Say></Response>
 ```
 
 If no message is queued for `destinationNumber` (e.g. a retried callback,

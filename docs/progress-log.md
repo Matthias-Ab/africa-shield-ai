@@ -5,6 +5,42 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-20 — Safety-priority line for women/children in high-risk alerts
+
+### Completed
+- Closed a real gap flagged in `todo.md` since the pitch-brief work
+  earlier the same day: "women" and "children" are two of the groups
+  the jury scorecard's Social Impact & Inclusion criterion names
+  explicitly, and until now nothing in the system had been deliberately
+  designed for either — voice alerts, local-language text, and
+  feature-phone delivery served disabilities/elderly/underserved
+  communities, but the other two were unaddressed.
+- **Added a safety-priority clause to every "high" risk alert template**
+  in `backend/app/models/translations.py`, in all 7 languages — naming
+  children, elderly people, and pregnant/nursing individuals as
+  priorities during evacuation. This is standard humanitarian
+  evacuation guidance (the same category IFRC/UNICEF flood materials
+  use), not a new personal-data field or subscriber attribute — no
+  schema change, no new privacy surface.
+- Deliberately scoped to `"high"` only — `medium`/`low` templates have
+  no evacuation instruction for this clause to attach to.
+- Updated the 4 example payloads in `docs/api-contract.md` that quoted
+  the old "high" message text verbatim so they match the real output.
+
+### Flags for the team
+- **This new clause is unreviewed by a native speaker in all 7
+  languages — including Swahili, Arabic, and Somali**, whose *original*
+  sentence was already confirmed correct on 2026-08-17. That review
+  didn't cover this new addition; don't assume it inherited that
+  review. Same status the newer French/Portuguese/Amharic content
+  already carries.
+- Adding a sentence can push a "high" SMS from one 160-character GSM-7
+  segment into two, which roughly doubles that message's per-alert send
+  cost — worth accounting for before quoting "$0.01-$0.03 per alert" as
+  a flat figure in the pitch or BMC.
+
+---
+
 ## 2026-08-17 — Added Addis Ababa as a 10th sample city, so Amharic is exercised live
 
 ### Completed
