@@ -9,31 +9,48 @@ import {
   RefreshCw,
   ShieldAlert,
   Volume2,
+  MessageSquare,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const API_URL = "http://localhost:8000/api/regions";
+const REGIONS_API_URL = "http://localhost:8000/api/regions";
+const ALERTS_API_URL = "http://localhost:8000/api/alerts";
 
 function Alerts() {
   const [regions, setRegions] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState(null);
 
+  /*
+   * Fetch both:
+   * 1. Regional flood-risk information
+   * 2. Alert delivery information
+   */
   const fetchAlerts = useCallback(async () => {
     try {
       setLoading(true);
       setError(false);
 
-      const response = await fetch(API_URL);
+      const [regionsResponse, alertsResponse] = await Promise.all([
+        fetch(REGIONS_API_URL),
+        fetch(ALERTS_API_URL),
+      ]);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch alert data");
+      if (!regionsResponse.ok) {
+        throw new Error("Failed to fetch regional data");
       }
 
-      const data = await response.json();
+      if (!alertsResponse.ok) {
+        throw new Error("Failed to fetch alert delivery data");
+      }
 
-      setRegions(Array.isArray(data) ? data : []);
+      const regionsData = await regionsResponse.json();
+      const alertsData = await alertsResponse.json();
+
+      setRegions(Array.isArray(regionsData) ? regionsData : []);
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
     } catch (err) {
       console.error("Error loading alerts:", err);
       setError(true);
@@ -46,6 +63,28 @@ function Alerts() {
     fetchAlerts();
   }, [fetchAlerts]);
 
+  /*
+   * Find the delivery record belonging to a region.
+   */
+  const getDeliveryInfo = useCallback(
+    (region) => {
+      if (!region?.location_name) return null;
+
+      return (
+        alerts.find(
+          (alert) =>
+            alert.location_name?.toLowerCase() ===
+            region.location_name?.toLowerCase()
+        ) || null
+      );
+    },
+    [alerts]
+  );
+
+  /*
+   * Only HIGH and MEDIUM risk regions appear
+   * in the active alert list.
+   */
   const alertRegions = useMemo(() => {
     return regions
       .filter((region) => {
@@ -67,6 +106,9 @@ function Alerts() {
       });
   }, [regions]);
 
+  /*
+   * Statistics.
+   */
   const statistics = useMemo(() => {
     const high = regions.filter(
       (region) => region.risk_level?.toLowerCase() === "high"
@@ -83,6 +125,12 @@ function Alerts() {
     };
   }, [regions]);
 
+  /*
+   * Get clean region name.
+   *
+   * Example:
+   * "Lagos, Nigeria" -> "Lagos"
+   */
   const getRegionName = (locationName, country) => {
     if (!locationName) return "Unknown region";
 
@@ -93,10 +141,17 @@ function Alerts() {
     return locationName.split(",")[0].trim();
   };
 
+  /*
+   * Convert backend risk score to percentage.
+   *
+   * Example:
+   * 0.82 -> 82
+   */
   const getRiskScore = (region) => {
     const score =
       region.risk_score ??
       region.risk_score_breakdown?.risk_score ??
+      region.ml_risk_score ??
       0;
 
     if (typeof score !== "number") return 0;
@@ -104,14 +159,33 @@ function Alerts() {
     return score <= 1 ? Math.round(score * 100) : Math.round(score);
   };
 
+  /*
+   * ML risk score.
+   */
+  const getMLRiskScore = (region) => {
+    const score = region.ml_risk_score ?? 0;
+
+    if (typeof score !== "number") return 0;
+
+    return score <= 1 ? Math.round(score * 100) : Math.round(score);
+  };
+
+  /*
+   * Backend warning message.
+   */
   const getAlertMessage = (region) => {
     return (
       region.alert_message_en ||
       region.alert_message ||
-      `Flood risk is currently classified as ${region.risk_level || "unknown"} in this region.`
+      `Flood risk is currently classified as ${
+        region.risk_level || "unknown"
+      } in this region.`
     );
   };
 
+  /*
+   * Risk styling.
+   */
   const getRiskStyles = (riskLevel) => {
     switch (riskLevel?.toLowerCase()) {
       case "high":
@@ -138,6 +212,38 @@ function Alerts() {
           label: "MONITOR",
         };
     }
+  };
+
+  /*
+   * Format backend timestamp.
+   *
+   * Example:
+   * 2026-08-07T09:15:00Z
+   * ->
+   * Aug 7, 2026, 12:15 PM
+   */
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "Not available";
+
+    const date = new Date(timestamp);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Not available";
+    }
+
+    return date.toLocaleString([], {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
+  /*
+   * Get delivery channel.
+   */
+  const getChannelLabel = (delivery) => {
+    if (!delivery?.channel) return "Not sent";
+
+    return delivery.channel.replace(" (simulated)", "");
   };
 
   return (
@@ -174,6 +280,7 @@ function Alerts() {
               size={15}
               className={loading ? "animate-spin" : ""}
             />
+
             Refresh alerts
           </button>
         </div>
@@ -297,6 +404,8 @@ function Alerts() {
                 {alertRegions.map((region, index) => {
                   const styles = getRiskStyles(region.risk_level);
                   const score = getRiskScore(region);
+                  const mlScore = getMLRiskScore(region);
+                  const delivery = getDeliveryInfo(region);
 
                   return (
                     <button
@@ -348,7 +457,7 @@ function Alerts() {
                           <div className="mt-4 flex flex-wrap items-center gap-4 text-[10px] font-semibold text-slate-400">
                             <span className="flex items-center gap-1.5">
                               <ShieldAlert size={12} />
-                              Risk score: {score}/100
+                              Risk: {score}/100
                             </span>
 
                             <span className="flex items-center gap-1.5">
@@ -359,6 +468,13 @@ function Alerts() {
                             {region.rainfall_mm_24h !== undefined && (
                               <span>
                                 Rainfall: {region.rainfall_mm_24h} mm
+                              </span>
+                            )}
+
+                            {delivery && (
+                              <span className="flex items-center gap-1.5 text-emerald-600">
+                                <MessageSquare size={12} />
+                                {getChannelLabel(delivery)}
                               </span>
                             )}
 
@@ -411,6 +527,7 @@ function Alerts() {
 
             {selectedAlert ? (
               <div className="p-5">
+                {/* Region Summary */}
                 <div className="rounded-2xl bg-slate-50 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -446,23 +563,44 @@ function Alerts() {
                         Risk
                       </p>
 
-                      <p className="mt-1 text-sm font-extrabold text-slate-800">
+                      <p className="mt-1 text-sm font-extrabold capitalize text-slate-800">
                         {selectedAlert.risk_level || "Unknown"}
                       </p>
                     </div>
 
                     <div className="rounded-xl bg-white p-3">
                       <p className="text-[9px] font-bold uppercase text-slate-400">
-                        Score
+                        Risk Score
                       </p>
 
                       <p className="mt-1 text-sm font-extrabold text-slate-800">
                         {getRiskScore(selectedAlert)}/100
                       </p>
                     </div>
+
+                    <div className="rounded-xl bg-white p-3">
+                      <p className="text-[9px] font-bold uppercase text-slate-400">
+                        ML Score
+                      </p>
+
+                      <p className="mt-1 text-sm font-extrabold text-slate-800">
+                        {getMLRiskScore(selectedAlert)}/100
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-3">
+                      <p className="text-[9px] font-bold uppercase text-slate-400">
+                        Rainfall
+                      </p>
+
+                      <p className="mt-1 text-sm font-extrabold text-slate-800">
+                        {selectedAlert.rainfall_mm_24h ?? "—"} mm
+                      </p>
+                    </div>
                   </div>
                 </div>
 
+                {/* Warning Message */}
                 <div className="mt-5">
                   <p className="text-[10px] font-extrabold uppercase tracking-wide text-blue-600">
                     WARNING MESSAGE
@@ -473,6 +611,7 @@ function Alerts() {
                   </p>
                 </div>
 
+                {/* Localized Message */}
                 {selectedAlert.alert_message_local && (
                   <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-4">
                     <div className="flex items-center gap-2">
@@ -495,6 +634,83 @@ function Alerts() {
                   </div>
                 )}
 
+                {/* Alert Delivery */}
+                <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare size={17} className="text-emerald-600" />
+
+                    <p className="text-[10px] font-extrabold uppercase tracking-wide text-emerald-600">
+                      LAST-MILE DELIVERY
+                    </p>
+                  </div>
+
+                  {(() => {
+                    const delivery = getDeliveryInfo(selectedAlert);
+
+                    if (!delivery) {
+                      return (
+                        <div className="mt-4">
+                          <p className="text-xs font-bold text-slate-700">
+                            No delivery record found
+                          </p>
+
+                          <p className="mt-1 text-[10px] leading-5 text-slate-400">
+                            This region currently has no corresponding alert
+                            delivery record from the backend.
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="mt-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-xl bg-white p-3">
+                            <p className="text-[9px] font-bold uppercase text-slate-400">
+                              Channel
+                            </p>
+
+                            <p className="mt-1 text-sm font-extrabold text-slate-800">
+                              {getChannelLabel(delivery)}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl bg-white p-3">
+                            <p className="text-[9px] font-bold uppercase text-slate-400">
+                              Status
+                            </p>
+
+                            <p className="mt-1 text-sm font-extrabold text-emerald-600">
+                              Sent
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl bg-white p-3">
+                          <p className="text-[9px] font-bold uppercase text-slate-400">
+                            Alert sent
+                          </p>
+
+                          <p className="mt-1 text-xs font-bold text-slate-700">
+                            {formatTimestamp(delivery.timestamp)}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-white p-3">
+                          <p className="text-[9px] font-bold uppercase text-slate-400">
+                            Message sent
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {delivery.message_sent || "No message available"}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Communication Channels */}
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-slate-100 p-4">
                     <Volume2 size={17} className="text-blue-600" />
@@ -607,6 +823,7 @@ function Alerts() {
           </div>
         </section>
 
+        {/* Footer */}
         <div className="flex items-center justify-between px-1 py-6 text-[10px] text-slate-400">
           <span>AfriShield Early Warning System</span>
 

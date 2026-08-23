@@ -145,6 +145,78 @@ function RegionTable() {
     return "Flood";
   };
 
+  /*
+   * Prepare the backend region data for RegionDetails.
+   *
+   * The backend uses names such as:
+   * location_name
+   * risk_level
+   * risk_score
+   * rainfall_mm_24h
+   * river_level_m
+   *
+   * RegionDetails uses:
+   * name
+   * riskLevel
+   * riskScore
+   * rainfall
+   * riverLevel
+   */
+  const handleRegionClick = (region) => {
+    const backendRiskScore =
+      region.risk_score ??
+      region.risk_score_breakdown?.risk_score ??
+      0;
+
+    const riskScore = getRiskScore(backendRiskScore);
+
+    const riskLevel = region.risk_level || "low";
+
+    const formattedRiskLevel =
+      riskLevel.charAt(0).toUpperCase() +
+      riskLevel.slice(1).toLowerCase();
+
+    const selectedRegionData = {
+      name: getRegionName(
+        region.location_name,
+        region.country
+      ),
+
+      country: region.country || "Unknown country",
+
+      flag: "🌍",
+
+      riskLevel: formattedRiskLevel,
+
+      riskScore,
+
+      hazard: getHazard(region),
+
+      status: getStatus(region),
+
+      rainfall: region.rainfall_mm_24h ?? 0,
+
+      riverLevel: region.river_level_m ?? 0,
+
+      latitude: region.latitude ?? null,
+
+      longitude: region.longitude ?? null,
+
+      alertMessage:
+        region.alert_message_en ||
+        region.alert_message ||
+        null,
+
+      localMessage:
+        region.alert_message_local || null,
+
+      localLanguage:
+        region.local_language || null,
+    };
+
+    setSelectedRegion(selectedRegionData);
+  };
+
   return (
     <>
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -174,6 +246,7 @@ function RegionTable() {
 
           {/* Refresh */}
           <button
+            type="button"
             onClick={fetchRegions}
             disabled={loading}
             title="Refresh regional data"
@@ -216,6 +289,7 @@ function RegionTable() {
               </p>
 
               <button
+                type="button"
                 onClick={fetchRegions}
                 className="mt-4 rounded-lg bg-blue-600 px-5 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
               >
@@ -268,22 +342,21 @@ function RegionTable() {
 
                   /*
                    * Use the backend's rules-based risk score.
-                   * Some responses may provide it directly as risk_score,
-                   * while others may provide it inside risk_score_breakdown.
                    */
                   const backendRiskScore =
                     region.risk_score ??
                     region.risk_score_breakdown?.risk_score ??
                     null;
 
-                  const riskScore = getRiskScore(backendRiskScore);
+                  const riskScore =
+                    getRiskScore(backendRiskScore);
 
                   const status = getStatus(region);
 
                   return (
                     <tr
                       key={`${region.location_name}-${index}`}
-                      onClick={() => setSelectedRegion(region)}
+                      onClick={() => handleRegionClick(region)}
                       className="group cursor-pointer border-b border-slate-100 transition-all duration-200 last:border-0 hover:bg-blue-50/40"
                     >
                       {/* Region */}
@@ -341,11 +414,14 @@ function RegionTable() {
                               riskLevel.toLowerCase() === "high"
                                 ? "bg-red-500"
                                 : riskLevel.toLowerCase() === "medium"
-                                ? "bg-orange-500"
-                                : "bg-emerald-500"
+                                  ? "bg-orange-500"
+                                  : "bg-emerald-500"
                             }`}
                             style={{
-                              width: `${Math.min(riskScore, 100)}%`,
+                              width: `${Math.min(
+                                riskScore,
+                                100
+                              )}%`,
                             }}
                           />
                         </div>
@@ -370,6 +446,7 @@ function RegionTable() {
                           )}`}
                         >
                           {getStatusIcon(status)}
+
                           <span>{status}</span>
                         </div>
                       </td>
@@ -382,7 +459,7 @@ function RegionTable() {
         )}
       </section>
 
-      {/* Existing Region Details panel */}
+      {/* Region Details */}
       {selectedRegion && (
         <RegionDetails
           region={selectedRegion}

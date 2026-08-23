@@ -334,7 +334,7 @@ function LiveFloodMap() {
                 </button>
               </div>
             ) : (
-              <RiskMap />
+              <RiskMap regions={regions} onRefresh={fetchRegions} />
             )}
           </div>
         </section>
