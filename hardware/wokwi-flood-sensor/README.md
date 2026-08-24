@@ -12,7 +12,12 @@ analog voltage output.
 - `sketch.ino` — the ESP32 firmware: reads both simulated sensors, syncs
   real time over NTP, and POSTs a reading to the backend every 15 seconds.
 - `diagram.json` — the Wokwi wiring: ESP32 + 2 potentiometers on GPIO34
-  (rain) and GPIO35 (water level).
+  (rain) and GPIO35 (water level), plus the ESP32's `TX0`/`RX0` wired to
+  the special `$serialMonitor` part. That wiring (found 2026-08-24) is
+  required — without it, the Serial Monitor panel never captures any
+  output no matter what `"serialMonitor": {"display": "always"}` is set
+  to in this same file; the display setting only controls the panel's
+  visibility, not whether anything is actually routed to it.
 
 ## Running the simulation
 
@@ -36,9 +41,8 @@ backend, you need a tunnel that exposes it on a public URL:
 2. In a separate terminal, run a tunnel — [ngrok](https://ngrok.com/) is
    the simplest free option: `ngrok http 8000`. It prints a public URL
    like `https://abcd1234.ngrok-free.app`.
-3. Ngrok also exposes the same tunnel over plain `http://` at that
-   address — use the `http://` form in `SERVER_URL` in `sketch.ino` to
-   avoid dealing with TLS certificates in the sketch:
+3. Use the `http://` form of that address in `SERVER_URL` in
+   `sketch.ino`:
    ```cpp
    const char *SERVER_URL = "http://abcd1234.ngrok-free.app/api/sensor-reading";
    ```
@@ -49,6 +53,23 @@ backend, you need a tunnel that exposes it on a public URL:
 If your backend isn't running or the tunnel URL is wrong/expired, the
 Serial Monitor will show `POST failed: ...` instead of a response —
 that's the sketch telling you the connection didn't work, not a crash.
+
+**Known unresolved gap (found 2026-08-24): the free ngrok agent now
+301/307-redirects plain `http://` requests to `https://` on its own —
+the README above used to claim plain `http://` passes through
+untouched, which is no longer true.** This sketch's `HTTPClient` doesn't
+follow that redirect, so it'll log `Backend responded (307):` with an
+empty body instead of a real response. Switching `SERVER_URL` to
+`https://` and adding a `WiFiClientSecure` with `setInsecure()` (the
+standard ESP32 pattern for skipping cert validation) gets past the
+redirect, but the TLS handshake itself then fails with
+`POST failed: connection refused` inside Wokwi's simulated network —
+untested whether that's a genuine Wokwi TLS limitation or something
+fixable. **Not solved yet** — whoever picks this up next should either
+find a working TLS approach, or find a tunnel option that truly serves
+plain HTTP without a forced redirect (an ngrok Traffic Policy
+`https-redirect` action looked promising but returned
+`ERR_NGROK_2201: Invalid policy action type` on the free plan).
 
 ## The device registry
 

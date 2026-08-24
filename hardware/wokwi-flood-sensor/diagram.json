@@ -26,7 +26,11 @@
 
     [ "esp32:3V3", "water_level_sensor:VCC", "red", [] ],
     [ "esp32:GND.2", "water_level_sensor:GND", "black", [] ],
-    [ "water_level_sensor:SIG", "esp32:D35", "blue", [] ]
+    [ "water_level_sensor:SIG", "esp32:D35", "blue", [] ],
+
+    [ "esp32:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp32:RX0", "$serialMonitor:TX", "", [] ]
   ],
-  "dependencies": {}
+  "dependencies": {},
+  "serialMonitor": { "display": "always", "collapse": false }
 }
