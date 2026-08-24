@@ -59,7 +59,26 @@ shapes. Summary:
   ESP32 flood sensor (`app/data/devices.json` resolves `device_id` to a
   region) and scores it exactly like `POST /api/risk-check` — same
   underlying function, same input validation, identical response shape.
-  See `app/routes/sensors.py` and `../hardware/wokwi-flood-sensor/`.
+  **Also auto-sends a real SMS** the first time this pushes the region
+  into `"high"` (not on every reading while it stays high) — see
+  "Automatic alerts" below. See `app/routes/sensors.py` and
+  `../hardware/wokwi-flood-sensor/`.
+
+## Automatic alerts
+
+- `POST /api/sensor-reading` calls `maybe_auto_trigger()`
+  (`app/routes/alerts.py`) after scoring a reading — it sends a real
+  alert the first time a region crosses into `"high"`, using the exact
+  same `send_alert_for_region()` function `POST /api/alerts/send` uses,
+  so there's one send code path, not two.
+- `app/data/region_alert_state.json` tracks each region's last-seen risk
+  level so "still high" doesn't re-fire the same alert every reading —
+  gitignored, since it's runtime state, not seed data.
+- `POST /api/risk-check` does **not** auto-trigger — it's also the
+  judge/dashboard "what-if" slider demo, which needs to stay
+  side-effect-free.
+- `GET /api/alerts` entries now include `"trigger": "manual"` or
+  `"trigger": "automatic"` so the history is honest about which is which.
 
 ## How the two risk scores work
 

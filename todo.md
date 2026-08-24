@@ -144,9 +144,18 @@ Presentation & Pitch 5.
       team's other languages) — see
       `docs/translation-review/amharic-review.txt`'s explicit warning.
       Portuguese packet: `docs/translation-review/portuguese-review.txt`.
-- [ ] Automatic threshold-triggered alerts (a scheduled job firing
-      `/api/alerts/send` when a region crosses into `high`), instead of
-      only on-demand sending.
+- [x] **Automatic threshold-triggered alerts (2026-08-18).**
+      `POST /api/sensor-reading` now auto-sends a real SMS the first time
+      a device's region crosses into `high` risk, reusing the exact same
+      send function `POST /api/alerts/send` uses. Fires once per
+      transition (tracked in the new `region_alert_state.json`), not
+      once per reading. Deliberately NOT wired into `POST /api/risk-check`
+      — that endpoint also backs the judge/dashboard "what-if" slider
+      demo, which must stay side-effect-free. `GET /api/alerts` entries
+      now show `"trigger": "manual"` or `"automatic"`. Still only covers
+      the sensor-reading path — a scheduled job re-scoring `regions.json`
+      itself (for regions with no live sensor) is a separate, un-done
+      next step.
 - [ ] Real subscriber registration/outreach at scale, instead of a
       hand-seeded or USSD-only list.
 
@@ -174,7 +183,10 @@ Presentation & Pitch 5.
 
 - [ ] Expand beyond flooding to droughts, heatwaves, wildfires, cyclones,
       earthquakes.
-- [ ] Offline-first Flutter mobile app.
+- [ ] **Offline-first Flutter mobile app — confirmed team plan, now in
+      UI/UX design (as of 2026-08-18).** Screens/flows being designed;
+      no app code written yet. Scope, timeline, and owner still to be
+      decided. Update this line again once design wraps and build starts.
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
 - [ ] Community-reporting feature (on-the-ground condition reports).

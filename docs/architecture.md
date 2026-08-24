@@ -150,13 +150,12 @@ As of 2026-08-17, `/api/alerts` is no longer just a simulated stub.
 - **`GET /api/alerts`** now returns real send history
   (`backend/app/data/alert_log.json`) once anything has gone through
   `/api/alerts/send`, falling back to the original hardcoded
-  `mock-data.json` list when nothing has been sent yet.
+  `mock-data.json` list when nothing has been sent yet. Each entry now
+  also has a `trigger` field (`"manual"` / `"automatic"` — added
+  2026-08-18, see "Automatic threshold alerts" below).
 - **What's still a deliberate shortcut:** subscribers are seeded by hand
   or via the USSD flow, not through any real-world outreach/registration
-  process; there's no automatic trigger (a background job re-scoring
-  regions and firing sends on a threshold crossing) — sends are
-  on-demand, from `POST /api/alerts/send`. Both are reasonable next steps,
-  not required for the demo.
+  process — a reasonable next step, not required for the demo.
 - **Not yet verified:** whether Africa's Talking's voice `<Say>`
   text-to-speech actually renders non-English text (Arabic/Swahili/
   Somali/French/Portuguese/Amharic) acceptably — only tested locally
@@ -206,14 +205,50 @@ simulation plan (`hardware/wokwi-flood-sensor/`).
   running backend yet (only tested with `curl` standing in for the
   device). Real hardware validation is further out still.
 
+## Automatic threshold alerts
+
+Added 2026-08-18. Previously, every alert required a person to press
+"send" — `POST /api/alerts/send` was the only way anything went out.
+
+- **`POST /api/sensor-reading` now auto-sends a real SMS** the first
+  time a device's region crosses into `"high"` risk — via
+  `maybe_auto_trigger()` in `backend/app/routes/alerts.py`, which calls
+  the exact same `send_alert_for_region()` function
+  `POST /api/alerts/send` uses (extracted from that route so the two
+  paths can't quietly drift apart into two different ways of sending an
+  alert).
+- **Fires once per transition, not once per reading.** A sensor
+  reporting every 15 seconds while still `"high"` would spam its
+  subscribers with a duplicate alert every 15 seconds without this —
+  `backend/app/data/region_alert_state.json` remembers each region's
+  last-seen risk level specifically to tell "still high" apart from
+  "just became high." Dropping back below `"high"` and rising into it
+  again re-arms it.
+- **`POST /api/risk-check` deliberately does NOT auto-trigger.** That
+  endpoint doubles as the judge/dashboard "what-if" slider demo (see
+  `docs/frontend-feature-spec.md`) — auto-sending a real SMS every time
+  someone drags a demo slider into the red would surprise everyone in
+  the room, not help the pitch. Automatic alerting only exists on the
+  device-ingestion path, where a "high" reading is a genuinely new,
+  real event, not someone testing the UI.
+- **`GET /api/alerts` gained a `trigger` field** (`"manual"` /
+  `"automatic"`) so the send history is honest about which alerts a
+  person sent versus which fired on their own.
+- Verified end-to-end against the running server: a device reporting
+  `"high"` fires once; a second `"high"` reading in a row does not
+  re-fire; dropping to `"low"` then rising to `"high"` again does;
+  `/api/risk-check` produces zero log entries even for `"high"` inputs.
+
 ## Future Improvements (post-hackathon roadmap)
 
 - Train the ML risk model on real historical flood/rainfall/river-level
   data (e.g. NASA/ESA satellite archives, national meteorological
   services) instead of the synthetic data it uses today — see "Two risk
   scores, on purpose" above.
-- Automatically trigger `/api/alerts/send` when a region's risk crosses
-  into `high` (a scheduled job), instead of requiring an on-demand call.
+- Extend automatic alerting beyond the sensor-reading path — e.g. a
+  scheduled job periodically re-scoring `regions.json` itself, for
+  regions with no live sensor yet (see "Automatic threshold alerts"
+  above for what's already built on the device-ingestion path).
 - Real subscriber self-registration/outreach at scale, instead of a
   hand-seeded or USSD-only subscriber list.
 - Expand beyond flooding to droughts, heatwaves, wildfires, cyclones, and

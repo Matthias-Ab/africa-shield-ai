@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from app.routes.alerts import maybe_auto_trigger
 from app.routes.risk import RiskCheckResponse, build_risk_check_response
 
 router = APIRouter()
@@ -45,16 +46,26 @@ def sensor_reading(payload: SensorReadingRequest) -> RiskCheckResponse:
     `POST /api/risk-check`'s, so the frontend can render a device-
     originated reading with zero special-casing. Its `timestamp` field
     is the time this score was computed, same meaning as everywhere else
-    that field appears."""
+    that field appears.
+
+    If this reading pushes the device's region into "high" risk for the
+    first time (not just "still high" from the last reading), this also
+    automatically sends a real SMS to that region's subscribers — see
+    `maybe_auto_trigger()` in `app/routes/alerts.py` for the exact
+    once-per-transition logic and why `/api/risk-check` doesn't do this
+    too. A failure here never breaks the sensor-reading response itself;
+    the reading is still scored and returned either way."""
     devices = json.loads(DEVICES_FILE.read_text(encoding="utf-8")) if DEVICES_FILE.exists() else []
     device = next((d for d in devices if d["device_id"] == payload.device_id), None)
     if device is None:
         raise HTTPException(status_code=404, detail=f"Unknown device_id: {payload.device_id}")
 
-    return build_risk_check_response(
+    response = build_risk_check_response(
         device["location_name"],
         device["latitude"],
         device["longitude"],
         payload.rainfall_mm_24h,
         payload.river_level_m,
     )
+    maybe_auto_trigger(device["location_name"], response.risk_level)
+    return response

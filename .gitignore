@@ -17,6 +17,11 @@ dist-ssr/
 .env.*
 !.env.example
 
+# Runtime state (grows from live/test usage, not seed data -- unlike
+# regions.json/devices.json/subscribers.json, which ARE committed)
+backend/app/data/alert_log.json
+backend/app/data/region_alert_state.json
+
 # Editor/OS
 .vscode/
 .idea/

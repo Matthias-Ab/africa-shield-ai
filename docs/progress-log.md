@@ -41,6 +41,54 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-18 — Automatic threshold-triggered alerts (sensor path only)
+
+### Completed
+- Closed a real todo item: previously every alert required a person to
+  press "send" — `POST /api/alerts/send` was the only way anything went
+  out, even a device reporting a dangerously high reading.
+- **Refactored `backend/app/routes/alerts.py`** to extract
+  `send_alert_for_region(location_name, channel, trigger)` — the actual
+  work `POST /api/alerts/send` was already doing (look up the region,
+  score it, find subscribers, send via SMS/voice, log the result) pulled
+  out of the FastAPI route handler so it can be called from elsewhere
+  without duplicating it. The route itself is now a thin wrapper that
+  calls this function with `trigger="manual"` and translates
+  `LookupError` into the existing 404. Verified this refactor changed
+  nothing about `/api/alerts/send`'s existing behavior.
+- **Added `maybe_auto_trigger(location_name, risk_level)`** in the same
+  file: tracks each region's last-seen risk level in the new
+  `backend/app/data/region_alert_state.json`, and calls
+  `send_alert_for_region(..., trigger="automatic")` — but only the first
+  time a region's level becomes `"high"`, not on every subsequent
+  reading that's still `"high"`. Dropping back below `"high"` and rising
+  into it again re-arms it. Without this, a Wokwi/ESP32 sensor reporting
+  every 15 seconds would re-send the same alert to the same subscribers
+  every 15 seconds while a flood was ongoing — worse than not automating
+  it at all.
+- **Wired this into `POST /api/sensor-reading` only.** Considered also
+  wiring it into `POST /api/risk-check` and deliberately did not:
+  `risk-check` also backs the judge/dashboard "what-if" slider demo (see
+  `docs/frontend-feature-spec.md`) — a real SMS firing every time someone
+  drags a demo slider into the red during a pitch would be a bad
+  surprise, not a feature. Automatic alerting only makes sense where a
+  "high" reading represents a genuinely new real event, which is true
+  for a sensor reading and not true for someone testing the UI.
+- Tested by pointing the Wokwi-simulated device at the Lagos region
+  (which has zero subscribers seeded) specifically so the transition
+  logic could be verified without sending a real SMS to a real phone.
+- Added `"trigger": "manual" | "automatic"` to every `GET /api/alerts`
+  entry, and to `.gitignore`'d `region_alert_state.json` /
+  `alert_log.json` (runtime state, not seed data).
+- Documented in `backend/README.md` and `docs/api-contract.md`.
+
+### Not yet started
+- A scheduled job re-scoring `regions.json` itself on a timer, for
+  regions with no live sensor feeding them — this session only covers
+  the sensor-reading path.
+
+---
+
 ## 2026-08-17 — Added Addis Ababa as a 10th sample city, so Amharic is exercised live
 
 ### Completed
