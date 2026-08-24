@@ -161,9 +161,12 @@ Presentation & Pitch 5.
 
 ## Feasibility & Scalability (10 pts) — not addressed in any doc yet
 
-- [ ] Write a short cost/scaling note for the pitch: Africa's Talking SMS
-      costs roughly $0.01–0.03/message, so adding a new city/region costs
-      pennies per alert — an honest, cheap-to-add talking point.
+- [x] **Cost/scaling note written (2026-08-21)** — see the new "Cost &
+      scalability" section in `docs/pitch-notes.md`: Africa's Talking SMS
+      costs roughly $0.01–0.03/message, adding a region is a data-entry
+      cost not an engineering one, and the new safety-priority line
+      roughly doubles a "high" alert's segment cost worth flagging
+      honestly rather than quoting one flat rate.
 
 ## Sustainability & Resource Efficiency (5 pts) — not addressed in any doc yet
 
