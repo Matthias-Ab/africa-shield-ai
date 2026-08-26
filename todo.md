@@ -168,11 +168,13 @@ Presentation & Pitch 5.
       roughly doubles a "high" alert's segment cost worth flagging
       honestly rather than quoting one flat rate.
 
-## Sustainability & Resource Efficiency (5 pts) — not addressed in any doc yet
+## Sustainability & Resource Efficiency (5 pts)
 
-- [ ] Write a short sustainability note: lightweight JSON-file backend +
-      FastAPI, no heavy infra, low compute footprint. Low point weight —
-      don't over-invest here.
+- [x] **Sustainability note written (2026-08-24)** — see the new
+      "Sustainability & resource efficiency" section in
+      `docs/pitch-notes.md`: lightweight JSON-file backend + FastAPI, no
+      heavy infra, low compute footprint, data-entry-only maintenance,
+      low-bandwidth channels by design.
 
 ## Presentation & Pitch (5 pts)
 

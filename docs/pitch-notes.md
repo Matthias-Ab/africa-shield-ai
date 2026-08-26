@@ -49,6 +49,26 @@ platform rate, not an estimate we made up.
   have a confirmed per-call/per-session rate yet to quote — don't guess a
   number for those on stage; SMS is the one rate we can defend.
 
+## Sustainability & resource efficiency
+
+**Affordable.** Roughly $0.01–$0.03 per alert sent, and the risk-scoring
+itself is cheap to run — a small trained model plus simple arithmetic,
+not a heavy compute job.
+
+**Environmentally responsible.** A lightweight JSON-file backend and a
+small ML model mean minimal server compute and power draw compared to
+running large infrastructure. The planned physical sensors are
+low-power microcontroller hardware, not energy-intensive equipment.
+
+**Maintainable.** Adding a region is a data-entry task, not a code
+change, so a partner disaster authority could plausibly maintain their
+own region's thresholds without engineering support once onboarded.
+
+**Resource-efficient.** SMS/USSD/voice were chosen specifically because
+they need minimal bandwidth and no data plan on the recipient's end —
+the system was designed around scarcity, not around assuming abundant
+connectivity.
+
 ## Demo flow (TODO — walk through the actual click path once built)
 
 1. Open dashboard → show regions color-coded by risk.
