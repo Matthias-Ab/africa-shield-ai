@@ -88,6 +88,9 @@ Advisory Board on Disaster Risk Reduction (AYAB-DRR) under the African Union.
   [`hardware/wokwi-flood-sensor/README.md`](hardware/wokwi-flood-sensor/README.md) —
   runs in the browser at wokwi.com, needs a tunnel to reach a locally
   running backend.
+- Mobile: see [`mobile-app/README.md`](mobile-app/README.md) — citizen-facing
+  companion app, structural scaffold only so far (real UI pending Figma),
+  `flutter run --dart-define=API_BASE_URL=...`.
 
 ## Docs
 

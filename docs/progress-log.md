@@ -5,6 +5,100 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-27 — Flutter mobile app: Figma design implemented
+
+### Completed
+- Team shared the Figma design ("AfriShield AI App") as one PDF export per
+  screen. Read all ~20 exports (onboarding flow, Home in both High/Low risk
+  states, Alerts in all 4 filter states, Alert Details, Alert Channels,
+  Risk Map, Report a Hazard, Safety Guidance, Settings) and rebuilt the app
+  to match: full onboarding (Splash → Welcome → Language → Country →
+  Location Setup), a 4-tab main app (Home / Alert / Maps / Reports) with a
+  floating pill nav bar matching the design, and Settings reached from
+  Home's app bar rather than as a 5th tab, exactly as designed.
+- Real, not placeholder, where the design called for real: `flutter_map`
+  (OpenStreetMap) for the Risk Map screen — the same tile-source family the
+  web dashboard's Leaflet map uses; `flutter_tts` for a genuine "Read Aloud"
+  accessibility feature (on-device text-to-speech reading the alert +
+  safety steps aloud); `share_plus` for the real system share sheet on
+  "Share Alert"; app-wide text-scale and high-contrast settings actually
+  applied via a `MediaQuery` override in `app.dart`, not just a settings
+  screen that does nothing.
+- Found and flagged two real gaps between the Figma design and what
+  actually exists, rather than quietly papering over them:
+  - The language list has 9 languages (adds Yoruba and Hausa); the backend
+    only generates alert text in 7. Yoruba/Hausa are still selectable, each
+    tagged "alerts not translated yet" in the UI.
+  - The Location Setup screen's State/LGA/City fields are dropdowns in the
+    design, but there's no real administrative-boundary dataset for all 54
+    countries to populate them from — built as plain text fields instead of
+    faking that data.
+- Deliberately left non-functional, with an honest explanation in the UI
+  rather than a silent no-op: the "Call Emergency Line" button (no verified
+  per-country emergency number exists — dialing a guessed one could
+  actively mislead someone), "Use my current location" (no `geolocator`
+  wired in yet), and the Reports tab's hazard-reporting form (no backend
+  endpoint exists for community reports — confirmed against `todo.md`'s
+  roadmap; submitting shows a local-only confirmation, explained as such).
+- `flutter analyze` and `flutter test` both pass clean.
+
+### Not yet started
+- A real backend endpoint for hazard reports.
+- `geolocator` integration for GPS-based location.
+- A real State/LGA/City geo dataset.
+- A verified emergency-number source per country.
+- Push notifications into the app itself (backend still only sends via
+  SMS/USSD/voice).
+- Translated UI strings for the 7 (or 9) supported languages.
+
+---
+
+## 2026-08-27 — Flutter mobile app: scoped citizen-facing, structural scaffold built
+
+### Completed
+- **Decided the app's audience before writing any code:** citizen-facing,
+  as an additional channel alongside SMS/USSD/voice — not a replacement,
+  and not an admin tool (the web dashboard already covers that). Reasoning:
+  "offline-first" only makes sense for someone in the field during a flood
+  who may lose connectivity mid-event; an authority already has the web
+  dashboard from an office. A citizen app only makes sense as *extra*
+  reach for the smartphone-owning segment — the project's actual
+  differentiator is still reaching people who don't have one.
+- Created `mobile-app/` (Flutter, Android + iOS targets) with a real
+  layered structure: `config/` (API base URL via `--dart-define`, not
+  hardcoded — the web dashboard's opposite choice cost real cleanup time,
+  see `todo.md`), `models/` (mirror `GET /api/regions` and
+  `GET /api/alerts` field-for-field), `services/` (real HTTP calls, no
+  mocking, plus a `SharedPreferences`-backed cache), `providers/` (region
+  + alert state with live-data-falls-back-to-cache logic, exposed to the
+  UI as `LoadStatus` so it can honestly show "cached" vs "live" — same
+  no-overclaiming standard as the rest of the project), `screens/`, and
+  `widgets/`.
+- Screens are functional placeholders, not final design: region list
+  (color-coded by risk), region detail (risk, alert text in the local
+  language + English, alert history), full alert history, and a settings
+  screen for picking a region + one of the 7 supported languages. All of
+  it is wired to the real backend — running it against a live
+  `uvicorn` instance actually loads real regions and real alert history.
+- `flutter analyze` and `flutter test` both pass clean.
+- Declared the same 7 locales the backend supports
+  (`backend/app/models/translations.py`) as the app's supported locales,
+  enabling things like Arabic RTL — but the UI's own strings aren't
+  translated yet, only prepared to be.
+
+### Not yet started
+- **The actual visual design** — waiting on Figma from the team; nothing
+  in `mobile-app/` right now is meant to be final UI.
+- A map screen (no mapping package chosen/wired in yet).
+- Push notifications — the backend's automatic-alert system sends real
+  SMS/voice today, not a push into this app. That needs its own delivery
+  mechanism (e.g. Firebase Cloud Messaging) and a backend trigger; out of
+  scope for this scaffold.
+- Translated UI chrome for the 7 languages (structure is ready; strings
+  aren't written).
+
+---
+
 ## 2026-08-20 — Safety-priority line for women/children in high-risk alerts
 
 ### Completed

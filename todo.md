@@ -188,10 +188,16 @@ Presentation & Pitch 5.
 
 - [ ] Expand beyond flooding to droughts, heatwaves, wildfires, cyclones,
       earthquakes.
-- [ ] **Offline-first Flutter mobile app — confirmed team plan, now in
-      UI/UX design (as of 2026-08-18).** Screens/flows being designed;
-      no app code written yet. Scope, timeline, and owner still to be
-      decided. Update this line again once design wraps and build starts.
+- [ ] **Offline-first Flutter mobile app — Figma design implemented
+      (2026-08-27).** See `mobile-app/README.md`'s feature table for exactly
+      what's real vs. UI-only. Full onboarding flow (language/country/
+      location), 4-tab app (Home/Alert/Maps/Reports) all wired to the live
+      backend, real OSM map, real text-to-speech "Read Aloud" accessibility
+      feature, real offline cache. `flutter analyze` and `flutter test` both
+      pass. Still needed: hazard-report backend endpoint (Reports tab is
+      UI-only), a real geo dataset for State/LGA/City (currently free text),
+      `geolocator` for GPS location, a verified per-country emergency number
+      source, push notifications, and translated UI strings.
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
 - [ ] Community-reporting feature (on-the-ground condition reports).
