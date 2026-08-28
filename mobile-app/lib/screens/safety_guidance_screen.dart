@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../widgets/afrishield_logo.dart';
 
@@ -10,8 +11,9 @@ class SafetyGuidanceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('SAFETY GUIDANCE')),
+      appBar: AppBar(title: Text(l10n.safetyGuidanceTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -19,43 +21,31 @@ class SafetyGuidanceScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
-                children: const [
-                  AfriShieldLogo(size: 32),
-                  SizedBox(width: 12),
+                children: [
+                  const AfriShieldLogo(size: 32),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text('Prepare before flooding happens',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    child: Text(l10n.prepareBeforeFlooding,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const _GuidanceSection(
-            title: 'Before a flood!',
-            points: [
-              'Keep important documents and essential items in a safe place.',
-              'Know where you can move to higher ground.',
-              'Keep your phone charged.',
-            ],
+          _GuidanceSection(
+            title: l10n.beforeAFlood,
+            points: [l10n.beforeFlood1, l10n.beforeFlood2, l10n.beforeFlood3],
           ),
           const SizedBox(height: 12),
-          const _GuidanceSection(
-            title: 'During a flood!',
-            points: [
-              'Move to a safe location.',
-              'Avoid walking or driving through floodwater.',
-              'Follow instructions from local authorities.',
-            ],
+          _GuidanceSection(
+            title: l10n.duringAFlood,
+            points: [l10n.duringFlood1, l10n.duringFlood2, l10n.duringFlood3],
           ),
           const SizedBox(height: 12),
-          const _GuidanceSection(
-            title: 'After a flood!',
-            points: [
-              'Avoid contaminated water.',
-              'Report damaged infrastructure.',
-              'Continue monitoring official updates.',
-            ],
+          _GuidanceSection(
+            title: l10n.afterAFlood,
+            points: [l10n.afterFlood1, l10n.afterFlood2, l10n.afterFlood3],
           ),
         ],
       ),

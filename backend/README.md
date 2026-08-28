@@ -55,6 +55,18 @@ shapes. Summary:
 - `POST /api/voice/callback` — real. Africa's Talking Voice webhook,
   called when a `channel: "voice"` alert is answered; responds with the
   queued alert text as speech. See `app/routes/voice.py`.
+- `POST /api/hazard-reports` — real. A citizen reports a hazard they're
+  seeing, or flags `"needs_assistance": true` if they need help — stored
+  in `app/data/hazard_reports.json`. No dispatch/routing happens yet;
+  this only persists the report. See `app/routes/hazard_reports.py`.
+- `GET /api/hazard-reports` — real. Lists everything reported so far,
+  oldest first. Empty list, not a 404, before anyone's reported.
+- `POST /api/hazard-reports/{id}/photo` — real. Attaches a photo
+  (JPEG/PNG/WebP, max 8MB) to an already-created report — multipart, so
+  it's a separate call from the JSON `POST` above. Stored as a plain file
+  on local disk (`app/data/hazard_report_photos/`), not object storage.
+- `GET /api/hazard-reports/{id}/photo` — real. Serves the attached photo;
+  404 if the report has none.
 - `POST /api/sensor-reading` — real. Ingests a reading from a registered
   ESP32 flood sensor (`app/data/devices.json` resolves `device_id` to a
   region) and scores it exactly like `POST /api/risk-check` — same

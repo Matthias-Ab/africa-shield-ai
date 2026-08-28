@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -23,13 +24,6 @@ class AlertDetailScreen extends StatefulWidget {
 }
 
 class _AlertDetailScreenState extends State<AlertDetailScreen> {
-  static const _steps = [
-    'Move to higher ground',
-    'Avoid rivers and flooded roads',
-    'Keep your phone charged',
-    'Follow local authority instructions',
-  ];
-
   final _tts = FlutterTts();
   bool _speaking = false;
 
@@ -39,14 +33,14 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
     super.dispose();
   }
 
-  Future<void> _readAloud(String message) async {
+  Future<void> _readAloud(String message, List<String> steps, String whatYouShouldDo) async {
     if (_speaking) {
       await _tts.stop();
       setState(() => _speaking = false);
       return;
     }
     setState(() => _speaking = true);
-    final text = '$message. What you should do: ${_steps.join(". ")}.';
+    final text = '$message. $whatYouShouldDo: ${steps.join(". ")}.';
     await _tts.speak(text);
     _tts.setCompletionHandler(() {
       if (mounted) setState(() => _speaking = false);
@@ -56,12 +50,19 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final voiceEnabled = context.watch<AccessibilityProvider>().voiceAlertsEnabled;
+    final l10n = AppLocalizations.of(context)!;
+    final steps = [
+      l10n.stepMoveToHigherGround,
+      l10n.stepAvoidRivers,
+      l10n.stepKeepPhoneCharged,
+      l10n.stepFollowAuthorities,
+    ];
 
     return Consumer<RegionProvider>(
       builder: (context, provider, _) {
         final region = provider.regionByName(widget.locationName);
         if (region == null) {
-          return const Scaffold(body: Center(child: Text('Alert not found.')));
+          return Scaffold(body: Center(child: Text(l10n.alertNotFound)));
         }
 
         final color = AppColors.forRiskLevel(region.riskLevel);
@@ -69,15 +70,15 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('FLOOD ALERT'),
+            title: Text(l10n.floodAlertAppBarTitle),
             foregroundColor: color,
             titleTextStyle: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 18),
             actions: [
               if (voiceEnabled)
                 IconButton(
-                  tooltip: _speaking ? 'Stop' : 'Read aloud',
+                  tooltip: _speaking ? l10n.stopTooltip : l10n.readAloudTooltip,
                   icon: Icon(_speaking ? Icons.stop_circle_outlined : Icons.volume_up_outlined, color: color),
-                  onPressed: () => _readAloud(region.alertMessageEn),
+                  onPressed: () => _readAloud(region.alertMessageEn, steps, l10n.whatYouShouldDo),
                 ),
             ],
           ),
@@ -92,7 +93,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${region.riskLevel.toUpperCase()} FLOOD RISK',
+                        l10n.floodRiskSuffix(region.riskLevel.toUpperCase()),
                         style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 17),
                       ),
                       const SizedBox(height: 6),
@@ -103,9 +104,9 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _Stat(label: 'Rainfall', sub: 'Last 24 hours', value: '${region.rainfallMm24h.toStringAsFixed(0)} mm'),
-                          _Stat(label: 'River Level', sub: 'Current', value: '${region.riverLevelM.toStringAsFixed(1)} m'),
-                          _Stat(label: 'Risk Score', sub: 'Current', value: region.riskScore.toStringAsFixed(2)),
+                          _Stat(label: l10n.statRainfall, sub: l10n.statLast24Hours, value: '${region.rainfallMm24h.toStringAsFixed(0)} mm'),
+                          _Stat(label: l10n.statRiverLevel, sub: l10n.statCurrent, value: '${region.riverLevelM.toStringAsFixed(1)} m'),
+                          _Stat(label: l10n.statRiskScore, sub: l10n.statCurrent, value: region.riskScore.toStringAsFixed(2)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -114,7 +115,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Your Current Location', style: TextStyle(color: AppColors.inkSoft, fontSize: 12.5)),
+                          Text(l10n.yourCurrentLocation, style: const TextStyle(color: AppColors.inkSoft, fontSize: 12.5)),
                           Row(
                             children: [
                               const Icon(Icons.location_on, size: 14, color: AppColors.navy),
@@ -131,9 +132,13 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                         child: FilledButton(
                           style: FilledButton.styleFrom(backgroundColor: color),
                           onPressed: () => Share.share(
-                            '${region.riskLevel.toUpperCase()} flood risk in ${region.locationName}: ${region.alertMessageEn}',
+                            l10n.shareAlertTemplate(
+                              region.riskLevel.toUpperCase(),
+                              region.locationName,
+                              region.alertMessageEn,
+                            ),
                           ),
-                          child: const Text('SHARE ALERT'),
+                          child: Text(l10n.shareAlert),
                         ),
                       ),
                     ],
@@ -148,10 +153,10 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('What you should do',
+                      Text(l10n.whatYouShouldDo,
                           style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 16)),
                       const SizedBox(height: 8),
-                      for (var i = 0; i < _steps.length; i++)
+                      for (var i = 0; i < steps.length; i++)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
@@ -162,7 +167,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                                 child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                               ),
                               const SizedBox(width: 12),
-                              Expanded(child: Text(_steps[i])),
+                              Expanded(child: Text(steps[i])),
                             ],
                           ),
                         ),
@@ -176,19 +181,14 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                 onPressed: () => showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    title: const Text('Emergency line not set up yet'),
-                    content: const Text(
-                      "AfriShield doesn't have a verified emergency number for "
-                      "this country yet — showing the wrong one could send "
-                      'someone to the wrong service. Use your local emergency '
-                      'number directly for now.',
-                    ),
+                    title: Text(l10n.emergencyDialogTitle),
+                    content: Text(l10n.emergencyDialogBody),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+                      TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.ok)),
                     ],
                   ),
                 ),
-                child: const Text('CALL EMERGENCY LINE'),
+                child: Text(l10n.callEmergencyLine),
               ),
             ],
           ),

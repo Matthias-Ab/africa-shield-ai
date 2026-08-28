@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../data/countries.dart';
 import '../../theme/app_theme.dart';
@@ -23,17 +24,18 @@ class _CountryScreenState extends State<CountryScreen> {
         .where((c) => c.name.toLowerCase().contains(_query.toLowerCase()))
         .toList();
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('📍  COUNTRY')),
+      appBar: AppBar(title: Text(l10n.countryAppBarTitle)),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search country...',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: l10n.searchCountryHint,
+                prefixIcon: const Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _query = v),
             ),

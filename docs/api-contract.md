@@ -42,6 +42,16 @@ field (`"manual"` / `"automatic"`) on real-send-log entries — additive,
 no existing field changed. `POST /api/risk-check` is deliberately
 unaffected — see the sensor-reading section for why.
 
+**Status (as of 2026-08-28): citizen hazard/help reporting is real, with
+GPS and photo attachment.** `POST /api/hazard-reports` and
+`GET /api/hazard-reports` let a citizen report a hazard they're seeing
+(or flag that they need help), optionally with a real GPS fix;
+`POST /api/hazard-reports/{id}/photo` and
+`GET /api/hazard-reports/{id}/photo` attach and serve a photo. See those
+endpoints' sections below. Additive; no existing endpoint's shape
+changed. No dispatch/routing to a responder exists yet — this only
+persists and lists reports.
+
 **Contract change (additive, non-breaking):** both `POST /api/risk-check`
 and `GET /api/regions` gained a new `risk_score_breakdown` field (for a
 "why this score" explainability view), and `GET /api/regions` gained
@@ -466,3 +476,110 @@ language/accent support hasn't been tested against non-English alert
 text (Arabic/Swahili/Somali/French) — confirm this works as expected
 against the real sandbox before relying on it for a non-English region
 in the demo.
+
+---
+
+## `POST /api/hazard-reports`
+
+A citizen reports a hazard they're seeing ("water is rising on my
+street"), or flags that they need help. Matches the mobile app's
+"Reports" tab (see `mobile-app/lib/models/hazard_report.dart`), which
+calls this for real.
+
+**Current status:** real — persists to `backend/app/data/hazard_reports.json`
+(gitignored, same runtime-state pattern as `alert_log.json`). No
+dispatch/routing to a responder happens here; this only stores and lists
+reports.
+
+### Request
+
+```json
+{
+  "category": "Water Rising",
+  "description": "Trapped on roof, water still rising",
+  "location_name": "Lagos, Nigeria",
+  "needs_assistance": true,
+  "latitude": 6.5244,
+  "longitude": 3.3792
+}
+```
+
+| Field              | Type    | Notes                                                        |
+|--------------------|---------|-----------------------------------------------------------------|
+| `category`         | string  | Freeform, not a server-enforced enum — the mobile UI's category list (`hazardCategories`) is a suggestion, not the only valid set. |
+| `description`      | string? | Optional.                                                        |
+| `location_name`    | string  | Freeform — not required to match a region in `regions.json`, unlike `POST /api/alerts/send`. |
+| `needs_assistance` | bool    | Defaults to `false`. `true` distinguishes "I need help now" from a routine condition report — same shape either way, not two endpoints. |
+| `latitude`         | float?  | Optional. Real GPS when the mobile app has a fix (onboarding and the Reports tab both wire this up via `geolocator`); `null` otherwise. No reverse geocoding — this is a raw coordinate, not an address. |
+| `longitude`        | float?  | Optional, same caveat.                                           |
+
+### Response
+
+```json
+{
+  "id": "fe17044d53d645b088bc57b49448975c",
+  "category": "Water Rising",
+  "description": "Trapped on roof, water still rising",
+  "location_name": "Lagos, Nigeria",
+  "needs_assistance": true,
+  "latitude": 6.5244,
+  "longitude": 3.3792,
+  "submitted_at": "2026-08-28T06:55:58Z",
+  "has_photo": false
+}
+```
+
+`201 Created`. `id` is a server-generated UUID4 hex string. `submitted_at`
+is ISO 8601, UTC. `has_photo` is always `false` on creation — a photo can
+only be attached afterward via `POST /api/hazard-reports/{id}/photo`,
+below.
+
+---
+
+## `GET /api/hazard-reports`
+
+Every report submitted so far, oldest first (same convention as
+`GET /api/alerts`). Returns `[]`, not a 404, before anyone's reported
+anything. Each entry is the same shape as `POST /api/hazard-reports`'s
+response, above (including `has_photo`).
+
+---
+
+## `POST /api/hazard-reports/{report_id}/photo`
+
+Attaches a photo to an already-created report. Separate from
+`POST /api/hazard-reports` because this is multipart, not JSON.
+
+### Request
+
+Multipart form data, one field:
+
+| Field   | Type | Notes                                                              |
+|---------|------|-------------------------------------------------------------------|
+| `photo` | file | JPEG, PNG, or WebP only (`415` otherwise); max 8MB (`413` otherwise). |
+
+`404` if `report_id` doesn't match an existing report.
+
+### Response
+
+Same shape as `POST /api/hazard-reports`'s response, with `has_photo:
+true`. `200 OK`.
+
+Stored as a plain file on local disk
+(`backend/app/data/hazard_report_photos/{report_id}.{ext}`, gitignored)
+— matches this backend's existing lightweight-storage approach, not
+object storage. A second upload for the same `report_id` overwrites the
+first; only the latest photo is kept.
+
+---
+
+## `GET /api/hazard-reports/{report_id}/photo`
+
+Serves the photo attached to a report. `404` if the report doesn't exist
+or has no photo. Response is the raw image file (`image/jpeg`,
+`image/png`, or `image/webp`), not JSON.
+
+### Response
+
+Array of objects, same shape as `POST /api/hazard-reports`'s response,
+above.

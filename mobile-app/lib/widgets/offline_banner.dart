@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
@@ -13,8 +14,9 @@ class OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final when = lastUpdated == null
-        ? 'unknown time'
+        ? l10n.unknownTime
         : DateFormat('MMM d, HH:mm').format(lastUpdated!);
     return Container(
       width: double.infinity,
@@ -26,7 +28,7 @@ class OfflineBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Showing saved data from $when — no connection right now.',
+              l10n.showingSavedData(when),
               style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
             ),
           ),

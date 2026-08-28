@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
@@ -35,8 +36,9 @@ class _RiskMapScreenState extends State<RiskMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('🗺️  FLOOD RISK MAP')),
+      appBar: AppBar(title: Text(l10n.floodRiskMapTitle)),
       body: Consumer<RegionProvider>(
         builder: (context, provider, _) {
           if (provider.status == LoadStatus.loading || provider.status == LoadStatus.initial) {
@@ -53,9 +55,9 @@ class _RiskMapScreenState extends State<RiskMapScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Search location...',
-                    prefixIcon: Icon(Icons.search),
+                  decoration: InputDecoration(
+                    hintText: l10n.searchLocationHint,
+                    prefixIcon: const Icon(Icons.search),
                   ),
                   onChanged: (v) => setState(() => _query = v),
                 ),
@@ -114,9 +116,9 @@ class _RiskMapScreenState extends State<RiskMapScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              _Stat(label: 'Rainfall', sub: 'Last 24 hours', value: '${selected.rainfallMm24h.toStringAsFixed(0)} mm'),
-                              _Stat(label: 'River Level', sub: 'Current', value: '${selected.riverLevelM.toStringAsFixed(1)} m'),
-                              _Stat(label: 'Risk Score', sub: 'Current', value: selected.riskScore.toStringAsFixed(2)),
+                              _Stat(label: l10n.statRainfall, sub: l10n.statLast24Hours, value: '${selected.rainfallMm24h.toStringAsFixed(0)} mm'),
+                              _Stat(label: l10n.statRiverLevel, sub: l10n.statCurrent, value: '${selected.riverLevelM.toStringAsFixed(1)} m'),
+                              _Stat(label: l10n.statRiskScore, sub: l10n.statCurrent, value: selected.riskScore.toStringAsFixed(2)),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -127,7 +129,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> {
                                 builder: (_) => AlertDetailScreen(locationName: selected.locationName),
                               ),
                             ),
-                            child: const Text('VIEW ALERT'),
+                            child: Text(l10n.viewAlertButton),
                           ),
                         ],
                       ),

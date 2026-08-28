@@ -5,6 +5,148 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-28 — Mobile: UI chrome translated into all 7 backend languages
+
+### Completed
+- Real Flutter localization, replacing the locale-only scaffolding that
+  existed before (`supportedLocales` was wired for RTL, but every
+  screen's own text was hardcoded English). Added `generate: true` +
+  `l10n.yaml` + `lib/l10n/app_{en,sw,ar,so,fr,pt,am}.arb` (~150 keys
+  each) and wired every screen and widget with real UI text — all of
+  `lib/screens/**` and `lib/widgets/**` — to `AppLocalizations.of(context)`
+  instead of literal strings.
+- `MaterialApp.locale` in `app.dart` is now driven live by
+  `OnboardingProvider.language` via a new `languageLocaleCodes` map in
+  `lib/data/languages.dart` — changing Settings > Language actually
+  changes the app's own UI language now, not just alert text.
+- Deliberately **not** translated, to avoid breaking behavior: data that
+  comes from the backend at runtime (region names, `alert_message_en`/
+  `alert_message_local`, risk-level words like "HIGH"/"MEDIUM"/"LOW");
+  the `hazardCategories` values in `reports_screen.dart` (still sent to
+  `POST /api/hazard-reports` in English, and still used as the icon
+  lookup key — only the *displayed* category label is translated,
+  via a new `_categoryLabel()` mapping); the 54-country list and
+  language names in `lib/data/`.
+- Yoruba and Hausa have no `.arb` file (matching their existing "alerts
+  not translated yet" gap) — `app.dart` falls back to English UI chrome
+  for those two rather than crashing or guessing.
+- **Every one of the 6 non-English translations is an unreviewed AI
+  draft** — flagged explicitly here because this is a *different* set of
+  strings than the alert wording, so Swahili/Arabic/Somali's prior
+  native-speaker review (2026-08-17) does not cover it. Treat all 6
+  languages as equally unreviewed for this UI-chrome set, same standing
+  policy as French/Portuguese/Amharic's alert text.
+- `flutter analyze` and `flutter test` both still pass clean after the
+  full pass — verified by grepping for any remaining hardcoded English
+  `Text(...)`/`hintText`/`tooltip` literals across `lib/screens/` and
+  `lib/widgets/`; none found.
+
+### Not yet started
+- Native-speaker review of all 6 non-English `.arb` files.
+- `ApiException`/`LocationException` messages (thrown from service
+  classes with no `BuildContext`) are still English-only regardless of
+  the selected language — localizing them would need passing localized
+  strings into the service layer, which wasn't attempted here.
+- `lib/widgets/region_card.dart` and `risk_badge.dart` were left
+  untouched — grepped and confirmed unused anywhere in the app (likely
+  leftover from before the Figma rebuild), so there's no live UI to
+  localize there.
+- RTL (Arabic) layout wasn't manually re-checked screen-by-screen beyond
+  what Flutter's locale-driven `Directionality` handles automatically —
+  worth a visual pass once someone can actually run the Arabic locale on
+  a device.
+
+---
+
+## 2026-08-28 — Mobile: real GPS and hazard-report photo attachment
+
+### Completed
+- **Real GPS via `geolocator`, replacing two UI-only stubs.** New
+  `lib/services/location_service.dart` wraps `Geolocator` with real error
+  handling (services off, permission denied/denied forever) — every
+  failure surfaces as a real message, never a silent fallback.
+  - Onboarding's Location Setup screen: "Use my current location" now
+    fetches a real fix and shows the raw coordinates. **No reverse
+    geocoding** — State/LGA/City still need manual entry, since a
+    coordinate isn't an address; this is captured honestly in the UI
+    copy rather than pretending to auto-fill.
+  - Reports tab: "Attach my current GPS location" fetches a fresh fix at
+    submit time (not reused from onboarding, since a report should
+    reflect where you are now) and sends it as `latitude`/`longitude` on
+    `POST /api/hazard-reports`.
+  - Added Android (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`) and
+    iOS (`NSLocationWhenInUseUsageDescription`) permission entries.
+- **Real photo attachment for hazard reports**, both sides:
+  - Backend: new `POST /api/hazard-reports/{id}/photo` (multipart;
+    JPEG/PNG/WebP only, 8MB cap) and `GET /api/hazard-reports/{id}/photo`.
+    Stored as a plain file on local disk
+    (`app/data/hazard_report_photos/`, gitignored) — same lightweight
+    approach as the rest of this backend, not object storage. Tested
+    manually: create → upload → `has_photo` flips true → photo downloads
+    back byte-identical; 404/415/413 error paths all verified.
+  - Mobile: `image_picker` (camera or gallery) replaces the "ADD PHOTO"
+    stub, with a thumbnail preview and a remove button. Uses
+    `readAsBytes()` + `MultipartFile.fromBytes` (not a file path), so
+    this works on web too, where picked files have no filesystem path.
+  - **Partial-failure case handled honestly:** if the report itself sends
+    but the photo upload fails, the dialog says exactly that ("report
+    sent, but the photo could not be uploaded") instead of claiming full
+    success or silently dropping the photo.
+- Added Android (`CAMERA`/`READ_MEDIA_IMAGES`) and iOS
+  (`NSCameraUsageDescription`/`NSPhotoLibraryUsageDescription`)
+  permission entries for the photo picker.
+- `flutter analyze` and `flutter test` both pass clean after all of the
+  above.
+
+### Not yet started
+- Reverse geocoding (coordinate → address) — would need a geocoding
+  service; `geocoding`-style plugins don't support Flutter web, which is
+  the only platform actually testable in this environment right now
+  (no Android emulator/SDK installed), so this was deliberately not
+  attempted rather than shipped broken on the one testable platform.
+- The web dashboard's Reports page is still not wired to
+  `GET /api/hazard-reports` (see the 2026-08-28 entry below).
+
+---
+
+## 2026-08-28 — Citizen hazard/help reporting: backend endpoint built
+
+### Completed
+- New `POST /api/hazard-reports` / `GET /api/hazard-reports` endpoints —
+  a citizen can report a hazard they're seeing, or flag
+  `"needs_assistance": true` if they need help, and it's persisted to
+  `backend/app/data/hazard_reports.json` (gitignored, same runtime-state
+  pattern as `alert_log.json`). See `docs/api-contract.md` for the full
+  request/response shape and `backend/app/routes/hazard_reports.py`.
+- `category` is intentionally freeform on the backend, not a server-
+  enforced enum, even though the mobile UI offers a fixed list
+  (`hazardCategories` in `mobile-app/lib/models/hazard_report.dart`) —
+  other channels (USSD, web) may want to send their own categories, and
+  "Other" already covers anything not in the list.
+- Tested manually end-to-end against a locally running backend: posted a
+  routine report and a `needs_assistance: true` report, confirmed both
+  round-trip correctly through `GET /api/hazard-reports`.
+- **Mobile app's Reports tab wired to the real endpoint.**
+  `ApiService.submitHazardReport()` posts `category`/`description`/
+  `location_name` to `POST /api/hazard-reports`; `ReportsScreen` shows a
+  real success dialog on `201`, or a real error dialog (nothing faked)
+  if the send fails — same "don't overclaim" pattern as
+  `RegionProvider`'s live/cached/error states. `needs_assistance` isn't
+  sent from the mobile UI — the Figma design has no "I need help"
+  toggle, so every mobile-submitted report defaults to `false` on that
+  field; it's only reachable today by calling the API directly.
+
+### Not yet started
+- The web dashboard's Reports page (`frontend-web/src/pages/Reports.jsx`)
+  is still an empty placeholder — not wired to `GET /api/hazard-reports`.
+- No dispatch/routing of any kind — a `needs_assistance: true` report
+  just sits in the log for now. Deciding who sees it and how fast is a
+  separate, unscoped piece of work.
+- Photo upload and GPS were both still-missing at the time this entry was
+  written; both are now done — see the GPS/photo entry above (same date).
+
+---
+
 ## 2026-08-27 — Flutter mobile app: Figma design implemented
 
 ### Completed

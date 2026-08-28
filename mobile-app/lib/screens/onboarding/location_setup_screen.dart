@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/countries.dart';
 import '../../providers/onboarding_provider.dart';
+import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
 import '../root_shell.dart';
 
@@ -30,6 +32,10 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
   late final _cityController =
       TextEditingController(text: context.read<OnboardingProvider>().city ?? '');
   bool _rememberLocation = false;
+  final _locationService = LocationService();
+  bool _locatingGps = false;
+  double? _gpsLatitude;
+  double? _gpsLongitude;
 
   @override
   void dispose() {
@@ -41,81 +47,113 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('📍  LOCATION')),
+      appBar: AppBar(title: Text(l10n.locationAppBarTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            const Text('Where are you located?',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+            Text(l10n.whereAreYouLocated,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
             const SizedBox(height: 4),
-            const Text("We'll use your location to provide relevant disaster alerts.",
-                style: TextStyle(color: AppColors.inkSoft)),
+            Text(l10n.locationIntro,
+                style: const TextStyle(color: AppColors.inkSoft)),
             const SizedBox(height: 20),
-            const _FieldLabel('Country *'),
+            _FieldLabel(l10n.countryFieldLabel),
             TextField(
               readOnly: true,
               controller: TextEditingController(text: widget.country.name),
             ),
             const SizedBox(height: 16),
-            const _FieldLabel('State / Region'),
+            _FieldLabel(l10n.stateFieldLabel),
             TextField(
               controller: _stateController,
-              decoration: const InputDecoration(hintText: 'Enter your state / region'),
+              decoration: InputDecoration(hintText: l10n.stateFieldHint),
             ),
             const SizedBox(height: 16),
-            const _FieldLabel('Local Government Area'),
+            _FieldLabel(l10n.lgaFieldLabel),
             TextField(
               controller: _lgaController,
-              decoration: const InputDecoration(hintText: 'Enter your local government area'),
+              decoration: InputDecoration(hintText: l10n.lgaFieldHint),
             ),
             const SizedBox(height: 16),
-            const _FieldLabel('City / Community'),
+            _FieldLabel(l10n.cityFieldLabel),
             TextField(
               controller: _cityController,
-              decoration: const InputDecoration(hintText: 'Enter your city / community'),
+              decoration: InputDecoration(hintText: l10n.cityFieldHint),
             ),
             const SizedBox(height: 20),
-            const Row(
+            Row(
               children: [
-                Expanded(child: Divider()),
+                const Expanded(child: Divider()),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('OR', style: TextStyle(fontWeight: FontWeight.w700)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(l10n.orDivider, style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
-                Expanded(child: Divider()),
+                const Expanded(child: Divider()),
               ],
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('GPS location detection is coming in a later build.')),
-              ),
-              icon: const Icon(Icons.my_location),
-              label: const Text('Use my current location'),
+              onPressed: _locatingGps ? null : _useCurrentLocation,
+              icon: _locatingGps
+                  ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.my_location),
+              label: Text(l10n.useMyCurrentLocation),
             ),
+            if (_gpsLatitude != null && _gpsLongitude != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.gpsCapturedNote(
+                  _gpsLatitude!.toStringAsFixed(4),
+                  _gpsLongitude!.toStringAsFixed(4),
+                ),
+                style: const TextStyle(color: AppColors.inkSoft, fontSize: 12),
+              ),
+            ],
             const SizedBox(height: 8),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               value: _rememberLocation,
               onChanged: (v) => setState(() => _rememberLocation = v ?? false),
-              title: const Text('Remember last used location'),
+              title: Text(l10n.rememberLocation),
             ),
-            const Text(
-              'Your location is used to provide relevant alerts.',
-              style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+            Text(
+              l10n.locationUsageNote,
+              style: const TextStyle(color: AppColors.inkSoft, fontSize: 12),
             ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _continue,
-              child: const Text('CONTINUE'),
+              child: Text(l10n.continueButton),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _useCurrentLocation() async {
+    setState(() => _locatingGps = true);
+    try {
+      final position = await _locationService.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _gpsLatitude = position.latitude;
+        _gpsLongitude = position.longitude;
+        _locatingGps = false;
+      });
+    } on LocationException catch (e) {
+      if (!mounted) return;
+      setState(() => _locatingGps = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   void _continue() async {
@@ -124,6 +162,8 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
           stateRegion: _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
           lga: _lgaController.text.trim().isEmpty ? null : _lgaController.text.trim(),
           city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+          latitude: _gpsLatitude,
+          longitude: _gpsLongitude,
         );
     if (!mounted) return;
     if (widget.fromSettings) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../theme/app_theme.dart';
 import 'alerts_screen.dart';
@@ -26,15 +27,15 @@ class _RootShellState extends State<RootShell> {
     ReportsScreen(),
   ];
 
-  static const _items = [
-    (icon: Icons.home_outlined, selectedIcon: Icons.home, label: 'Home'),
-    (icon: Icons.notifications_none, selectedIcon: Icons.notifications, label: 'Alert'),
-    (icon: Icons.map_outlined, selectedIcon: Icons.map, label: 'Maps'),
-    (icon: Icons.bar_chart_outlined, selectedIcon: Icons.bar_chart, label: 'Reports'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final items = [
+      (icon: Icons.home_outlined, selectedIcon: Icons.home, label: l10n.navHome),
+      (icon: Icons.notifications_none, selectedIcon: Icons.notifications, label: l10n.navAlert),
+      (icon: Icons.map_outlined, selectedIcon: Icons.map, label: l10n.navMaps),
+      (icon: Icons.bar_chart_outlined, selectedIcon: Icons.bar_chart, label: l10n.navReports),
+    ];
     return Scaffold(
       body: Stack(
         children: [
@@ -45,7 +46,7 @@ class _RootShellState extends State<RootShell> {
             bottom: 16,
             child: _PillNavBar(
               index: _index,
-              items: _items,
+              items: items,
               onChanged: (i) => setState(() => _index = i),
             ),
           ),

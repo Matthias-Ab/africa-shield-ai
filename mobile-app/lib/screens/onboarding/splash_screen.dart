@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/onboarding_provider.dart';
@@ -37,26 +38,27 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AfriShieldLogo(size: 140),
-            SizedBox(height: 20),
+            const AfriShieldLogo(size: 140),
+            const SizedBox(height: 20),
             Text(
-              'AfriShield',
-              style: TextStyle(
+              l10n.appName,
+              style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
                 color: AppColors.ink,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'Know the Risk. Act Early. Stay Safe.',
-              style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+              l10n.tagline,
+              style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
             ),
           ],
         ),

@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>AfriShield uses your location to help set your alert region and to tag hazard reports.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>AfriShield uses your camera to attach a photo to a hazard report.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AfriShield uses your photo library to attach a photo to a hazard report.</string>
 </dict>
 </plist>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../theme/app_theme.dart';
@@ -52,7 +53,7 @@ class _AlertChannelsScreenState extends State<AlertChannelsScreen> {
     await prefs.setBool(_ussdKey, _ussd);
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Preferences saved.')));
+        .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.preferencesSaved)));
   }
 
   @override
@@ -60,49 +61,50 @@ class _AlertChannelsScreenState extends State<AlertChannelsScreen> {
     if (!_loaded) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('⚠️  ALERT CHANNELS')),
+      appBar: AppBar(title: Text(l10n.alertChannelsAppBarTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('How would you like to receive alerts?',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          const Text("We'll use your preferred channels to deliver important warnings.",
-              style: TextStyle(color: AppColors.inkSoft)),
+          Text(l10n.howWouldYouLikeAlerts,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          Text(l10n.preferredChannelsNote,
+              style: const TextStyle(color: AppColors.inkSoft)),
           const SizedBox(height: 16),
           _ChannelTile(
             icon: Icons.phone_iphone,
-            title: 'Mobile App',
-            subtitle: 'Receive alerts directly in AfriShield.',
+            title: l10n.mobileAppChannelTitle,
+            subtitle: l10n.mobileAppChannelSubtitle,
             enabled: false,
-            note: 'Push notifications aren\'t wired up yet.',
+            note: l10n.pushNotWiredNote,
             value: _mobileApp,
             onChanged: (v) => setState(() => _mobileApp = v),
           ),
           _ChannelTile(
             icon: Icons.chat_bubble_outline,
-            title: 'WhatsApp',
-            subtitle: 'Receive alerts through WhatsApp.',
+            title: l10n.whatsappChannelTitle,
+            subtitle: l10n.whatsappChannelSubtitle,
             enabled: false,
-            note: 'Not built on the backend yet.',
+            note: l10n.notBuiltNote,
             value: _whatsapp,
             onChanged: (v) => setState(() => _whatsapp = v),
           ),
           _ChannelTile(
             icon: Icons.sms_outlined,
-            title: 'SMS',
-            subtitle: 'Receive alerts via SMS even without internet.',
+            title: l10n.smsChannelTitle,
+            subtitle: l10n.smsChannelSubtitle,
             enabled: true,
-            note: 'Real — sent via Africa\'s Talking.',
+            note: l10n.smsRealNote,
             value: _sms,
             onChanged: (v) => setState(() => _sms = v),
           ),
           _ChannelTile(
             icon: Icons.dialpad,
-            title: 'USSD',
-            subtitle: 'Receive alerts on basic feature phones.',
+            title: l10n.ussdChannelTitle,
+            subtitle: l10n.ussdChannelSubtitle,
             enabled: false,
-            note: 'Built, but not yet verified against a real carrier.',
+            note: l10n.ussdNote,
             value: _ussd,
             onChanged: (v) => setState(() => _ussd = v),
           ),
@@ -114,19 +116,18 @@ class _AlertChannelsScreenState extends State<AlertChannelsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('No smartphone? No problem.', style: TextStyle(fontWeight: FontWeight.w800)),
-                  SizedBox(height: 4),
+                  Text(l10n.noSmartphoneTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
                   Text(
-                    'AfriShield is designed to make critical warnings accessible '
-                    'beyond the app.',
-                    style: TextStyle(color: AppColors.inkSoft),
+                    l10n.noSmartphoneBody,
+                    style: const TextStyle(color: AppColors.inkSoft),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 20),
-          FilledButton(onPressed: _save, child: const Text('Save Preferences')),
+          FilledButton(onPressed: _save, child: Text(l10n.savePreferences)),
         ],
       ),
     );

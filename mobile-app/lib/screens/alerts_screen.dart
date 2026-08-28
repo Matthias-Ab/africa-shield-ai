@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/region_provider.dart';
@@ -23,11 +24,25 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   static const _filters = ['All', 'High', 'Medium', 'Low'];
 
+  String _filterLabel(AppLocalizations l10n, String filter) {
+    switch (filter) {
+      case 'High':
+        return l10n.filterHigh;
+      case 'Medium':
+        return l10n.filterMedium;
+      case 'Low':
+        return l10n.filterLow;
+      default:
+        return l10n.filterAll;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FLOOD RISK ALERT'),
+        title: Text(l10n.floodRiskAlertTitle),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -36,7 +51,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 child: DropdownButton<String>(
                   value: _filter,
                   items: _filters
-                      .map((f) => DropdownMenuItem(value: f, child: Text(f.toUpperCase())))
+                      .map((f) => DropdownMenuItem(value: f, child: Text(_filterLabel(l10n, f).toUpperCase())))
                       .toList(),
                   onChanged: (v) => setState(() => _filter = v ?? 'All'),
                 ),
@@ -57,8 +72,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           }).toList();
 
           if (regions.isEmpty) {
-            return const Center(
-              child: Text('No regions at this risk level right now.', style: TextStyle(color: AppColors.inkSoft)),
+            return Center(
+              child: Text(l10n.noRegionsAtRiskLevel, style: const TextStyle(color: AppColors.inkSoft)),
             );
           }
 

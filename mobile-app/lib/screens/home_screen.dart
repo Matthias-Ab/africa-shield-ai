@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
@@ -64,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer3<RegionProvider, SettingsProvider, OnboardingProvider>(
       builder: (context, regionProvider, settings, onboarding, _) {
+        final l10n = AppLocalizations.of(context)!;
         if (regionProvider.status == LoadStatus.loading ||
             regionProvider.status == LoadStatus.initial) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -78,10 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Icon(Icons.cloud_off, size: 40, color: AppColors.inkSoft),
                     const SizedBox(height: 12),
-                    const Text("Can't reach AfriShield, and there's no saved data yet.",
-                        textAlign: TextAlign.center),
+                    Text(l10n.cantReachBackend, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
-                    FilledButton(onPressed: regionProvider.load, child: const Text('Try again')),
+                    FilledButton(onPressed: regionProvider.load, child: Text(l10n.tryAgain)),
                   ],
                 ),
               ),
@@ -114,8 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Text(
-                            "AfriShield isn't monitoring your set location yet — "
-                            'showing ${region.locationName} as sample data.',
+                            l10n.notMonitoredYet(region.locationName),
                             style: const TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
                           ),
                         ),
@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Settings',
+                        tooltip: l10n.settingsTooltip,
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const SettingsScreen()),
                         ),
@@ -141,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('CURRENT FLOOD RISK', style: TextStyle(fontWeight: FontWeight.w800)),
+                  Text(l10n.currentFloodRisk, style: const TextStyle(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 8),
                   Card(
                     color: bg,
@@ -163,10 +163,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 6),
                           Text(
                             region.riskLevel.toLowerCase() == 'high'
-                                ? 'Your area is at high risk of flooding.'
+                                ? l10n.highRiskMessage
                                 : region.riskLevel.toLowerCase() == 'medium'
-                                    ? 'Stay alert and monitor local updates.'
-                                    : 'No immediate flood threat detected.',
+                                    ? l10n.mediumRiskMessage
+                                    : l10n.lowRiskMessage,
                           ),
                           const SizedBox(height: 10),
                           const Divider(),
@@ -174,9 +174,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              _Stat(label: 'Rainfall', sub: 'Last 24 hours', value: '${region.rainfallMm24h.toStringAsFixed(0)} mm'),
-                              _Stat(label: 'River Level', sub: 'Current', value: '${region.riverLevelM.toStringAsFixed(1)} m'),
-                              _Stat(label: 'Risk Score', sub: 'Current', value: region.riskScore.toStringAsFixed(2)),
+                              _Stat(label: l10n.statRainfall, sub: l10n.statLast24Hours, value: '${region.rainfallMm24h.toStringAsFixed(0)} mm'),
+                              _Stat(label: l10n.statRiverLevel, sub: l10n.statCurrent, value: '${region.riverLevelM.toStringAsFixed(1)} m'),
+                              _Stat(label: l10n.statRiskScore, sub: l10n.statCurrent, value: region.riskScore.toStringAsFixed(2)),
                             ],
                           ),
                         ],
@@ -223,13 +223,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  region.riskLevel.toLowerCase() == 'low' ? 'STAY PREPARED' : 'ACTION RECOMMENDED',
+                                  region.riskLevel.toLowerCase() == 'low' ? l10n.stayPrepared : l10n.actionRecommended,
                                   style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 13),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   region.riskLevel.toLowerCase() == 'low'
-                                      ? 'Continue monitoring local updates and weather conditions.'
+                                      ? l10n.continueMonitoring
                                       : region.alertMessageEn,
                                   style: const TextStyle(fontSize: 12.5),
                                 ),
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           FilledButton(
                             style: FilledButton.styleFrom(backgroundColor: color, minimumSize: const Size(0, 40)),
                             onPressed: () {},
-                            child: const Text('SHARE ALERT'),
+                            child: Text(l10n.shareAlert),
                           ),
                         ],
                       ),
@@ -254,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const SafetyGuidanceScreen()),
                           ),
-                          child: const Text('Safety Guidance'),
+                          child: Text(l10n.safetyGuidanceButton),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -265,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (_) => AlertDetailScreen(locationName: region.locationName),
                             ),
                           ),
-                          child: const Text('View Full Alert'),
+                          child: Text(l10n.viewFullAlert),
                         ),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/accessibility_provider.dart';
@@ -10,9 +11,10 @@ class AccessibilityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a11y = context.watch<AccessibilityProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ACCESSIBILITY')),
+      appBar: AppBar(title: Text(l10n.accessibilityAppBarTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -22,12 +24,12 @@ class AccessibilityScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Text size', style: TextStyle(fontWeight: FontWeight.w800)),
-                  const Text('Preview text at the size below.',
-                      style: TextStyle(color: AppColors.inkSoft, fontSize: 12)),
+                  Text(l10n.textSize, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text(l10n.previewTextAtSize,
+                      style: const TextStyle(color: AppColors.inkSoft, fontSize: 12)),
                   const SizedBox(height: 8),
                   Text(
-                    'Flood risk is HIGH. Move to higher ground.',
+                    l10n.previewSampleText,
                     style: TextStyle(fontSize: 15 * a11y.textScale),
                   ),
                   Slider(
@@ -45,11 +47,8 @@ class AccessibilityScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Card(
             child: SwitchListTile(
-              title: const Text('Voice alerts', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text(
-                'Adds a "Read Aloud" button to alert details — for anyone who '
-                "can't read the local script, or is visually impaired.",
-              ),
+              title: Text(l10n.voiceAlerts, style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(l10n.voiceAlertsSubtitle),
               value: a11y.voiceAlertsEnabled,
               onChanged: (v) => context.read<AccessibilityProvider>().setVoiceAlertsEnabled(v),
             ),
@@ -57,8 +56,8 @@ class AccessibilityScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Card(
             child: SwitchListTile(
-              title: const Text('High contrast', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Increases text and border contrast throughout the app.'),
+              title: Text(l10n.highContrast, style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(l10n.highContrastSubtitle),
               value: a11y.highContrast,
               onChanged: (v) => context.read<AccessibilityProvider>().setHighContrast(v),
             ),

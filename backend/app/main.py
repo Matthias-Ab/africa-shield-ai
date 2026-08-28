@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routes import alerts, regions, risk, sensors, ussd, voice
+from app.routes import alerts, hazard_reports, regions, risk, sensors, ussd, voice
 
 app = FastAPI(
     title="Africa Shield AI - Last-Mile Alert API",
@@ -19,7 +19,11 @@ app = FastAPI(
         "POST /api/voice/callback is the webhook Africa's Talking calls when a "
         "voice alert is answered, to read the alert aloud. POST /api/sensor-reading "
         "ingests a live reading from a registered ESP32 flood sensor (or its Wokwi "
-        "simulation) and scores it the same way /api/risk-check does."
+        "simulation) and scores it the same way /api/risk-check does. "
+        "POST /api/hazard-reports lets a citizen report a hazard they're seeing or "
+        "flag that they need help; GET /api/hazard-reports lists what's come in. "
+        "POST /api/hazard-reports/{id}/photo attaches a photo to a report; "
+        "GET /api/hazard-reports/{id}/photo serves it back."
     ),
     version="0.1.0",
 )
@@ -38,6 +42,7 @@ app.include_router(alerts.router)
 app.include_router(ussd.router)
 app.include_router(voice.router)
 app.include_router(sensors.router)
+app.include_router(hazard_reports.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -70,5 +75,7 @@ def root() -> dict:
             "/api/ussd",
             "/api/voice/callback",
             "/api/sensor-reading",
+            "/api/hazard-reports",
+            "/api/hazard-reports/{id}/photo",
         ],
     }

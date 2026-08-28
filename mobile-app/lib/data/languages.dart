@@ -24,3 +24,20 @@ const List<AppLanguage> supportedLanguages = [
   AppLanguage('Hausa', isBackendSupported: false),
   AppLanguage('Amharic', isBackendSupported: true),
 ];
+
+/// Maps a language's display name to the locale code its UI chrome is
+/// translated into (`lib/l10n/*.arb`) — the same 7 languages the backend
+/// generates alert text in. Yoruba and Hausa have neither an alert
+/// translation nor a UI-chrome one yet, so they fall back to English for
+/// the app's own strings; that's a separate gap from the "alerts not
+/// translated yet" tag those two already show in the language picker,
+/// not the same thing.
+const Map<String, String> languageLocaleCodes = {
+  'English': 'en',
+  'Swahili': 'sw',
+  'Arabic': 'ar',
+  'Somali': 'so',
+  'French': 'fr',
+  'Portuguese': 'pt',
+  'Amharic': 'am',
+};

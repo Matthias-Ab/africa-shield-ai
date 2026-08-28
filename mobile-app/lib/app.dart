@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'data/languages.dart';
 import 'providers/accessibility_provider.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/region_provider.dart';
@@ -9,10 +11,9 @@ import 'providers/settings_provider.dart';
 import 'screens/onboarding/splash_screen.dart';
 import 'theme/app_theme.dart';
 
-/// Locale codes for the same 7 languages the backend generates alerts in.
-/// Only wired up as *supported* locales so far (enables RTL for Arabic,
-/// etc.) — the UI's own strings aren't translated yet; that's real
-/// follow-up work, not scaffolding.
+/// Locale codes for the same 7 languages the backend generates alerts in —
+/// and, now, the same 7 languages `lib/l10n/*.arb` translates the UI's own
+/// strings into (AI-drafted, unreviewed — see `mobile-app/README.md`).
 const supportedLocales = [
   Locale('en'),
   Locale('sw'),
@@ -35,13 +36,20 @@ class AfriShieldApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OnboardingProvider()..load()),
         ChangeNotifierProvider(create: (_) => AccessibilityProvider()..load()),
       ],
-      child: Consumer<AccessibilityProvider>(
-        builder: (context, a11y, _) {
+      child: Consumer2<AccessibilityProvider, OnboardingProvider>(
+        builder: (context, a11y, onboarding, _) {
+          // Yoruba/Hausa have no lib/l10n/*.arb file (see
+          // languageLocaleCodes' doc comment) — null here just means "let
+          // MaterialApp pick from supportedLocales the normal way," which
+          // resolves to English, the template locale.
+          final localeCode = languageLocaleCodes[onboarding.language];
           return MaterialApp(
             title: 'AfriShield',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
+            locale: localeCode == null ? null : Locale(localeCode),
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/languages.dart';
@@ -28,8 +29,9 @@ class _LanguageScreenState extends State<LanguageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('🌐  LANGUAGE')),
+      appBar: AppBar(title: Text(l10n.languageAppBarTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -41,11 +43,11 @@ class _LanguageScreenState extends State<LanguageScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Choose Your Language!',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text(l10n.chooseYourLanguage,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
                     const SizedBox(height: 4),
-                    const Text("Select the language you'd like to receive alerts in.",
-                        style: TextStyle(color: AppColors.inkSoft)),
+                    Text(l10n.languageSubtitle,
+                        style: const TextStyle(color: AppColors.inkSoft)),
                     const SizedBox(height: 12),
                     ...supportedLanguages.map(
                       (lang) => RadioListTile<String>(
@@ -55,7 +57,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                             Text(lang.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                             if (!lang.isBackendSupported) ...[
                               const SizedBox(width: 8),
-                              const _ComingSoonTag(),
+                              _ComingSoonTag(label: l10n.alertsNotTranslatedYet),
                             ],
                           ],
                         ),
@@ -65,9 +67,9 @@ class _LanguageScreenState extends State<LanguageScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'More local languages will be supported in future versions.',
-                      style: TextStyle(color: AppColors.inkSoft, fontSize: 12),
+                    Text(
+                      l10n.moreLanguagesNote,
+                      style: const TextStyle(color: AppColors.inkSoft, fontSize: 12),
                     ),
                   ],
                 ),
@@ -76,7 +78,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
             const Spacer(),
             FilledButton(
               onPressed: _selected == null ? null : _continue,
-              child: Text(widget.fromSettings ? 'SAVE' : 'CONTINUE'),
+              child: Text(widget.fromSettings ? l10n.saveButton : l10n.continueButton),
             ),
           ],
         ),
@@ -98,7 +100,8 @@ class _LanguageScreenState extends State<LanguageScreen> {
 }
 
 class _ComingSoonTag extends StatelessWidget {
-  const _ComingSoonTag();
+  final String label;
+  const _ComingSoonTag({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -108,9 +111,9 @@ class _ComingSoonTag extends StatelessWidget {
         color: AppColors.riskMediumBg,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: const Text(
-        'alerts not translated yet',
-        style: TextStyle(fontSize: 10, color: AppColors.riskMedium, fontWeight: FontWeight.w700),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 10, color: AppColors.riskMedium, fontWeight: FontWeight.w700),
       ),
     );
   }

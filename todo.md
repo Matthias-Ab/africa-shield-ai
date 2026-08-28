@@ -144,6 +144,13 @@ Presentation & Pitch 5.
       team's other languages) — see
       `docs/translation-review/amharic-review.txt`'s explicit warning.
       Portuguese packet: `docs/translation-review/portuguese-review.txt`.
+- [ ] **Native-speaker review of the mobile app's UI-chrome translations
+      (2026-08-28) — all 6 non-English `mobile-app/lib/l10n/*.arb` files,
+      a separate item from the alert-wording reviews above.** Even
+      Swahili/Arabic/Somali need this: their alert wording was reviewed
+      2026-08-17, but that review never covered this different set of
+      strings (buttons, labels, headings), so treat all 6 as unreviewed
+      here regardless of that language's alert-text status.
 - [x] **Automatic threshold-triggered alerts (2026-08-18).**
       `POST /api/sensor-reading` now auto-sends a real SMS the first time
       a device's region crosses into `high` risk, reusing the exact same
@@ -189,18 +196,36 @@ Presentation & Pitch 5.
 - [ ] Expand beyond flooding to droughts, heatwaves, wildfires, cyclones,
       earthquakes.
 - [ ] **Offline-first Flutter mobile app — Figma design implemented
-      (2026-08-27).** See `mobile-app/README.md`'s feature table for exactly
-      what's real vs. UI-only. Full onboarding flow (language/country/
-      location), 4-tab app (Home/Alert/Maps/Reports) all wired to the live
-      backend, real OSM map, real text-to-speech "Read Aloud" accessibility
-      feature, real offline cache. `flutter analyze` and `flutter test` both
-      pass. Still needed: hazard-report backend endpoint (Reports tab is
-      UI-only), a real geo dataset for State/LGA/City (currently free text),
-      `geolocator` for GPS location, a verified per-country emergency number
-      source, push notifications, and translated UI strings.
+      (2026-08-27); GPS + hazard-report photo added, UI chrome translated
+      into all 7 languages (2026-08-28).** See `mobile-app/README.md`'s
+      feature table for exactly what's real vs. UI-only. Full onboarding
+      flow (language/country/location), 4-tab app (Home/Alert/Maps/
+      Reports) all wired to the live backend, real OSM map, real
+      text-to-speech "Read Aloud" accessibility feature, real offline
+      cache, real `geolocator` GPS (onboarding + Reports tab), real photo
+      attachment on hazard reports, real `AppLocalizations`-driven UI
+      chrome switching live from Settings > Language. `flutter analyze`
+      and `flutter test` both pass. Still needed: a real geo dataset for
+      State/LGA/City (GPS gives raw coordinates, not an address, so this
+      is still free text), a verified per-country emergency number
+      source, push notifications, and native-speaker review of the 6
+      non-English UI translations (see the translation-review section
+      below).
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
-- [ ] Community-reporting feature (on-the-ground condition reports).
+- [ ] **Community-reporting feature — backend + mobile app fully wired,
+      including GPS and photo attachment (2026-08-28); web dashboard
+      still not wired.** `POST /api/hazard-reports` / `GET
+      /api/hazard-reports` / `POST .../{id}/photo` / `GET .../{id}/photo`
+      all exist and are tested (see `docs/api-contract.md`). The mobile
+      app's Reports tab submits category/description/location/GPS/photo
+      for real, with honest partial-failure handling if the photo upload
+      fails after the report itself sends. Still needed: wire the web
+      dashboard's Reports page (still an empty placeholder) to `GET
+      /api/hazard-reports` so reports are actually visible somewhere; no
+      dispatch/routing for `needs_assistance: true` reports exists either
+      — that field isn't even settable from the mobile UI yet, since the
+      Figma design has no "I need help" toggle.
 - [ ] Move from the Wokwi simulation to real ESP32 hardware with real
       rain/water-level sensors (backend ingestion already built).
 - [ ] User authentication / role-based access for disaster-management

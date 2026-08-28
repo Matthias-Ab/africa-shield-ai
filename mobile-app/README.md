@@ -19,7 +19,7 @@ mocked.
 - **Maps** — real OpenStreetMap (`flutter_map`) with every region pinned,
   color-coded, tap a pin for its stats + "View Alert".
 - **Reports** — community hazard reporting form (category, description,
-  location, photo). **No backend endpoint exists for this yet** — see below.
+  location, GPS, photo) — sent for real, see below.
 
 Reached from Home's app bar (not a bottom tab, matching Figma): **Settings**
 — Location, Alert Preference, Language, Alert Channels, Accessibility,
@@ -36,11 +36,13 @@ About.
 | Voice alerts (text-to-speech "Read Aloud") | **Real** — `flutter_tts`, on-device, no backend involved |
 | Text size / high contrast | **Real** — applied app-wide via `AccessibilityProvider` + `MediaQuery` override in `app.dart` |
 | Offline cache | **Real** — last-known regions/alerts persist via `SharedPreferences`, shown with an honest "showing saved data" banner |
-| Hazard reporting ("Reports" tab) | **UI only.** Submitting shows a local confirmation dialog saying it isn't sent anywhere — see `HazardReport`'s doc comment. Community reporting has no backend endpoint (`todo.md` roadmap item) |
-| "Use my current location" (GPS) | **UI only** — shows a "coming in a later build" message, no `geolocator` wired in yet |
+| Hazard reporting ("Reports" tab) | **Real** — `POST /api/hazard-reports`. Category/description/location/GPS are sent for real and persisted server-side; a failed send shows a real error, not a fake success |
+| Hazard report photo attachment | **Real** — `image_picker` (camera or gallery) + `POST /api/hazard-reports/{id}/photo`. If the report sends but the photo upload fails, the dialog says so honestly rather than claiming full success |
+| "Use my current location" (GPS) | **Real** — `geolocator`, in both onboarding's Location Setup and the Reports tab. No reverse geocoding: onboarding shows the raw coordinates and still requires manual State/LGA/City entry; Reports attaches the raw coordinates to the report |
 | Emergency call button | **Deliberately inert** — no verified per-country emergency number exists in the data model; dialing a guessed number would be actively misleading, so it explains that instead of guessing |
 | Country/State/LGA/City dropdowns | Country is a real 54-country list. State/LGA/City are **plain text fields**, not dropdowns — there's no real administrative-boundary dataset to populate them from yet |
-| Yoruba / Hausa (2 of the 9 languages) | Selectable, tagged "alerts not translated yet" — the backend's `translations.py` only covers 7 of the 9 languages Figma lists |
+| Yoruba / Hausa (2 of the 9 languages) | Selectable, tagged "alerts not translated yet" — the backend's `translations.py` only covers 7 of the 9 languages Figma lists. The app's own UI chrome (buttons/labels) also has no translation for these two, and falls back to English |
+| UI chrome translation (buttons, labels, headings) | **Real for the 7 backend-supported languages** — `lib/l10n/*.arb` + generated `AppLocalizations`, switched live from the Settings > Language choice. **AI-drafted, unreviewed by a native speaker** — same caveat as the backend's own French/Portuguese/Amharic alert text (see `backend/README.md`), except here it applies to all 6 non-English languages, since this is a different set of strings than the alert wording and has never been reviewed even for Swahili/Arabic/Somali. Runtime error messages (`ApiException`, `LocationException`) are a separate, deliberately out-of-scope gap — still English-only |
 
 ## Structure
 
@@ -51,7 +53,9 @@ lib/
   theme/app_theme.dart                  — colors/type matching the Figma file
   data/countries.dart, languages.dart    — static reference lists
   models/region.dart, alert.dart, hazard_report.dart
-  services/api_service.dart, cache_service.dart
+  services/api_service.dart, cache_service.dart, location_service.dart
+  l10n/app_en.arb, app_sw.arb, app_ar.arb, app_so.arb, app_fr.arb,
+       app_pt.arb, app_am.arb  — UI chrome translations (see l10n.yaml)
   providers/
     region_provider.dart                 — live regions/alerts + cache fallback
     settings_provider.dart                — which backend region is "mine"
@@ -84,12 +88,15 @@ a real error state, not fake data.
 
 ## Known gaps worth tackling next
 
-- Real geo dataset for State/LGA/City (currently free text).
-- `geolocator` for "Use my current location".
-- A backend endpoint for hazard reports, then wire `ReportsScreen` to it
-  for real instead of a local-only confirmation.
+- Real geo dataset for State/LGA/City (currently free text) — GPS gives raw
+  coordinates, not an address, so this still needs manual entry.
 - A verified per-country emergency-line number source, before enabling the
   "Call Emergency Line" button for real.
-- Translated UI chrome for all 7 (or 9) languages — locales are declared
-  in `app.dart` (enables e.g. Arabic RTL) but the screens' own strings are
-  English-only so far.
+- **Native-speaker review of the 6 non-English UI-chrome translations**
+  (`lib/l10n/*.arb`) — all are unreviewed AI drafts right now, including
+  Swahili/Arabic/Somali even though those languages' *alert* wording was
+  already reviewed (that review never covered this separate set of
+  strings).
+- Localize `ApiException`/`LocationException` runtime error messages —
+  currently English-only regardless of the selected language, since
+  they're thrown from service classes with no `BuildContext`.

@@ -58,6 +58,14 @@ dependencies:
   # still shows something useful with no connectivity.
   shared_preferences: ^2.3.3
   intl: ^0.19.0
+  # Used directly (not just transitively via `http`) for the hazard-report
+  # photo upload's MIME content type.
+  http_parser: ^4.1.2
+  # Real device GPS for "Use my current location" (onboarding + hazard
+  # reports) — not a stub.
+  geolocator: ^13.0.2
+  # Real camera/gallery photo picking for hazard report attachments.
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +88,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Generates AppLocalizations from lib/l10n/*.arb (see l10n.yaml) — real
+  # UI-chrome translations for the 7 backend-supported languages, not
+  # just the locale-declaration scaffolding this used to be.
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:

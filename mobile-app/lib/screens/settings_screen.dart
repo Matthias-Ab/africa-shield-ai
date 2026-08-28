@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/onboarding_provider.dart';
@@ -17,15 +18,16 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onboarding = context.watch<OnboardingProvider>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('⚙️  SETTINGS')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _SettingsTile(
             icon: Icons.location_on_outlined,
-            title: 'Location',
+            title: l10n.locationTile,
             subtitle: onboarding.displayLocation,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const CountryScreen(fromSettings: true)),
@@ -33,15 +35,15 @@ class SettingsScreen extends StatelessWidget {
           ),
           _SettingsTile(
             icon: Icons.warning_amber_outlined,
-            title: 'Alert Preference',
-            subtitle: 'Manage your warnings',
+            title: l10n.alertPreferenceTile,
+            subtitle: l10n.manageYourWarnings,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AlertChannelsScreen()),
             ),
           ),
           _SettingsTile(
             icon: Icons.public,
-            title: 'Language',
+            title: l10n.languageTile,
             subtitle: onboarding.language,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const LanguageScreen(fromSettings: true)),
@@ -49,16 +51,16 @@ class SettingsScreen extends StatelessWidget {
           ),
           _SettingsTile(
             icon: Icons.notifications_none,
-            title: 'Alert Channels',
-            subtitle: 'SMS • WhatsApp • App',
+            title: l10n.alertChannelsTile,
+            subtitle: l10n.alertChannelsSubtitle,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AlertChannelsScreen()),
             ),
           ),
           _SettingsTile(
             icon: Icons.accessibility_new,
-            title: 'Accessibility',
-            subtitle: 'Text size • Voice alerts • Contrast',
+            title: l10n.accessibilityTile,
+            subtitle: l10n.accessibilitySubtitle,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AccessibilityScreen()),
             ),
@@ -69,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  const Text('Follow us on:', style: TextStyle(fontWeight: FontWeight.w700)),
+                  Text(l10n.followUsOn, style: const TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 10),
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -90,8 +92,8 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Card(
             child: ListTile(
-              title: const Text('About', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('About AfriShield • v1.0.0'),
+              title: Text(l10n.aboutTile, style: const TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: Text(l10n.aboutSubtitleWithVersion),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AboutScreen()),
