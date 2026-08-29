@@ -66,6 +66,9 @@ dependencies:
   geolocator: ^13.0.2
   # Real camera/gallery photo picking for hazard report attachments.
   image_picker: ^1.1.2
+  # Real tel: dialing for "Call Emergency Line" — see
+  # lib/data/emergency_numbers.dart for the real, cited number data.
+  url_launcher: ^6.3.1
   # Real push notifications (Firebase Cloud Messaging) for the "Mobile
   # App" alert channel — see lib/services/push_service.dart and
   # lib/firebase_options.dart for why this degrades gracefully without a

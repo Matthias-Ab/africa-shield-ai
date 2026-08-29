@@ -87,6 +87,16 @@
   "emergencyDialogTitle": "Linha de emergência ainda não configurada",
   "emergencyDialogBody": "O AfriShield ainda não possui um número de emergência verificado para este país — mostrar o número errado poderia direcionar alguém ao serviço errado. Use seu número de emergência local diretamente por enquanto.",
   "callEmergencyLine": "LIGAR PARA A LINHA DE EMERGÊNCIA",
+  "emergencyCallConfirmTitle": "Ligar para a linha de emergência?",
+  "emergencyCallConfirmBody": "Isso liga para o número geral de emergência de {country}, {number}. Obtido de listas públicas, não verificado de forma independente para a sua área exata — use seu próprio conhecimento dos números de emergência locais, se tiver.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "Cancelar",
+  "callButton": "Ligar",
   "shareAlertTemplate": "Risco de inundação {riskLevel} em {location}: {message}",
 
   "floodRiskMapTitle": "🗺️  MAPA DE RISCO DE INUNDAÇÃO",

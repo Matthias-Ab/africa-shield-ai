@@ -1,0 +1,394 @@
+[
+  {
+    "location_name": "Accra, Ghana",
+    "began": "1991-07-14",
+    "ended": "1991-07-16",
+    "severity": 1.0,
+    "detailed_location": "Southern Regions - Accra, Volta, Central, Eastern",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "1995-07-05",
+    "ended": "1995-07-07",
+    "severity": 1.5,
+    "detailed_location": "Southern Ghana - Accra",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "1997-06-12",
+    "ended": "1997-06-15",
+    "severity": 1.0,
+    "detailed_location": "Accra, Tema",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "1998-10-19",
+    "ended": "1998-10-24",
+    "severity": 1.0,
+    "detailed_location": "Accra",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "2001-06-27",
+    "ended": "2001-06-30",
+    "severity": 1.0,
+    "detailed_location": "Coastal Ghana\u00a0- Accra city area: East Legon district, Kasoa and Adabraka Town/Odawna",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "2002-01-06",
+    "ended": "2002-01-08",
+    "severity": 1.0,
+    "detailed_location": "Accra city.",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "2002-06-10",
+    "ended": "2002-06-12",
+    "severity": 1.0,
+    "detailed_location": "Accra city.",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "2009-06-20",
+    "ended": "2009-06-22",
+    "severity": 1.0,
+    "detailed_location": "Accra",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "2009-07-06",
+    "ended": "2009-07-17",
+    "severity": 1.0,
+    "detailed_location": "Coastal and forest belt, western parts of Accra, Eastern, Volta, Central, Western and Ashanti Regions, Shama, Jomoro, Nzema",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Accra, Ghana",
+    "began": "2010-06-22",
+    "ended": "2010-06-26",
+    "severity": 1.0,
+    "detailed_location": "Tema, Ashaima and Kpone, East Accra regions, Greater Accra",
+    "dfo_country_field": "Ghana"
+  },
+  {
+    "location_name": "Addis Ababa, Ethiopia",
+    "began": "1994-08-25",
+    "ended": "1994-08-31",
+    "severity": 1.0,
+    "detailed_location": "Addis Ababa. northern Wollo region.",
+    "dfo_country_field": "Ethiopia"
+  },
+  {
+    "location_name": "Addis Ababa, Ethiopia",
+    "began": "1995-08-11",
+    "ended": "1995-08-18",
+    "severity": 1.0,
+    "detailed_location": "Magete, Addis Ababa",
+    "dfo_country_field": "Ethiopia"
+  },
+  {
+    "location_name": "Cairo, Egypt",
+    "began": "1997-03-02",
+    "ended": "1997-03-04",
+    "severity": 1.0,
+    "detailed_location": "North: Cairo region",
+    "dfo_country_field": "Egypt"
+  },
+  {
+    "location_name": "Dar es Salaam, Tanzania",
+    "began": "1995-05-27",
+    "ended": "1995-06-01",
+    "severity": 1.0,
+    "detailed_location": "Dar es Salaam",
+    "dfo_country_field": "Tanzania"
+  },
+  {
+    "location_name": "Dar es Salaam, Tanzania",
+    "began": "1998-04-27",
+    "ended": "1998-05-04",
+    "severity": 1.0,
+    "detailed_location": "Dar es Salaam, coastal belt, Kinondoni, Dala, Temeke",
+    "dfo_country_field": "Tanzania"
+  },
+  {
+    "location_name": "Dar es Salaam, Tanzania",
+    "began": "2001-02-27",
+    "ended": "2001-02-27",
+    "severity": 1.0,
+    "detailed_location": "Dar es Salaam city, Ubungo area.",
+    "dfo_country_field": "Tanzania"
+  },
+  {
+    "location_name": "Kampala, Uganda",
+    "began": "1988-11-23",
+    "ended": "1988-12-07",
+    "severity": 1.0,
+    "detailed_location": "Bundibugyo district (about 200 miles west of Kampala)",
+    "dfo_country_field": "Uganda"
+  },
+  {
+    "location_name": "Kampala, Uganda",
+    "began": "2002-11-16",
+    "ended": "2002-11-25",
+    "severity": 1.0,
+    "detailed_location": "Uganda - Kampala area, Nakivubo Channel. \nEastern districts: Mbale, Bugiri, Sironko.\nSouthwestern districts: Rukungiri, Kabale and Busheny.\n--Kenya - Nyando District, Ayweyo, Awach River.",
+    "dfo_country_field": "Uganda"
+  },
+  {
+    "location_name": "Kampala, Uganda",
+    "began": "2007-11-15",
+    "ended": "2007-11-18",
+    "severity": 1.0,
+    "detailed_location": "Kampala city - Lufuka, Kajjansi and Abayita Ababiri in Wakiso district",
+    "dfo_country_field": "Uganda"
+  },
+  {
+    "location_name": "Kinshasa, DRC",
+    "began": "1998-03-26",
+    "ended": "1998-03-27",
+    "severity": 1.0,
+    "detailed_location": "Kinshasa city's Bandalunga district",
+    "dfo_country_field": "Democratic Republic of the Congo"
+  },
+  {
+    "location_name": "Kinshasa, DRC",
+    "began": "1999-11-29",
+    "ended": "1999-12-31",
+    "severity": 2.0,
+    "detailed_location": "DRCongo (DRC) - Kinshasa, Bandundu\n--Congo Republic - Brazzaville, Yoro, Mpila, Kangabanzi",
+    "dfo_country_field": "Democratic Republic of Congo, Congo Republic"
+  },
+  {
+    "location_name": "Kinshasa, DRC",
+    "began": "2001-05-18",
+    "ended": "2001-05-18",
+    "severity": 1.0,
+    "detailed_location": "Kinshasa city",
+    "dfo_country_field": "DR Congo"
+  },
+  {
+    "location_name": "Kinshasa, DRC",
+    "began": "2006-04-08",
+    "ended": "2006-04-27",
+    "severity": 1.0,
+    "detailed_location": "Makelekele, Kinshasa - Kisenso, Kalamu, Lingwala",
+    "dfo_country_field": "Democratic Republic of Congo"
+  },
+  {
+    "location_name": "Kinshasa, DRC",
+    "began": "2007-10-25",
+    "ended": "2007-10-31",
+    "severity": 1.0,
+    "detailed_location": "DRCongo - Kinshasa city - Lemba, Ngaliema, Mont Ngafula, Bandalungwa, Ngaba, Bumbu, Kisenso, Selembao and other eastern suburbs. \n--Republic of Congo - Brazzaville.",
+    "dfo_country_field": "Democratic Republic of Congo"
+  },
+  {
+    "location_name": "Lagos, Nigeria",
+    "began": "1988-07-02",
+    "ended": "1988-07-03",
+    "severity": 1.0,
+    "detailed_location": "Lagos area",
+    "dfo_country_field": "Nigeria"
+  },
+  {
+    "location_name": "Lagos, Nigeria",
+    "began": "1990-07-03",
+    "ended": "1990-07-04",
+    "severity": 1.0,
+    "detailed_location": "Lagos",
+    "dfo_country_field": "Nigeria"
+  },
+  {
+    "location_name": "Lagos, Nigeria",
+    "began": "2000-09-20",
+    "ended": "2000-09-21",
+    "severity": 1.0,
+    "detailed_location": "Lagos city",
+    "dfo_country_field": "Nigeria"
+  },
+  {
+    "location_name": "Lagos, Nigeria",
+    "began": "2002-07-24",
+    "ended": "2002-07-26",
+    "severity": 1.0,
+    "detailed_location": "Lagos",
+    "dfo_country_field": "Nigeria"
+  },
+  {
+    "location_name": "Lagos, Nigeria",
+    "began": "2004-06-17",
+    "ended": "2004-06-18",
+    "severity": 1.0,
+    "detailed_location": "Lagos city",
+    "dfo_country_field": "Nigeria"
+  },
+  {
+    "location_name": "Lagos, Nigeria",
+    "began": "2007-08-01",
+    "ended": "2007-08-15",
+    "severity": 1.0,
+    "detailed_location": "Lagos area - Ikorodu, Kosofe\nOgun state - Abeokuta",
+    "dfo_country_field": "Nigeria"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "1985-02-09",
+    "ended": "1985-02-11",
+    "severity": 1.5,
+    "detailed_location": "Provinces: Natal, Maputo; Rivers: Nkomati, Omati, Maputo, Umbeluzi, Incomati, Limpopo, Pungue, Buzi a Zambezi; Town: Ressano Garcia",
+    "dfo_country_field": "Mozambique"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "1996-01-12",
+    "ended": "1996-01-15",
+    "severity": 1.0,
+    "detailed_location": "Maputo province",
+    "dfo_country_field": "Mozambique"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "1996-02-13",
+    "ended": "1996-02-29",
+    "severity": 1.0,
+    "detailed_location": "Central and Southern Provinces: Zambezia, Gaza (Xai Xai, Chokwe), Maputo, Inhambane",
+    "dfo_country_field": "Mozambique - Cyclone Bonita"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "1999-01-15",
+    "ended": "1999-03-15",
+    "severity": 1.5,
+    "detailed_location": "Central area and four southern provinces (Inhambane, Sofala, Tete and Zambezi). Towns: Vilankulo, Inhassoro, Maputo",
+    "dfo_country_field": "Mozambique"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "2000-01-26",
+    "ended": "2000-03-27",
+    "severity": 1.5,
+    "detailed_location": "Mozambique - Provinces: Maputo, Gaza, Inhambane, Manica and Sofala. Cities: Maputo, Matola, Xai-Xai, Nova Mambone.  \n--South Africa - Provinces: Northern, Mpumalanga, Kwa-Zulu Natal and Guateng. Kruge",
+    "dfo_country_field": "Mozambique"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "2008-12-28",
+    "ended": "2009-01-19",
+    "severity": 1.0,
+    "detailed_location": "Maputo, Inhambane",
+    "dfo_country_field": "Mozambique"
+  },
+  {
+    "location_name": "Maputo, Mozambique",
+    "began": "2010-01-25",
+    "ended": "2010-01-28",
+    "severity": 1.0,
+    "detailed_location": "Maputo, Maputo River",
+    "dfo_country_field": "Mozambique"
+  },
+  {
+    "location_name": "Mogadishu, Somalia",
+    "began": "1993-05-29",
+    "ended": "1993-06-15",
+    "severity": 1.0,
+    "detailed_location": "Upper Shabelle area, Rakeyle Omar Gudle. Jelib area south of Mogadishu. \u00a0Shabelle River",
+    "dfo_country_field": "Somalia"
+  },
+  {
+    "location_name": "Mogadishu, Somalia",
+    "began": "1995-11-04",
+    "ended": "1995-11-07",
+    "severity": 1.0,
+    "detailed_location": "Mogadishu",
+    "dfo_country_field": "Somalia"
+  },
+  {
+    "location_name": "Mogadishu, Somalia",
+    "began": "1998-06-24",
+    "ended": "1998-06-25",
+    "severity": 1.0,
+    "detailed_location": "Mogadishu, Afgoie, Merca",
+    "dfo_country_field": "Somalia"
+  },
+  {
+    "location_name": "Mogadishu, Somalia",
+    "began": "2006-08-24",
+    "ended": "2006-10-10",
+    "severity": 1.0,
+    "detailed_location": "Middle Shabelle Region - Jowhar, Mogadishu\nLower Shabelle Region - Sablale, Kuntwarey",
+    "dfo_country_field": "Somalia"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "1988-04-10",
+    "ended": "1988-05-10",
+    "severity": 1.0,
+    "detailed_location": "Nairobi area.\u00a0Districts: Kisumu , South Nyanza, Laikipia. Nyando Division in West Kenya. Rivers: Tana, Nyando.",
+    "dfo_country_field": "Kenya"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "1998-01-01",
+    "ended": "1998-01-20",
+    "severity": 1.5,
+    "detailed_location": "Kenya: Voi, Nairobi-Mombasa Highway, Tsavo National Park, Garissa \nTanzania:  Lakes Victoria and Tanganyika, North Zambia, Mwanga district, Kilimanjaro region",
+    "dfo_country_field": "Kenya, Somalia, Tanzania"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "1998-05-27",
+    "ended": "1998-05-31",
+    "severity": 1.0,
+    "detailed_location": "Nairobi",
+    "dfo_country_field": "Kenya"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "2001-01-13",
+    "ended": "2001-01-14",
+    "severity": 1.0,
+    "detailed_location": "Nairobi and surrounding areas -\u00a0Dagoretti, Kibera",
+    "dfo_country_field": "Kenya"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "2002-04-26",
+    "ended": "2002-05-28",
+    "severity": 1.5,
+    "detailed_location": "Kenya - Bundalangi area in Nyanza province. central Meru and Muranga districts near Mount Kenya. Nairobi area. western districts of Kisumu and Busia.  Rivers: Mara, Tana, Sabaki.   \n--Uganda - Countie",
+    "dfo_country_field": "Kenya"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "2002-04-29",
+    "ended": "2002-05-02",
+    "severity": 1.0,
+    "detailed_location": "Nairobi area. Nairobi river",
+    "dfo_country_field": "Kenya"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "2002-11-17",
+    "ended": "2002-11-20",
+    "severity": 1.0,
+    "detailed_location": "Central Kenya - Kiambu District - River Riara from Kiambu town to Githurai area in Nairobi.",
+    "dfo_country_field": "Kenya"
+  },
+  {
+    "location_name": "Nairobi, Kenya",
+    "began": "2009-12-21",
+    "ended": "2010-01-13",
+    "severity": 1.0,
+    "detailed_location": "Turkana East, Rarieda, Nairobi, Kajiado North, Narok, Rachuonyo, East Pokot, Mogotio, North Rift  (Turkana East district, East and West Pokot districts, Kenya-Ethiopia-Sudan  roads cut.",
+    "dfo_country_field": "Kenya"
+  }
+]

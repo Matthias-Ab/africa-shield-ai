@@ -87,6 +87,16 @@
   "emergencyDialogTitle": "خط الطوارئ غير مُعدّ بعد",
   "emergencyDialogBody": "لا يملك AfriShield رقم طوارئ موثّقًا لهذه الدولة بعد — قد يؤدي عرض رقم خاطئ إلى توجيه شخص إلى الخدمة الخاطئة. استخدم رقم الطوارئ المحلي مباشرةً في الوقت الحالي.",
   "callEmergencyLine": "اتصل بخط الطوارئ",
+  "emergencyCallConfirmTitle": "الاتصال بخط الطوارئ؟",
+  "emergencyCallConfirmBody": "سيؤدي هذا إلى الاتصال برقم الطوارئ العام لـ {country}، {number}. مصدره قوائم عامة، ولم يتم التحقق منه بشكل مستقل لمنطقتك بالتحديد — استخدم معرفتك الخاصة بأرقام الطوارئ المحلية إن وُجدت.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "إلغاء",
+  "callButton": "اتصال",
   "shareAlertTemplate": "خطر فيضان {riskLevel} في {location}: {message}",
 
   "floodRiskMapTitle": "🗺️  خريطة خطر الفيضانات",

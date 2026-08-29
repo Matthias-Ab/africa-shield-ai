@@ -103,6 +103,16 @@
   "emergencyDialogTitle": "Emergency line not set up yet",
   "emergencyDialogBody": "AfriShield doesn't have a verified emergency number for this country yet — showing the wrong one could send someone to the wrong service. Use your local emergency number directly for now.",
   "callEmergencyLine": "CALL EMERGENCY LINE",
+  "emergencyCallConfirmTitle": "Call emergency line?",
+  "emergencyCallConfirmBody": "This calls {country}'s general emergency number, {number}. Sourced from public listings, not independently verified for your exact area — use your own knowledge of local emergency numbers if you have it.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "Cancel",
+  "callButton": "Call",
   "shareAlertTemplate": "{riskLevel} flood risk in {location}: {message}",
   "@shareAlertTemplate": {
     "placeholders": {

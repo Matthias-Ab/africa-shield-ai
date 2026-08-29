@@ -87,6 +87,16 @@
   "emergencyDialogTitle": "Khadka degdegga ah weli lama dejin",
   "emergencyDialogBody": "AfriShield weli ma haysato nambar degdeg oo la xaqiijiyay oo wadankan ah — nambar khalad ah oo la muujiyo ayaa dad u geyn kara adeeg khalad ah. Hadda si toos ah u isticmaal nambarkaaga degdegga ah ee maxalliga ah.",
   "callEmergencyLine": "WAC KHADKA DEGDEGGA AH",
+  "emergencyCallConfirmTitle": "Wac khadka degdegga ah?",
+  "emergencyCallConfirmBody": "Tan waxay wici doontaa lambarka guud ee degdegga ee {country}, {number}. Waxaa laga soo qaatay liisas dadweyne, lamana xaqiijin gobolkaaga gaarka ah — isticmaal aqoontaada shakhsi ahaaneed ee lambarrada degdegga ee maxalliga ah haddii aad haysato.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "Jooji",
+  "callButton": "Wac",
   "shareAlertTemplate": "Khatarta daadka {riskLevel} ee {location}: {message}",
 
   "floodRiskMapTitle": "🗺️  KHARIIDADA KHATARTA DAADKA",

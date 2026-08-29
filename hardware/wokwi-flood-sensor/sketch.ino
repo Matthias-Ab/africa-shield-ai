@@ -17,6 +17,7 @@
 */
 
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <time.h>
 
@@ -30,9 +31,12 @@ const char *WIFI_PASSWORD = "";
 // ---- Backend endpoint ----
 // Wokwi cannot reach "http://localhost:8000" — that address means
 // "the Wokwi simulator itself," not your computer. Run the backend
-// locally, expose it with a tunnel (e.g. `ngrok http 8000`), and paste
-// the resulting public URL below. See the README in this folder.
-const char *SERVER_URL = "http://YOUR-TUNNEL-URL-HERE/api/sensor-reading";
+// locally, expose it with a tunnel, and paste the resulting public URL
+// below. Must be https:// — see the README in this folder for why
+// (ngrok's free tier force-redirects plain http:// to https://, which
+// this sketch doesn't follow; cloudflared's quick tunnels serve https://
+// directly with no redirect, so that's the tunnel this project uses).
+const char *SERVER_URL = "https://canvas-examination-writes-initially.trycloudflare.com/api/sensor-reading";
 
 // Must match a "device_id" already registered in
 // backend/app/data/devices.json, so the backend knows which region this
@@ -124,8 +128,14 @@ void sendReading(float rainfallMm, float riverLevelM) {
 
   Serial.println("Sending reading: " + payload);
 
+  // WiFiClientSecure + setInsecure(): skips TLS certificate validation.
+  // Fine for this hackathon prototype hitting a throwaway tunnel URL —
+  // not something to carry into a real deployment with a stable domain,
+  // where the cert should actually be checked.
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
-  http.begin(SERVER_URL);
+  http.begin(client, SERVER_URL);
   http.addHeader("Content-Type", "application/json");
   int statusCode = http.POST(payload);
 

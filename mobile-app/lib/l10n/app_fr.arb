@@ -87,6 +87,16 @@
   "emergencyDialogTitle": "Ligne d'urgence non configurée",
   "emergencyDialogBody": "AfriShield ne dispose pas encore d'un numéro d'urgence vérifié pour ce pays — afficher le mauvais numéro pourrait vous orienter vers le mauvais service. Utilisez directement votre numéro d'urgence local pour le moment.",
   "callEmergencyLine": "APPELER LA LIGNE D'URGENCE",
+  "emergencyCallConfirmTitle": "Appeler le numéro d'urgence ?",
+  "emergencyCallConfirmBody": "Cela appelle le numéro d'urgence général de {country}, {number}. Provient de listes publiques, non vérifié indépendamment pour votre zone exacte — utilisez vos propres connaissances des numéros d'urgence locaux si vous les avez.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "Annuler",
+  "callButton": "Appeler",
   "shareAlertTemplate": "Risque d'inondation {riskLevel} à {location} : {message}",
 
   "floodRiskMapTitle": "🗺️  CARTE DES RISQUES D'INONDATION",

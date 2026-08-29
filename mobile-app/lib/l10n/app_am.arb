@@ -87,6 +87,16 @@
   "emergencyDialogTitle": "የአደጋ ጊዜ መስመር ገና አልተዘጋጀም",
   "emergencyDialogBody": "AfriShield ለዚህ ሀገር የተረጋገጠ የአደጋ ጊዜ ስልክ ቁጥር ገና የለውም — የተሳሳተ ቁጥር ማሳየት አንድን ሰው ወደ ተሳሳተ አገልግሎት ሊመራው ይችላል። ለጊዜው የአካባቢዎን የአደጋ ጊዜ ስልክ ቀጥታ ይጠቀሙ።",
   "callEmergencyLine": "የአደጋ ጊዜ መስመር ይደውሉ",
+  "emergencyCallConfirmTitle": "የአደጋ ጊዜ መስመር ይደወል?",
+  "emergencyCallConfirmBody": "ይህ የ{country} አጠቃላይ የአደጋ ጊዜ ቁጥር {number} ይደውላል። ከሕዝባዊ ዝርዝሮች የተወሰደ ሲሆን ለእርስዎ ትክክለኛ አካባቢ በተናጠል አልተረጋገጠም — ካለዎት የአካባቢዎን የአደጋ ጊዜ ቁጥሮች እውቀት ይጠቀሙ።",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "ይቅር",
+  "callButton": "ደውል",
   "shareAlertTemplate": "{riskLevel} የጎርፍ አደጋ በ{location}፦ {message}",
 
   "floodRiskMapTitle": "🗺️  የጎርፍ አደጋ ካርታ",

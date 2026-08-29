@@ -3,7 +3,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../data/emergency_numbers.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/region_provider.dart';
 import '../theme/app_theme.dart';
@@ -31,6 +33,42 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
   void dispose() {
     _tts.stop();
     super.dispose();
+  }
+
+  /// Real, cited emergency numbers exist for all 54 countries now (see
+  /// `lib/data/emergency_numbers.dart` for the source and its caveat) —
+  /// this confirms with the user first (real numbers, real phone call,
+  /// not something to fire without asking), then dials via `tel:`.
+  /// Falls back to the original "not set up yet" explanation only for a
+  /// country somehow missing from that map.
+  Future<void> _onCallEmergencyLine(BuildContext context, AppLocalizations l10n, String country) async {
+    final number = emergencyNumberByCountry[country];
+    if (number == null) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(l10n.emergencyDialogTitle),
+          content: Text(l10n.emergencyDialogBody),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.ok)),
+          ],
+        ),
+      );
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(l10n.emergencyCallConfirmTitle),
+        content: Text(l10n.emergencyCallConfirmBody(country, number)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancelButton)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.callButton)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await launchUrl(Uri(scheme: 'tel', path: number));
   }
 
   Future<void> _readAloud(String message, List<String> steps, String whatYouShouldDo) async {
@@ -220,16 +258,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
               const SizedBox(height: 24),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: color),
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: Text(l10n.emergencyDialogTitle),
-                    content: Text(l10n.emergencyDialogBody),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.ok)),
-                    ],
-                  ),
-                ),
+                onPressed: () => _onCallEmergencyLine(context, l10n, region.country),
                 child: Text(l10n.callEmergencyLine),
               ),
             ],

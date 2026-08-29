@@ -31,17 +31,35 @@ Presentation & Pitch 5.
 - [ ] **Place a real test voice call** to a team member's own phone via
       `POST /api/alerts/send` with `"channel": "voice"`.
 - [ ] **Test USSD against Africa's Talking's real sandbox simulator** —
-      needs a public URL (e.g. `ngrok http 8000`) pointed at
-      `/api/ussd`, and a sandbox USSD channel configured to call it. Only
-      tested locally via raw form-encoded requests so far.
+      needs a public URL pointed at `/api/ussd`, and a sandbox USSD
+      channel configured to call it. Only tested locally via raw
+      form-encoded requests so far. **Use `cloudflared tunnel --url
+      http://localhost:8000` for the tunnel, not `ngrok`** — found
+      2026-08-29 that ngrok's free tier force-redirects plain `http://`
+      to `https://`, which broke the Wokwi sketch (see below);
+      `cloudflared`'s quick tunnels (no account needed) serve `https://`
+      cleanly with no redirect, verified with `curl`.
 - [ ] **Verify Africa's Talking's voice `<Say>` handles non-English text**
       (Arabic/Swahili/Somali) acceptably — untested. If it doesn't, decide
       a fallback (e.g. speak English instead of `alert_message_local` for
       those regions) before the demo, not during it.
 - [ ] **Run the Wokwi ESP32 simulation against a real, locally running
-      backend** (`hardware/wokwi-flood-sensor/`) — needs a tunnel (e.g.
-      `ngrok http 8000`) since Wokwi can't reach `localhost`. Only tested
-      so far with `curl` standing in for the device.
+      backend — backend side fully proven 2026-08-29, one step left.**
+      `hardware/wokwi-flood-sensor/sketch.ino` now uses
+      `WiFiClientSecure` to speak real HTTPS (was plain HTTP, which
+      never worked through any tunnel). Verified end-to-end with `curl`
+      against a live `cloudflared` tunnel standing in for the device:
+      low reading → `low`, high reading → `high` AND correctly
+      auto-triggered a real (simulated) SMS alert, logged with
+      `"trigger": "automatic"` — the exact backend path Wokwi would
+      exercise. **The one thing not yet confirmed: whether Wokwi's
+      simulated ESP32 actually completes a TLS handshake to an external
+      `https://` host** — open [wokwi.com](https://wokwi.com/), paste in
+      this folder's `sketch.ino` + `diagram.json`, click Run. If the
+      Serial Monitor shows a real backend response, this is fully done;
+      if it shows a TLS/connection error, that's a genuine Wokwi
+      limitation to work around, not a backend problem. See that
+      folder's README for full detail.
 
 ## Social Impact & Inclusion (20 pts) — currently the weakest-covered criterion
 
@@ -93,20 +111,32 @@ Presentation & Pitch 5.
       directly targets the scorecard's explicit "IoT & Sensors"
       sub-criterion. No real hardware yet — see Critical above for the
       Wokwi-against-real-backend test still needed.
-- [x] **Investigated real training data — not cleanly feasible, don't
-      force it.** Checked 2026-08-17: EM-DAT (registration-gated),
-      ICPAC (categorical, no raw-data API), NASA EONET (effectively
-      empty for Africa) all ruled out. GDACS + Open-Meteo (rainfall +
-      river-discharge) actually work, and `backend/app/models/
-      fetch_real_training_data.py` assembles real data from them — but
-      only 14 of 41,355 assembled rows (0.03%) carry a real confirmed
-      label, 7 of 9 cities got zero real positive examples, and GDACS's
-      river-flood events are partly auto-derived from the same discharge
-      series used as the feature (a real leakage risk, not just
-      imbalance). Kept the synthetic-trained model; recommend citing
-      real GDACS/rainfall data as external validation in the pitch
-      instead of a training-data swap. See `docs/progress-log.md`'s
-      2026-08-17 entry for the full investigation.
+- [x] **Investigated real training data (2026-08-17: GDACS — not
+      feasible; 2026-08-29: Dartmouth Flood Observatory (DFO) — real
+      validation achieved, still not a full retrain).** EM-DAT
+      (registration-gated), ICPAC (categorical, no raw-data API), NASA
+      EONET (effectively empty for Africa), GDACS (real events but 7 of
+      9 cities got zero, and its river-flood events partly auto-derive
+      from the same GloFAS discharge used as a feature — real leakage)
+      all ruled out on 2026-08-17. **2026-08-29: DFO gave 49 real, dated
+      flood events across all 10 cities (1985–2010), independent of
+      GloFAS — see `backend/app/data/dfo_flood_events.json` and
+      `backend/app/models/fetch_real_training_data_dfo.py`.** Still
+      blocked from a full production retrain by the same fundamental
+      issue as before — GloFAS gives river *discharge* (m³/s), not the
+      model's *level* (meters), and the live sensor-reading endpoint has
+      no 26-year history to compute a percentile from anyway. Used
+      instead for genuine validation
+      (`backend/app/models/validate_against_dfo.py`): **real result —
+      the rules-based model catches 41% of real historical flood days
+      (22% false-positive rate), the trained ML model catches 28% (13.7%
+      false-positive rate)**, against 239 real DFO-confirmed flood-days.
+      Now cited in `docs/pitch-notes.md`'s "Real-data validation"
+      section. See `docs/progress-log.md`'s 2026-08-17 and 2026-08-29
+      entries for both investigations in full. **Next step for anyone
+      continuing this:** find a second, more recent (post-2010) real
+      flood-label source to layer on top — DFO's own archive stops
+      there.
 - [x] **Native-speaker review of Swahili, Arabic, and Somali alert
       wording — all 3 confirmed correct (2026-08-17).** Also added
       city-name localization per the reviewers' feedback (e.g. "Cairo" →
@@ -208,25 +238,29 @@ Presentation & Pitch 5.
       earthquakes.
 - [ ] **Offline-first Flutter mobile app — Figma design implemented
       (2026-08-27); GPS + hazard-report photo, UI chrome translated into
-      all 7 languages, real State/City geo data, and push notifications
-      added (2026-08-28).** See `mobile-app/README.md`'s feature table
-      for exactly what's real vs. UI-only. Full onboarding flow
-      (language/country/location), 4-tab app (Home/Alert/Maps/Reports)
-      all wired to the live backend, real OSM map, real text-to-speech
-      "Read Aloud" accessibility feature, real offline cache, real
-      `geolocator` GPS (onboarding + Reports tab), real photo attachment
-      on hazard reports, real `AppLocalizations`-driven UI chrome
-      switching live from Settings > Language, real State/City pickers
-      (1,117 states/regions, 4,638 cities from the open
-      `dr5hn/countries-states-cities-database`, see
+      all 7 languages, real State/City geo data, push notifications, and
+      real emergency-call numbers added (2026-08-28/29).** See
+      `mobile-app/README.md`'s feature table for exactly what's real vs.
+      UI-only. Full onboarding flow (language/country/location), 4-tab
+      app (Home/Alert/Maps/Reports) all wired to the live backend, real
+      OSM map, real text-to-speech "Read Aloud" accessibility feature,
+      real offline cache, real `geolocator` GPS (onboarding + Reports
+      tab), real photo attachment on hazard reports, real
+      `AppLocalizations`-driven UI chrome switching live from Settings >
+      Language, real State/City pickers (1,117 states/regions, 4,638
+      cities from the open `dr5hn/countries-states-cities-database`, see
       `mobile-app/lib/data/geo_data.dart`) across all 54 countries, real
       Firebase Cloud Messaging push wiring (Settings > Alert Channels >
-      "Mobile App"). `flutter analyze` and `flutter test` both pass.
-      Still needed: a verified per-country emergency number source, and
-      native-speaker review of the 6 non-English UI translations (see
-      the translation-review section below). LGA stays free text — no
-      equally reliable third administrative tier exists across all 54
-      countries in the dataset used.
+      "Mobile App"), and a real "Call Emergency Line" button (cited
+      per-country numbers for all 54 countries, see
+      `mobile-app/lib/data/emergency_numbers.dart` — sourced from
+      Wikipedia's emergency-numbers table, not independently re-verified
+      per country, flagged as such in the UI). `flutter analyze` and
+      `flutter test` both pass. Still needed: native-speaker review of
+      the 6 non-English UI translations (see the translation-review
+      section below). LGA stays free text — no equally reliable third
+      administrative tier exists across all 54 countries in the dataset
+      used.
 - [ ] **Create a real Firebase project and drop its config into
       `mobile-app/lib/firebase_options.dart` (via `flutterfire configure`)
       and a service-account key into `backend/.env`'s

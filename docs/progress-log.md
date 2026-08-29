@@ -5,6 +5,115 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-29 — Wokwi tunnel fix, real emergency numbers, real ML validation data
+
+### Completed
+- **Wokwi ESP32 simulation — backend side fully proven end-to-end,
+  switched from `ngrok` to `cloudflared`.** Found that `ngrok`'s free
+  tier force-redirects plain `http://` to `https://`, which
+  `sketch.ino`'s `HTTPClient` doesn't follow — `cloudflared tunnel --url
+  http://localhost:8000` (no account needed) serves `https://` directly
+  with no redirect, verified with `curl` (clean `200 OK`, no `Location`
+  header). Updated `sketch.ino` to use `WiFiClientSecure` +
+  `setInsecure()` instead of a plain `HTTPClient`. Sent a full
+  low-reading → high-reading sequence through a live `cloudflared`
+  tunnel via `curl` standing in for the device: correctly scored
+  low/high and the high reading correctly auto-triggered a real
+  (simulated) SMS alert with `"trigger": "automatic"` — the exact path
+  Wokwi would exercise. **The one thing not re-confirmed:** whether
+  Wokwi's simulated ESP32 actually completes a TLS handshake to an
+  external host — a prior attempt against `ngrok`'s `https://` endpoint
+  got `connection refused` during the handshake itself, never confirmed
+  whether that was Wokwi-specific or an `ngrok` interop issue. Needs
+  someone to open wokwi.com and click Run to close this out. See
+  `hardware/wokwi-flood-sensor/README.md` for full detail.
+- **Real per-country emergency numbers for all 54 countries** — the
+  mobile app's "Call Emergency Line" button was deliberately inert since
+  2026-08-27 (no verified data existed). Sourced from Wikipedia's "List
+  of emergency telephone numbers," read directly from the article's
+  wikitext table (not an AI-summarized paraphrase — cross-checked after
+  an initial AI-summarized pass looked inconsistent for a couple of
+  countries) — most entries there are themselves cited to a government,
+  embassy, telecom, or ITU source. See
+  `mobile-app/lib/data/emergency_numbers.dart` for the full list and its
+  honesty caveat: this is real, cited data, not independently
+  re-verified per country, and the UI says so before dialing. Wired via
+  a new `url_launcher` dependency; confirms with the user (showing the
+  exact number) before placing a real `tel:` call.
+- **Real ML training/validation data — a second, much better attempt
+  after the 2026-08-17 GDACS attempt found almost nothing usable.**
+  Investigated (via a research pass) several sources not tried on
+  2026-08-17; the **Dartmouth Flood Observatory (DFO)** — an
+  independent, non-satellite-derived global flood catalog, free, no
+  login, republished via HDX — was the winner:
+  - Text-matched DFO's master list (4,029 global events) against our 10
+    city names, filtered one false positive (Cairo, Illinois, USA vs.
+    Cairo, Egypt), got **49 real, dated flood events across all 10
+    cities**, 1985–2010 — committed as
+    `backend/app/data/dfo_flood_events.json`. This directly fixes GDACS's
+    coverage problem (7 of 9 cities got zero real events on 2026-08-17).
+  - DFO's events are compiled independently of GloFAS, fixing GDACS's
+    other, more serious problem: GDACS's own river-flood events were
+    partly auto-derived from the same GloFAS discharge series used as a
+    model feature — real label leakage. DFO has no such circularity.
+  - New `backend/app/models/fetch_real_training_data_dfo.py` pairs these
+    events with real Open-Meteo rainfall + GloFAS discharge, 1985–2010.
+    **Found and fixed a real bug while building this:**
+    `fetch_rainfall_series()`/`fetch_discharge_series()` in the existing
+    `fetch_real_training_data.py` silently ignored any caller-supplied
+    date range and always used that file's own hardcoded 2010–2022
+    window — the first full run of the new script silently got 2010–2022
+    data back while claiming to cover 1985–2010, which would have gone
+    unnoticed without independently checking the actual date range of
+    the returned data rather than trusting the row counts. Fixed by
+    adding optional `start`/`end` parameters (default-preserving the old
+    behavior for the GDACS script).
+  - **A second real, previously-undiscovered limitation found while
+    debugging a suspiciously-low result:** GloFAS discharge data has
+    **zero coverage at all** for Maputo and Mogadishu's coordinates (100%
+    missing, every single day 1985–2010), and for the other 8 cities,
+    only starts 1997-01-01 (100% missing 1985–1996, complete 1997–2010).
+    Not a bug — Open-Meteo's API genuinely returns `null` for these
+    (location, date) pairs. This is new information: the 2026-08-17
+    investigation used a 2010–2022 window and never hit this, since it
+    never queried earlier dates.
+  - **Still blocked from a full production retrain, same fundamental
+    issue as 2026-08-17:** GloFAS gives discharge (m³/s), not the
+    production model's `river_level_m` (meters) — not convertible
+    without river-specific data that doesn't exist. Also, the live
+    `POST /api/sensor-reading` inference path receives a raw
+    `river_level_m` with no historical context, so even a model trained
+    on a "discharge percentile relative to 26 years of history" feature
+    couldn't be fed at inference time anyway — this isn't just a training
+    limitation, it's a pipeline-compatibility one.
+  - **What this real data was used for instead: genuine validation, not
+    retraining.** New `backend/app/models/validate_against_dfo.py`
+    evaluates the *existing* rules-based and trained-ML models (using
+    each city's own relative discharge percentile as an approximation
+    for "how high is the river," clearly flagged as an approximation, not
+    a real river-level reading) against 239 real, usable DFO-confirmed
+    flood-days (the 7 cities with both events and discharge coverage
+    overlapping). **Real result:** rules-based model recall 41% (22%
+    false-positive rate), trained ML model recall 28% (13.7%
+    false-positive rate) — genuine numbers from real data, now cited in
+    `docs/pitch-notes.md`'s new "Real-data validation" section instead of
+    the vaguer "cite GDACS as external validation" plan from 2026-08-17.
+
+### Not yet started
+- Wokwi's actual TLS-handshake behavior against `cloudflared` — needs a
+  human to click Run in the Wokwi web UI (not doable from this
+  environment without either a Wokwi account or working browser access,
+  neither available this session).
+- Emergency numbers are cited, real data but not independently
+  re-verified per country against each government's own current source
+  — flagged in the UI and in `emergency_numbers.dart`'s doc comment as a
+  follow-up item, same standing as an unreviewed translation.
+- No newer (post-2010) real flood-label source has been found or tried
+  yet — DFO's archive itself stops there. A second, more recent source
+  layered on top would be the next step for anyone continuing this.
+
+---
+
 ## 2026-08-28 — Push notifications (backend + mobile) and a real geo dataset
 
 ### Completed

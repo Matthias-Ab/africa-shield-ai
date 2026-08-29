@@ -87,6 +87,16 @@
   "emergencyDialogTitle": "Nambari ya dharura bado haijawekwa",
   "emergencyDialogBody": "AfriShield haina nambari ya dharura iliyothibitishwa kwa nchi hii bado — kuonyesha nambari isiyo sahihi kunaweza kukupeleka huduma isiyo sahihi. Tumia nambari yako ya dharura ya mtaa moja kwa moja kwa sasa.",
   "callEmergencyLine": "PIGA SIMU YA DHARURA",
+  "emergencyCallConfirmTitle": "Piga simu ya dharura?",
+  "emergencyCallConfirmBody": "Hii itapiga nambari ya dharura ya jumla ya {country}, {number}. Imetolewa kutoka orodha za umma, haijathibitishwa kwa eneo lako mahususi — tumia ujuzi wako wa nambari za dharura za eneo lako ikiwa unazo.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "Ghairi",
+  "callButton": "Piga",
   "shareAlertTemplate": "Hatari ya mafuriko {riskLevel} katika {location}: {message}",
 
   "floodRiskMapTitle": "🗺️  RAMANI YA HATARI YA MAFURIKO",

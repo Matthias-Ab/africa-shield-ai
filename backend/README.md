@@ -118,6 +118,17 @@ shapes. Summary:
   `ml_risk_model.pkl`. Trains on **synthetic** data (clearly flagged in
   that file's docstring) standing in for real historical flood data. Run
   it directly to retrain: `python -m app.models.train_ml_model`.
+- `app/models/fetch_real_training_data_dfo.py` +
+  `app/models/validate_against_dfo.py` — real historical flood data
+  (Dartmouth Flood Observatory, 49 events across all 10 cities) paired
+  with real Open-Meteo rainfall/discharge, used to genuinely validate
+  (not retrain) both risk scores against 239 real confirmed flood-days —
+  see `docs/pitch-notes.md`'s "Real-data validation" section for the
+  actual numbers, and `docs/progress-log.md`'s 2026-08-29 entry for why
+  this stayed validation rather than becoming a production retrain
+  (GloFAS discharge ≠ the model's river-level input, and the live
+  sensor-reading endpoint has no history to compute a percentile from
+  anyway).
 - See [`../docs/architecture.md`](../docs/architecture.md)'s "Two risk
   scores, on purpose" section for why both are kept side by side.
 

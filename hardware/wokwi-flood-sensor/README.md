@@ -38,13 +38,15 @@ backend, you need a tunnel that exposes it on a public URL:
 
 1. Start the backend as usual: `cd backend && uvicorn app.main:app --reload`
    (runs on `http://localhost:8000`).
-2. In a separate terminal, run a tunnel — [ngrok](https://ngrok.com/) is
-   the simplest free option: `ngrok http 8000`. It prints a public URL
-   like `https://abcd1234.ngrok-free.app`.
-3. Use the `http://` form of that address in `SERVER_URL` in
-   `sketch.ino`:
+2. In a separate terminal, run a tunnel — **use `cloudflared`, not
+   `ngrok`** (see the note below for why): `cloudflared tunnel --url
+   http://localhost:8000`. No account or login needed for this "quick
+   tunnel" mode. It prints a public URL like
+   `https://some-random-words.trycloudflare.com`.
+3. Use that `https://` address (with `/api/sensor-reading` appended) in
+   `SERVER_URL` in `sketch.ino`:
    ```cpp
-   const char *SERVER_URL = "http://abcd1234.ngrok-free.app/api/sensor-reading";
+   const char *SERVER_URL = "https://some-random-words.trycloudflare.com/api/sensor-reading";
    ```
 4. Re-run the Wokwi simulation. The Serial Monitor should show each
    reading and the backend's JSON response (risk level, score, alert
@@ -53,23 +55,34 @@ backend, you need a tunnel that exposes it on a public URL:
 If your backend isn't running or the tunnel URL is wrong/expired, the
 Serial Monitor will show `POST failed: ...` instead of a response —
 that's the sketch telling you the connection didn't work, not a crash.
+A `cloudflared` quick tunnel's URL is random and temporary — a new one
+is generated every time you restart it, and Cloudflare gives it no
+uptime guarantee. That's fine for testing; don't rely on the same URL
+staying alive long-term.
 
-**Known unresolved gap (found 2026-08-24): the free ngrok agent now
-301/307-redirects plain `http://` requests to `https://` on its own —
-the README above used to claim plain `http://` passes through
-untouched, which is no longer true.** This sketch's `HTTPClient` doesn't
-follow that redirect, so it'll log `Backend responded (307):` with an
-empty body instead of a real response. Switching `SERVER_URL` to
-`https://` and adding a `WiFiClientSecure` with `setInsecure()` (the
-standard ESP32 pattern for skipping cert validation) gets past the
-redirect, but the TLS handshake itself then fails with
-`POST failed: connection refused` inside Wokwi's simulated network —
-untested whether that's a genuine Wokwi TLS limitation or something
-fixable. **Not solved yet** — whoever picks this up next should either
-find a working TLS approach, or find a tunnel option that truly serves
-plain HTTP without a forced redirect (an ngrok Traffic Policy
-`https-redirect` action looked promising but returned
-`ERR_NGROK_2201: Invalid policy action type` on the free plan).
+**Resolved 2026-08-29 — use `cloudflared`, not `ngrok`.** The free
+`ngrok` agent force-redirects plain `http://` to `https://` on its own,
+and this sketch's `HTTPClient` doesn't follow redirects, so it used to
+log `Backend responded (307):` with an empty body. `cloudflared`'s quick
+tunnels serve `https://` directly with **no redirect** — verified
+2026-08-29 with `curl` against a live tunnel: clean `200 OK` on both
+`GET /` and `POST /api/sensor-reading`, no `Location` header, right
+away. `sketch.ino` now uses `WiFiClientSecure` (with `setInsecure()` —
+fine for a throwaway tunnel URL, not for a real deployment with a stable
+domain) instead of a plain `HTTPClient`, since the endpoint is always
+`https://` now.
+
+**Still open: whether Wokwi's simulated network actually completes this
+TLS handshake hasn't been re-verified against `cloudflared`'s edge**
+specifically — a prior attempt against `ngrok`'s `https://` endpoint got
+`POST failed: connection refused` during the TLS handshake itself, and
+it was never confirmed whether that was a Wokwi limitation or an
+`ngrok`-specific interop issue. Whoever runs this next: open
+[wokwi.com](https://wokwi.com/), paste in this folder's `sketch.ino` +
+`diagram.json`, and click Run — if the Serial Monitor shows a real `200`
+response, this whole path is finally confirmed end-to-end; if it still
+shows a TLS/connection failure, that narrows it down to a genuine Wokwi
+limitation rather than an `ngrok` quirk.
 
 ## The device registry
 

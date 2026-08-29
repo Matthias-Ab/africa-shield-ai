@@ -151,18 +151,27 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * r * math.asin(math.sqrt(a))
 
 
-def fetch_rainfall_series(latitude: float, longitude: float) -> dict[str, float]:
+def fetch_rainfall_series(
+    latitude: float, longitude: float, start: date = SERIES_START, end: date = SERIES_END
+) -> dict[str, float]:
     """Returns {date_str: rainfall_mm} from Open-Meteo's ERA5-backed
     historical archive. Real daily values, no API key. Response shape
     (`{"daily": {"time": [...], "precipitation_sum": [...]}}`) verified
-    against a live call, not assumed."""
+    against a live call, not assumed.
+
+    `start`/`end` default to this module's own SERIES_START/SERIES_END
+    (2010–2022, the window GDACS coverage forced) but can be overridden —
+    `fetch_real_training_data_dfo.py` passes its own 1985–2010 window,
+    matching DFO's event archive instead. Without this parameter, that
+    script silently got 2010–2022 data back regardless of what range it
+    intended, which is exactly the bug that motivated adding it."""
     response = _get_with_retries(
         RAINFALL_URL,
         params={
             "latitude": latitude,
             "longitude": longitude,
-            "start_date": SERIES_START.isoformat(),
-            "end_date": SERIES_END.isoformat(),
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
             "daily": "precipitation_sum",
             "timezone": "UTC",
         },
@@ -171,18 +180,23 @@ def fetch_rainfall_series(latitude: float, longitude: float) -> dict[str, float]
     return dict(zip(daily["time"], daily["precipitation_sum"]))
 
 
-def fetch_discharge_series(latitude: float, longitude: float) -> dict[str, float]:
+def fetch_discharge_series(
+    latitude: float, longitude: float, start: date = SERIES_START, end: date = SERIES_END
+) -> dict[str, float]:
     """Returns {date_str: discharge_m3s} from Open-Meteo's GloFAS-backed
     flood API. This is river DISCHARGE in m³/s, not river LEVEL in
     meters — see module docstring. No API key. Same verified shape as
-    the rainfall endpoint, under a "river_discharge" key instead."""
+    the rainfall endpoint, under a "river_discharge" key instead.
+
+    `start`/`end` — see `fetch_rainfall_series`'s doc comment; same
+    override behavior."""
     response = _get_with_retries(
         DISCHARGE_URL,
         params={
             "latitude": latitude,
             "longitude": longitude,
-            "start_date": SERIES_START.isoformat(),
-            "end_date": SERIES_END.isoformat(),
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
             "daily": "river_discharge",
         },
     )

@@ -24,6 +24,38 @@ _Fill this in as the demo comes together. Structure below is a starting point._
   the "message sent" screen proves the concept without needing a paid
   SMS provider account.
 
+## Real-data validation (2026-08-29) — the honest ML story
+
+**The model trains on synthetic data — that's not hidden, and here's the
+real evidence we cite instead of pretending otherwise.**
+
+- Real historical flood data for our 10 cities came from the **Dartmouth
+  Flood Observatory** (an independent, non-satellite-derived global flood
+  catalog, free/no-login) — 49 real, dated flood events across all 10
+  cities, 1985–2010 (see `backend/app/data/dfo_flood_events.json`).
+- Paired with **real** rainfall (Open-Meteo/ERA5) and river discharge
+  (Open-Meteo/GloFAS) for the same cities and years —
+  `backend/app/models/fetch_real_training_data_dfo.py`.
+- **The real, citable number:** validated against 239 real confirmed
+  flood-days (7 of our 10 cities have usable discharge data — GloFAS has
+  none at all for Maputo/Mogadishu, and only from 1997 onward elsewhere,
+  a real data-coverage limit, not a bug) — see
+  `backend/app/models/validate_against_dfo.py`:
+  - Our **rules-based** model flagged **41% of real historical flood
+    days** as medium-or-high risk (22% false-positive rate on
+    non-flood days).
+  - The **trained ML model** flagged 28% (13.7% false-positive rate) —
+    more conservative, fewer false alarms but also fewer catches.
+- **Why this isn't a full retrain, said plainly if asked:** GloFAS gives
+  river *discharge* (m³/s), not river *level* (meters) — the two aren't
+  convertible without river-specific data we don't have, so this
+  compares real rainfall + a river's own relative discharge percentile
+  against real flood days, not literal training on real river-level
+  readings. It's genuine external validation with real data, not a
+  production swap — same honest line the team already held to when the
+  first (GDACS-based) attempt at this found almost no usable real
+  events at all.
+
 ## Cost & scalability
 
 **Africa's Talking SMS costs roughly $0.01–$0.03 per message** (exact rate
