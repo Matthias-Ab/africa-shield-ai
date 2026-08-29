@@ -261,12 +261,18 @@ Presentation & Pitch 5.
       cities from the open `dr5hn/countries-states-cities-database`, see
       `mobile-app/lib/data/geo_data.dart`) across all 54 countries, real
       Firebase Cloud Messaging push wiring (Settings > Alert Channels >
-      "Mobile App"), and a real "Call Emergency Line" button (cited
+      "Mobile App"), a real "Call Emergency Line" button (cited
       per-country numbers for all 54 countries, see
       `mobile-app/lib/data/emergency_numbers.dart` — sourced from
-      Wikipedia's emergency-numbers table, not independently re-verified
-      per country, flagged as such in the UI). `flutter analyze` and
-      `flutter test` both pass. Still needed: native-speaker review of
+      Wikipedia's emergency-numbers table; **the 10 currently monitored
+      countries are cross-verified against gov.uk's travel advice too
+      (2026-08-29), which caught 4 wrong numbers: Kenya, Egypt, Uganda,
+      Mozambique** — the other 44 remain single-sourced), and localized
+      `ApiException`/`LocationException` runtime error messages
+      (2026-08-29 — each now carries an error-kind enum instead of a raw
+      English string, resolved to a translated message at the UI layer).
+      `flutter analyze` and `flutter test` both pass. Still needed:
+      native-speaker review of
       the 6 non-English UI translations (see the translation-review
       section below). LGA stays free text — no equally reliable third
       administrative tier exists across all 54 countries in the dataset

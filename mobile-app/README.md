@@ -41,10 +41,10 @@ About.
 | Hazard reporting ("Reports" tab) | **Real** — `POST /api/hazard-reports`. Category/description/location/GPS are sent for real and persisted server-side; a failed send shows a real error, not a fake success |
 | Hazard report photo attachment | **Real** — `image_picker` (camera or gallery) + `POST /api/hazard-reports/{id}/photo`. If the report sends but the photo upload fails, the dialog says so honestly rather than claiming full success |
 | "Use my current location" (GPS) | **Real** — `geolocator`, in both onboarding's Location Setup and the Reports tab. No reverse geocoding: onboarding shows the raw coordinates and still requires manual State/LGA/City entry; Reports attaches the raw coordinates to the report |
-| Emergency call button | **Real** — `url_launcher` + real, cited per-country emergency numbers for all 54 countries (`lib/data/emergency_numbers.dart`, sourced from Wikipedia's "List of emergency telephone numbers"). Confirms with the user first, showing the exact number and a caveat that it's cited data, not independently re-verified for their specific area |
+| Emergency call button | **Real** — `url_launcher` + real, cited per-country emergency numbers for all 54 countries (`lib/data/emergency_numbers.dart`, sourced from Wikipedia's "List of emergency telephone numbers"). **The 10 currently monitored countries are cross-verified against a second independent source** (UK gov.uk travel advice) — this caught and corrected 4 wrong numbers (Kenya, Egypt, Uganda, Mozambique). The other 44 are still single-sourced. Confirms with the user first, showing the exact number |
 | Country/State/LGA/City pickers | **Real** for Country/State/City — 54 countries, 1,117 states/regions, 4,638 cities/towns from the open `dr5hn/countries-states-cities-database` (see `lib/data/geo_data.dart`). Picking a State opens a real searchable list of that country's actual regions; picking a City opens that state's actual cities. **LGA is still a plain text field** — no equally reliable third administrative tier exists across all 54 countries in that dataset |
 | Yoruba / Hausa (2 of the 9 languages) | Selectable, tagged "alerts not translated yet" — the backend's `translations.py` only covers 7 of the 9 languages Figma lists. The app's own UI chrome (buttons/labels) also has no translation for these two, and falls back to English |
-| UI chrome translation (buttons, labels, headings) | **Real for the 7 backend-supported languages** — `lib/l10n/*.arb` + generated `AppLocalizations`, switched live from the Settings > Language choice. **AI-drafted, unreviewed by a native speaker** — same caveat as the backend's own French/Portuguese/Amharic alert text (see `backend/README.md`), except here it applies to all 6 non-English languages, since this is a different set of strings than the alert wording and has never been reviewed even for Swahili/Arabic/Somali. Runtime error messages (`ApiException`, `LocationException`) are a separate, deliberately out-of-scope gap — still English-only |
+| UI chrome translation (buttons, labels, headings) | **Real for the 7 backend-supported languages** — `lib/l10n/*.arb` + generated `AppLocalizations`, switched live from the Settings > Language choice. **AI-drafted, unreviewed by a native speaker** — same caveat as the backend's own French/Portuguese/Amharic alert text (see `backend/README.md`), except here it applies to all 6 non-English languages, since this is a different set of strings than the alert wording and has never been reviewed even for Swahili/Arabic/Somali. This now includes runtime error messages (`ApiException`, `LocationException`) too — each carries an error-kind enum instead of a raw English string, so the UI resolves a translated message via `localizedMessage(l10n)` instead of showing `toString()`'s technical (always-English) detail |
 
 ## Structure
 
@@ -107,6 +107,6 @@ a real error state, not fake data.
   Swahili/Arabic/Somali even though those languages' *alert* wording was
   already reviewed (that review never covered this separate set of
   strings).
-- Localize `ApiException`/`LocationException` runtime error messages —
-  currently English-only regardless of the selected language, since
-  they're thrown from service classes with no `BuildContext`.
+- The 44 countries outside the 10 currently monitored regions still
+  have single-sourced (Wikipedia only) emergency numbers, not
+  cross-verified against a second source.

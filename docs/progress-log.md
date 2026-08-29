@@ -5,6 +5,50 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-29 — Localized runtime error messages; cross-verified 10 countries' emergency numbers
+
+Closing out the two remaining mobile gaps that didn't need an account,
+a real device, or the (explicitly deprioritized) translation review.
+
+### Completed
+- **`ApiException`/`LocationException` are localized now**, not
+  English-only. Both used to carry a raw English `message` string set
+  at throw time, deep in a service class with no `BuildContext` to
+  localize with. Redesigned so each carries an error-*kind* enum
+  (`ApiErrorKind.network`/`.server`; `LocationErrorKind
+  .servicesDisabled`/`.permissionDenied`/`.permissionDeniedForever`)
+  plus a `debugDetail` string (kept English-only, for logs — e.g. the
+  exact status code and URL). UI call sites (which do have a
+  `BuildContext`) call `e.localizedMessage(l10n)` instead of
+  `e.toString()`/`e.message`. Added 5 new keys to all 7 `lib/l10n/*.arb`
+  files. `image_picker`'s own native platform error strings (a separate,
+  third-party `catch (e)` in `reports_screen.dart`) are out of scope —
+  we don't control what language a native OS exception is thrown in.
+- **Cross-verified emergency numbers for the 10 currently monitored
+  countries** against a second, independent source (UK gov.uk's
+  `foreign-travel-advice/.../getting-help` pages) — the original
+  2026-08-28 data was single-sourced from Wikipedia only. **Found 4 real
+  discrepancies**: Kenya (was 112, gov.uk says 999 — Wikipedia listed
+  112 as *also* valid, but 999 is what the independent source leads
+  with), Egypt (was 112, gov.uk says 122 and doesn't mention 112 at
+  all), Uganda (was 112, gov.uk says 999), Mozambique (was 119, gov.uk
+  states a unified 112). The other 6 of the 10 (Nigeria, Ghana,
+  Tanzania, DRC, Somalia, Ethiopia) matched exactly — corrected the 4,
+  annotated all 10 in `emergency_numbers.dart` with which were checked
+  and against what. The other 44 countries remain single-sourced from
+  Wikipedia only.
+- `flutter analyze` and `flutter test` both pass clean.
+
+### Not yet started
+- The 44 non-monitored countries' emergency numbers are still
+  single-sourced — same standing caveat as before, just narrower in
+  scope now.
+- `image_picker`'s native error strings are still English-only —
+  documented as a real, structural boundary (third-party plugin error
+  text), not something fixable from this side.
+
+---
+
 ## 2026-08-29 — Merged Habiba's frontend dashboard work (was stuck unmerged since 2026-08-16)
 
 ### Completed
