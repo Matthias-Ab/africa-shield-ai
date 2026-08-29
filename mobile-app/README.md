@@ -33,7 +33,7 @@ About.
 | Region risk, alert text, map pins | **Real** — `GET /api/regions` |
 | Alert filtering by risk level | **Real** — computed from the same data |
 | SMS alert channel toggle | **Real channel** (backend sends via Africa's Talking); the toggle itself is just a local preference, doesn't yet call a backend "opt in" endpoint |
-| "Mobile App" (push notification) channel | **Real** — Firebase Cloud Messaging, against a real project (`afrishield-ai-flood`, configured 2026-08-29 via `flutterfire configure` — see `lib/firebase_options.dart`). Toggling it on requests a device token and registers it with `POST /api/push-tokens`; toggling off calls `DELETE /api/push-tokens/{token}`. Android/iOS should work once built for those platforms (untested — no device/emulator in this environment). **Web still needs a VAPID key** (`PushService._webVapidKey`, currently `null`) before it can get a token in the browser; the backend also still needs its own service-account credential in `backend/.env`'s `FIREBASE_SERVICE_ACCOUNT_JSON` before it can actually send anything |
+| "Mobile App" (push notification) channel | **Real** — Firebase Cloud Messaging, against a real project (`afrishield-ai-flood`, configured 2026-08-29 via `flutterfire configure` — see `lib/firebase_options.dart`), with a real Web Push VAPID key set too (`PushService._webVapidKey`). Toggling it on requests a device token and registers it with `POST /api/push-tokens`; toggling off calls `DELETE /api/push-tokens/{token}`. Android/iOS/Web should all be able to obtain a token now (untested on Android/iOS — no device/emulator in this environment). **The backend still needs its own service-account credential** in `backend/.env`'s `FIREBASE_SERVICE_ACCOUNT_JSON` before it can actually send anything — this file/key pair alone only lets the app receive |
 | WhatsApp / USSD channels | **Not built.** Switches are disabled with an inline note explaining why — see `screens/settings/alert_channels_screen.dart` |
 | Voice alerts (text-to-speech "Read Aloud") | **Real** — `flutter_tts`, on-device, no backend involved |
 | Text size / high contrast | **Real** — applied app-wide via `AccessibilityProvider` + `MediaQuery` override in `app.dart` |
@@ -95,16 +95,14 @@ a real error state, not fake data.
 ## Known gaps worth tackling next
 
 - **Firebase project is real now** (`afrishield-ai-flood`, configured
-  2026-08-29 via `flutterfire configure` — see `lib/firebase_options.dart`'s
-  doc comment), but two setup steps remain: a Web Push VAPID key
-  (`PushService._webVapidKey`, currently `null` — Project Settings > Cloud
-  Messaging > Web configuration > Web Push certificates) so push works in
-  the browser, and a service-account key in `backend/.env`'s
+  2026-08-29 via `flutterfire configure`, plus a real Web Push VAPID key —
+  see `lib/firebase_options.dart` and `PushService`'s doc comments). One
+  setup step remains: a service-account key in `backend/.env`'s
   `FIREBASE_SERVICE_ACCOUNT_JSON` (Project Settings > Service Accounts >
-  Generate new private key) so the backend can actually send anything.
-  Until both are in place, Android/iOS token registration should work but
-  is untested (no device/emulator here), and web/backend push don't work
-  yet.
+  Firebase Admin SDK > Generate new private key) so the backend can
+  actually send anything — until then, tokens register successfully but
+  nothing gets pushed. Android/iOS token registration is also still
+  untested (no device/emulator here).
 - No third administrative tier (LGA) with reliable coverage across all 54
   countries — stays free text. GPS also still gives raw coordinates, not
   an address, so it doesn't help fill this in either.
