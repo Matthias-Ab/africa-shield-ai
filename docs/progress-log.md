@@ -5,6 +5,38 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-29 — Push notification setup fully wired: VAPID key + backend service-account key
+
+Closes out the two remaining Firebase setup steps from earlier today.
+
+### Completed
+- **Generated a real Web Push VAPID key** (Project Settings > Cloud
+  Messaging > Web configuration > Web Push certificates) and set it as
+  `PushService._webVapidKey` in `mobile-app/lib/services/push_service.dart`
+  (previously `null`). Fixed a resulting `unnecessary_nullable_for_final_
+  variable_declarations` lint by narrowing the field's type from
+  `String?` to `String` now that it always has a value.
+  `flutter analyze` — "No issues found!".
+- **Generated a real backend service-account key** (Project Settings >
+  Service Accounts > Firebase Admin SDK > Generate new private key),
+  saved outside the repo, and pointed `backend/.env`'s
+  `FIREBASE_SERVICE_ACCOUNT_JSON` at its path (`backend/.env` is
+  gitignored, so this is a local-only change, not committed).
+- Verified both ends: `app.models.push_gateway.is_configured()` now
+  returns `True` (previously `False` with no credential set), and
+  `app.main` still imports cleanly with the credential wired in.
+
+### Not yet started
+- Android/iOS token registration is wired up but untested — no
+  device/emulator available in this environment.
+- No actual push notification has been triggered end-to-end and
+  observed arriving anywhere yet — only the configuration plumbing has
+  been verified (`is_configured()`, clean imports, `flutter analyze`),
+  not a real delivered notification via `POST /api/alerts/send` or
+  `POST /api/push-tokens`.
+
+---
+
 ## 2026-08-29 — Real Firebase project created; `flutterfire configure` wired into the mobile app
 
 ### Completed

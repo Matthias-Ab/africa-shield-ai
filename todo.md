@@ -278,25 +278,24 @@ Presentation & Pitch 5.
       administrative tier exists across all 54 countries in the dataset
       used.
 - [x] ~~Create a real Firebase project and drop its config into
-      `mobile-app/lib/firebase_options.dart` via `flutterfire configure`~~
-      **Done 2026-08-29** — real project `afrishield-ai-flood`, real
-      config generated for Android/iOS/Web, `google-services.json` and
-      the Gradle plugin wired in. `flutter analyze`/`flutter test` still
-      pass; `flutter run -d chrome` boots clean. See
-      `docs/progress-log.md`'s 2026-08-29 "Real Firebase project
-      created" entry for the full account/permissions saga. **Two
-      narrower steps remain before push actually works end-to-end:**
-      - [ ] Generate a **Web Push VAPID key** (Project Settings > Cloud
-            Messaging > Web configuration > Web Push certificates) and
-            fill it into `PushService._webVapidKey` — needed for push to
-            work in a browser at all.
-      - [ ] Generate a **backend service-account key** (Project Settings
-            > Service Accounts > Generate new private key) and set
-            `backend/.env`'s `FIREBASE_SERVICE_ACCOUNT_JSON` to its path
-            — needed before the backend can actually send anything (the
-            mobile-side config alone only lets the app *receive*).
-      - [ ] Android/iOS token registration is wired up but still
-            untested on a real device/emulator.
+      `mobile-app/lib/firebase_options.dart` via `flutterfire configure`,
+      plus a Web Push VAPID key and a backend service-account key~~
+      **Done 2026-08-29** — real project `afrishield-ai-flood`: real
+      client config for Android/iOS/Web (`flutterfire configure`,
+      `google-services.json`, the Gradle plugin), a real Web Push VAPID
+      key in `PushService._webVapidKey`, and a real service-account key
+      (Firebase Admin SDK) at `backend/.env`'s
+      `FIREBASE_SERVICE_ACCOUNT_JSON` — confirmed
+      `push_gateway.is_configured()` returns `True` and the backend still
+      imports/starts cleanly. See `docs/progress-log.md`'s 2026-08-29
+      "Real Firebase project created" entry for the full
+      account/permissions saga. **Still not done:**
+      - [ ] Android/iOS token registration is wired up but untested on a
+            real device/emulator (none available in this environment).
+      - [ ] An actual push notification has never been triggered
+            end-to-end and observed arriving on a device/browser — only
+            the plumbing (`is_configured()`, imports, `flutter analyze`)
+            has been verified, not a real delivered notification.
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
 - [ ] **Community-reporting feature — backend + mobile app fully wired,
