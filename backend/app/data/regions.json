@@ -70,5 +70,13 @@
     "rainfall_mm_24h": 55,
     "river_level_m": 2.6,
     "population_estimate": 2600000
+  },
+  {
+    "location_name": "Addis Ababa, Ethiopia",
+    "latitude": 9.0320,
+    "longitude": 38.7469,
+    "rainfall_mm_24h": 65,
+    "river_level_m": 2.6,
+    "population_estimate": 5200000
   }
 ]

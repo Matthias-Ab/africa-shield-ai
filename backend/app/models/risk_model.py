@@ -27,11 +27,11 @@ def compute_risk(rainfall_mm_24h: float, river_level_m: float) -> tuple[str, flo
     river level, weighted equally. risk_level buckets the score into
     low / medium / high for display and alerting.
 
-    Sanity-checked against the 9 sample cities in app/data/regions.json:
+    Sanity-checked against the 10 sample cities in app/data/regions.json:
     Lagos 0.82/high, Kampala 0.89/high, Dar es Salaam 0.70/high,
     Cairo 0.42/medium, Accra 0.61/medium, Mogadishu 0.60/medium,
-    Nairobi 0.20/low, Maputo 0.20/low, Kinshasa 0.31/low — an even
-    3/3/3 high/medium/low spread.
+    Addis Ababa 0.65/medium, Nairobi 0.20/low, Maputo 0.20/low,
+    Kinshasa 0.31/low — a 3/4/3 high/medium/low spread.
     """
     normalized_rainfall, normalized_river_level = _normalized_inputs(rainfall_mm_24h, river_level_m)
 

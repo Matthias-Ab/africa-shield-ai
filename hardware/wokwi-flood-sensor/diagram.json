@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "author": "Africa Shield AI team",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp32", "top": 0, "left": -30, "attrs": {} },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "rain_sensor",
+      "top": -80,
+      "left": 220,
+      "attrs": { "label": "Rain Sensor (simulated)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "water_level_sensor",
+      "top": 60,
+      "left": 220,
+      "attrs": { "label": "Water Level Sensor (simulated)" }
+    }
+  ],
+  "connections": [
+    [ "esp32:3V3", "rain_sensor:VCC", "red", [] ],
+    [ "esp32:GND.1", "rain_sensor:GND", "black", [] ],
+    [ "rain_sensor:SIG", "esp32:D34", "green", [] ],
+
+    [ "esp32:3V3", "water_level_sensor:VCC", "red", [] ],
+    [ "esp32:GND.2", "water_level_sensor:GND", "black", [] ],
+    [ "water_level_sensor:SIG", "esp32:D35", "blue", [] ],
+
+    [ "esp32:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp32:RX0", "$serialMonitor:TX", "", [] ]
+  ],
+  "dependencies": {},
+  "serialMonitor": { "display": "always", "collapse": false }
+}

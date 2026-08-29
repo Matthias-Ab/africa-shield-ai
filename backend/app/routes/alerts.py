@@ -1,19 +1,198 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from app.models.risk_model import risk_score_breakdown
+from app.models.sms_gateway import is_configured as is_sms_configured, send_sms
+from app.models.translations import build_alert_messages
+from app.models.voice_gateway import is_configured as is_voice_configured, place_call
+from app.models.push_gateway import is_configured as is_push_configured, send_push
+from app.routes.push_tokens import read_push_tokens
 
 router = APIRouter()
 
 MOCK_DATA_FILE = Path(__file__).resolve().parents[3] / "docs" / "mock-data.json"
+REGIONS_FILE = Path(__file__).resolve().parent.parent / "data" / "regions.json"
+SUBSCRIBERS_FILE = Path(__file__).resolve().parent.parent / "data" / "subscribers.json"
+ALERT_LOG_FILE = Path(__file__).resolve().parent.parent / "data" / "alert_log.json"
+ALERT_STATE_FILE = Path(__file__).resolve().parent.parent / "data" / "region_alert_state.json"
+
+
+class SendAlertRequest(BaseModel):
+    location_name: str
+    channel: Literal["sms", "voice"] = "sms"
+
+
+class SendAlertResponse(BaseModel):
+    location_name: str
+    risk_level: str
+    message_sent: str
+    channel: str
+    recipients: int
+    timestamp: str
+    trigger: str
+    push_status: str
+
+
+def _read_json(path: Path, default):
+    if not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _append_alert_log(entry: dict) -> None:
+    log = _read_json(ALERT_LOG_FILE, [])
+    log.append(entry)
+    ALERT_LOG_FILE.write_text(json.dumps(log, indent=2), encoding="utf-8")
 
 
 @router.get("/api/alerts")
 def get_alerts() -> list[dict]:
-    """Intentionally still a simulated alert-history stub: no real
-    SMS/USSD/WhatsApp gateway is wired up this week (see
-    docs/architecture.md future-improvements list). Returns the hardcoded
-    list from docs/mock-data.json. This is a deliberate scope decision,
-    not an oversight — flagged in docs/progress-log.md."""
+    """Real send history, once at least one alert has gone through
+    `POST /api/alerts/send` (logged to `app/data/alert_log.json`). Falls
+    back to the original hardcoded `docs/mock-data.json` list on a fresh
+    clone/demo where nothing has been sent yet, so the dashboard's alert
+    history is never empty."""
+    log = _read_json(ALERT_LOG_FILE, [])
+    if log:
+        return log
     mock_data = json.loads(MOCK_DATA_FILE.read_text(encoding="utf-8"))
     return mock_data["alerts"]
+
+
+def send_alert_for_region(location_name: str, channel: str = "sms", trigger: str = "manual") -> dict:
+    """The actual work behind `POST /api/alerts/send`, factored out so
+    other code paths — specifically the automatic threshold trigger in
+    `app/routes/sensors.py` — can send a real alert the exact same way a
+    manual button-press does, without duplicating this logic.
+
+    `trigger` is recorded in the log entry ("manual" or "automatic") so
+    `GET /api/alerts` can honestly show which alerts a person sent versus
+    which fired on their own — this matters for judging/demo trust, not
+    just bookkeeping.
+
+    Raises `LookupError` (not `HTTPException` — this function has no HTTP
+    context) if `location_name` isn't in `app/data/regions.json`."""
+    regions = _read_json(REGIONS_FILE, [])
+    region = next((r for r in regions if r["location_name"] == location_name), None)
+    if region is None:
+        raise LookupError(f"Unknown region: {location_name}")
+
+    breakdown = risk_score_breakdown(region["rainfall_mm_24h"], region["river_level_m"])
+    risk_level = breakdown["risk_level"]
+    _message_en, message_local, _local_language = build_alert_messages(location_name, risk_level)
+
+    subscribers = _read_json(SUBSCRIBERS_FILE, [])
+    phone_numbers = [s["phone_number"] for s in subscribers if s["location_name"] == location_name]
+
+    if channel == "voice":
+        if is_voice_configured() and phone_numbers:
+            place_call(phone_numbers, message_local)
+            resolved_channel = "Voice call"
+        else:
+            resolved_channel = "Voice call (simulated)"
+    else:
+        if is_sms_configured() and phone_numbers:
+            send_sms(phone_numbers, message_local)
+            resolved_channel = "SMS"
+        else:
+            resolved_channel = "SMS (simulated)"
+
+    # Push is additive, not a channel choice — it rides alongside whatever
+    # `channel` was picked, for devices that opted in via
+    # POST /api/push-tokens (mobile app's Settings > Alert Channels >
+    # "Mobile App" toggle). A failure here never breaks the alert itself;
+    # SMS/voice already carries the message.
+    push_tokens = [t["token"] for t in read_push_tokens() if t["location_name"] == location_name]
+    if not push_tokens:
+        push_status = "no_recipients"
+    elif not is_push_configured():
+        push_status = "simulated"
+    else:
+        try:
+            send_push(push_tokens, f"{risk_level.upper()} flood risk: {location_name}", message_local)
+            push_status = "sent"
+        except Exception:
+            push_status = "failed"
+
+    entry = {
+        "location_name": location_name,
+        "risk_level": risk_level,
+        "message_sent": message_local,
+        "channel": resolved_channel,
+        "recipients": len(phone_numbers),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "trigger": trigger,
+        "push_status": push_status,
+    }
+    _append_alert_log(entry)
+    return entry
+
+
+def maybe_auto_trigger(location_name: str, risk_level: str) -> dict | None:
+    """Automatically sends an SMS alert the first time a region's risk
+    crosses INTO "high" — not on every reading while it stays high, so a
+    sensor reporting every 15 seconds (see `hardware/wokwi-flood-sensor/`)
+    doesn't spam its subscribers with a duplicate alert each time.
+
+    Tracks each region's last-seen risk_level in
+    `app/data/region_alert_state.json` specifically to detect that
+    transition — "still high" and "just became high" would look
+    identical without remembering the previous reading.
+
+    Returns the alert log entry if one was actually sent, or `None` if
+    nothing fired (already high last time, or not high now).
+
+    Called from `POST /api/sensor-reading` only — deliberately NOT wired
+    into `POST /api/risk-check`, which is also used for a judge/dashboard
+    "what-if" slider demo (see `docs/frontend-feature-spec.md`) that must
+    stay side-effect-free; auto-firing a real SMS every time someone
+    drags a demo slider into the red would be a bad surprise, not a
+    feature."""
+    state = _read_json(ALERT_STATE_FILE, {})
+    previous_level = state.get(location_name)
+
+    state[location_name] = risk_level
+    ALERT_STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+    if risk_level == "high" and previous_level != "high":
+        return send_alert_for_region(location_name, channel="sms", trigger="automatic")
+    return None
+
+
+@router.post("/api/alerts/send", response_model=SendAlertResponse)
+def send_alert(payload: SendAlertRequest) -> SendAlertResponse:
+    """Sends a real alert via Africa's Talking for one of the monitored
+    regions in `app/data/regions.json`, to every subscriber registered for
+    that region in `app/data/subscribers.json` (subscribers are added via
+    `POST /api/ussd`, or seeded by hand for testing).
+
+    `channel="sms"` (default) sends a text message. `channel="voice"`
+    places a phone call that reads the alert aloud when answered (see
+    `app/models/voice_gateway.py` and `app/routes/voice.py`) — for
+    recipients a text-only channel doesn't reach (can't read, or the
+    local script, or are visually impaired).
+
+    Either channel falls back to a clearly labeled simulation when its
+    Africa's Talking credentials aren't configured yet, or when the
+    region has zero subscribers, so this endpoint is always safe to call,
+    not just in a fully configured environment.
+
+    Also pushes a real notification (Firebase Cloud Messaging) to every
+    device registered for this region via `POST /api/push-tokens`,
+    regardless of `channel` — push is additive, not a third channel
+    choice. `push_status` in the response/log is `"sent"`, `"simulated"`
+    (no Firebase project configured — see
+    `app/models/push_gateway.py`), `"failed"`, or `"no_recipients"`.
+
+    This is always `trigger: "manual"` in the log — see
+    `POST /api/sensor-reading` for the automatic counterpart."""
+    try:
+        entry = send_alert_for_region(payload.location_name, payload.channel, trigger="manual")
+    except LookupError:
+        raise HTTPException(status_code=404, detail=f"Unknown region: {payload.location_name}")
+    return SendAlertResponse(**entry)

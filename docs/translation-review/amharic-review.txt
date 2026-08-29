@@ -1,0 +1,101 @@
+AFRICA SHIELD AI — AMHARIC TRANSLATION REVIEW
+================================================
+
+Status: AI-written, NEVER reviewed by a native/fluent Amharic speaker.
+Added 2026-08-17, to match the African Union's official languages
+(Ethiopia's official language).
+
+**THIS IS THE LEAST CONFIDENT DRAFT OF ALL SEVEN LANGUAGES IN THIS
+APP.** Amharic uses a different script (Ge'ez) and is linguistically
+further from the team's other languages than French/Portuguese are from
+English or from each other. Treat this one as most likely to need real
+correction, not just a polish pass.
+
+Source file: backend/app/models/translations.py (Amharic block in
+ALERT_TEMPLATES).
+Used for: SMS alerts, USSD "check flood risk" reply, and voice call
+text-to-speech (spoken aloud when someone answers a voice alert).
+
+UPDATE (2026-08-17, later the same day): Addis Ababa was added as our
+10th sample city in app/data/regions.json specifically so Amharic would
+be exercised live by the dashboard (GET /api/regions), not just
+reachable via a manual API call. Sample inputs: 65mm rainfall/24h, 2.6m
+river level -> MEDIUM risk (score 0.65). Demo city below is now the
+real, live one, not just illustrative.
+
+City name: "Addis Ababa" is localized to "አዲስ አበባ" (its Amharic name,
+written in Ge'ez script) inside the Amharic sentence — please also
+confirm this spelling/name is correct.
+
+--------------------------------------------------
+1. HIGH RISK
+--------------------------------------------------
+Amharic (as sent):
+የጎርፍ አደጋ በአዲስ አበባ ከፍተኛ ነው። ወደ ከፍታ ቦታ ይሂዱ እና የወንዝ ዳርቻዎችን ያስወግዱ።
+
+Intended meaning (English gloss, for reference only — not the source
+text, just what we think it says):
+"The flood danger in Addis Ababa is high. Go to a high place and avoid
+riverbanks."
+
+--------------------------------------------------
+2. MEDIUM RISK
+--------------------------------------------------
+Amharic (as sent):
+የጎርፍ አደጋ በአዲስ አበባ መካከለኛ ነው። ንቁ ይሁኑ እና የአካባቢ ዝማኔዎችን ይከታተሉ።
+
+Intended meaning (English gloss):
+"The flood danger in Addis Ababa is medium. Be alert and follow local
+updates."
+
+--------------------------------------------------
+3. LOW RISK
+--------------------------------------------------
+Amharic (as sent):
+የጎርፍ አደጋ በአዲስ አበባ ዝቅተኛ ነው። በአሁኑ ጊዜ እርምጃ አያስፈልግም።
+
+Intended meaning (English gloss):
+"The flood danger in Addis Ababa is low. No action is needed at this
+time."
+
+
+WHAT WE NEED FROM YOU
+======================
+1. Is the grammar correct and natural for each of the 3 messages above?
+   (We expect this is the most likely of all 7 languages to have real
+   errors — please be thorough.)
+2. Do the high/medium/low severity words read clearly as distinct risk
+   levels?
+3. Is "አዲስ አበባ" the correct/expected way to write "Addis Ababa"?
+4. Is the tone right for an emergency/safety alert?
+5. Is there a more natural word order or phrasing overall? We are not
+   confident in the sentence structure here.
+
+
+ADDITIONAL MESSAGES — NOT YET TRANSLATED AT ALL
+=================================================
+These only exist in English today, regardless of which local language a
+region is mapped to. We have NOT decided yet whether to translate these
+— flagging them now so you can tell us whether they're worth localizing
+too, and if so, we'll come back with drafts for review. No action needed
+unless you want to weigh in.
+
+USSD menu (what someone sees when they dial in on any phone):
+  "Welcome to Africa Shield AI
+   1. Check flood risk
+   2. Subscribe to alerts
+   3. Unsubscribe from alerts"
+
+  "Select a region:" (shown after picking option 1 or 2)
+
+  "You are now subscribed to flood alerts for {region}." (after
+  subscribing)
+
+  "You have been unsubscribed from all flood alerts." (after
+  unsubscribing)
+
+  "Invalid selection." (bad input)
+
+Voice call fallback line (spoken only if something goes wrong and no
+alert message was found for the call):
+  "This is Africa Shield AI. No specific alert was found for this call."

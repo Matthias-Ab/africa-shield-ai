@@ -63,7 +63,7 @@
       "river_level_m": 2.0,
       "risk_level": "medium",
       "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
-      "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
+      "alert_message_local": "خطر الفيضانات متوسط في القاهرة. توخَّ الحذر وتابع التحديثات المحلية.",
       "local_language": "Arabic",
       "population_estimate": 10000000,
       "risk_score_breakdown": {
@@ -144,8 +144,8 @@
       "river_level_m": 1.0,
       "risk_level": "low",
       "alert_message_en": "Flood risk is LOW in Maputo. No action needed at this time.",
-      "alert_message_local": "Flood risk is LOW in Maputo. No action needed at this time.",
-      "local_language": "English",
+      "alert_message_local": "O risco de inundação é BAIXO em Maputo. Nenhuma ação é necessária neste momento.",
+      "local_language": "Portuguese",
       "population_estimate": 1100000,
       "risk_score_breakdown": {
         "rainfall_mm_24h": 15,
@@ -198,8 +198,8 @@
       "river_level_m": 1.5,
       "risk_level": "low",
       "alert_message_en": "Flood risk is LOW in Kinshasa. No action needed at this time.",
-      "alert_message_local": "Flood risk is LOW in Kinshasa. No action needed at this time.",
-      "local_language": "English",
+      "alert_message_local": "Le risque d'inondation est FAIBLE à Kinshasa. Aucune action n'est nécessaire pour le moment.",
+      "local_language": "French",
       "population_estimate": 15000000,
       "risk_score_breakdown": {
         "rainfall_mm_24h": 25,
@@ -225,7 +225,7 @@
       "river_level_m": 2.6,
       "risk_level": "medium",
       "alert_message_en": "Flood risk is MEDIUM in Mogadishu. Stay alert and monitor local updates.",
-      "alert_message_local": "Khatarta daadka ee Mogadishu waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah.",
+      "alert_message_local": "Khatarta daadka ee Muqdisho waa DHEXDHEXAAD. La soco warbixinnaha maxaliga ah.",
       "local_language": "Somali",
       "population_estimate": 2600000,
       "risk_score_breakdown": {
@@ -242,6 +242,33 @@
       },
       "ml_risk_level": "medium",
       "ml_risk_score": 0.59
+    },
+    {
+      "location_name": "Addis Ababa, Ethiopia",
+      "country": "Ethiopia",
+      "latitude": 9.032,
+      "longitude": 38.7469,
+      "rainfall_mm_24h": 65,
+      "river_level_m": 2.6,
+      "risk_level": "medium",
+      "alert_message_en": "Flood risk is MEDIUM in Addis Ababa. Stay alert and monitor local updates.",
+      "alert_message_local": "የጎርፍ አደጋ በአዲስ አበባ መካከለኛ ነው። ንቁ ይሁኑ እና የአካባቢ ዝማኔዎችን ይከታተሉ።",
+      "local_language": "Amharic",
+      "population_estimate": 5200000,
+      "risk_score_breakdown": {
+        "rainfall_mm_24h": 65,
+        "river_level_m": 2.6,
+        "normalized_rainfall": 0.65,
+        "normalized_river_level": 0.65,
+        "rainfall_cap_mm": 100.0,
+        "river_level_cap_m": 4.0,
+        "high_threshold": 0.7,
+        "medium_threshold": 0.4,
+        "risk_level": "medium",
+        "risk_score": 0.65
+      },
+      "ml_risk_level": "medium",
+      "ml_risk_score": 0.66
     }
   ],
   "alerts": [
@@ -291,7 +318,7 @@
     "risk_level": "medium",
     "risk_score": 0.42,
     "alert_message_en": "Flood risk is MEDIUM in Cairo. Stay alert and monitor local updates.",
-    "alert_message_local": "خطر الفيضانات متوسط في Cairo. توخَّ الحذر وتابع التحديثات المحلية.",
+    "alert_message_local": "خطر الفيضانات متوسط في القاهرة. توخَّ الحذر وتابع التحديثات المحلية.",
     "local_language": "Arabic",
     "timestamp": "2026-08-07T12:00:00Z",
     "risk_score_breakdown": {

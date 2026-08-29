@@ -1,0 +1,68 @@
+/// The 54 countries listed in the Figma onboarding flow's country picker,
+/// with their ISO 3166-1 alpha-3 codes. This is a UI-only list — it isn't
+/// tied to which countries the backend actually monitors (see
+/// `RegionProvider`/`GET /api/regions`, currently 10 sample cities). A
+/// country picked here that isn't monitored yet should degrade gracefully,
+/// not pretend to have live data.
+class Country {
+  final String name;
+  final String iso3;
+  const Country(this.name, this.iso3);
+}
+
+const List<Country> africanCountries = [
+  Country('Algeria', 'DZA'),
+  Country('Angola', 'AGO'),
+  Country('Benin', 'BEN'),
+  Country('Botswana', 'BWA'),
+  Country('Burkina Faso', 'BFA'),
+  Country('Burundi', 'BDI'),
+  Country('Cabo Verde', 'CPV'),
+  Country('Cameroon', 'CMR'),
+  Country('Central African Republic', 'CAF'),
+  Country('Chad', 'TCD'),
+  Country('Comoros', 'COM'),
+  Country('Congo, Democratic Republic of the', 'COD'),
+  Country('Congo, Republic of the', 'COG'),
+  Country('Djibouti', 'DJI'),
+  Country('Egypt', 'EGY'),
+  Country('Equatorial Guinea', 'GNQ'),
+  Country('Eritrea', 'ERI'),
+  Country('Eswatini', 'SWZ'),
+  Country('Ethiopia', 'ETH'),
+  Country('Gabon', 'GAB'),
+  Country('Gambia', 'GMB'),
+  Country('Ghana', 'GHA'),
+  Country('Guinea', 'GIN'),
+  Country('Guinea-Bissau', 'GNB'),
+  Country("Ivory Coast (Côte d'Ivoire)", 'CIV'),
+  Country('Kenya', 'KEN'),
+  Country('Lesotho', 'LSO'),
+  Country('Liberia', 'LBR'),
+  Country('Libya', 'LBY'),
+  Country('Madagascar', 'MDG'),
+  Country('Malawi', 'MWI'),
+  Country('Mali', 'MLI'),
+  Country('Mauritania', 'MRT'),
+  Country('Mauritius', 'MUS'),
+  Country('Morocco', 'MAR'),
+  Country('Mozambique', 'MOZ'),
+  Country('Namibia', 'NAM'),
+  Country('Niger', 'NER'),
+  Country('Nigeria', 'NGA'),
+  Country('Rwanda', 'RWA'),
+  Country('São Tomé and Príncipe', 'STP'),
+  Country('Senegal', 'SEN'),
+  Country('Seychelles', 'SYC'),
+  Country('Sierra Leone', 'SLE'),
+  Country('Somalia', 'SOM'),
+  Country('South Africa', 'ZAF'),
+  Country('South Sudan', 'SSD'),
+  Country('Sudan', 'SDN'),
+  Country('Tanzania', 'TZA'),
+  Country('Togo', 'TGO'),
+  Country('Tunisia', 'TUN'),
+  Country('Uganda', 'UGA'),
+  Country('Zambia', 'ZMB'),
+  Country('Zimbabwe', 'ZWE'),
+];

@@ -1,0 +1,261 @@
+{
+  "@@locale": "en",
+
+  "appName": "AfriShield",
+  "tagline": "Know the Risk. Act Early. Stay Safe.",
+  "continueButton": "CONTINUE",
+  "saveButton": "SAVE",
+  "ok": "OK",
+
+  "skip": "Skip",
+  "welcomeHeadline": "Stay Informed! Stay Prepared!",
+  "welcomeMapPlaceholder": "Map illustration\n(placeholder)",
+  "welcomeIntro": "Africa Shield AI helps communities receive timely warnings about disasters that may affect them.",
+  "featureEarlyWarningsTitle": "Early Warnings",
+  "featureEarlyWarningsSubtitle": "Know when danger is near.",
+  "featureStayPreparedTitle": "Stay Prepared",
+  "featureStayPreparedSubtitle": "Get clear actions to stay safe.",
+  "featureStayAlertTitle": "Stay Alert",
+  "featureStayAlertSubtitle": "Receive warnings on channels that work.",
+  "getStarted": "GET STARTED",
+
+  "languageAppBarTitle": "🌐  LANGUAGE",
+  "chooseYourLanguage": "Choose Your Language!",
+  "languageSubtitle": "Select the language you'd like to receive alerts in.",
+  "moreLanguagesNote": "More local languages will be supported in future versions.",
+  "alertsNotTranslatedYet": "alerts not translated yet",
+
+  "countryAppBarTitle": "📍  COUNTRY",
+  "searchCountryHint": "Search country...",
+
+  "locationAppBarTitle": "📍  LOCATION",
+  "whereAreYouLocated": "Where are you located?",
+  "locationIntro": "We'll use your location to provide relevant disaster alerts.",
+  "countryFieldLabel": "Country *",
+  "stateFieldLabel": "State / Region",
+  "stateFieldHint": "Enter your state / region",
+  "lgaFieldLabel": "Local Government Area",
+  "lgaFieldHint": "Enter your local government area",
+  "cityFieldLabel": "City / Community",
+  "cityFieldHint": "Enter your city / community",
+  "orDivider": "OR",
+  "useMyCurrentLocation": "Use my current location",
+  "gpsCapturedNote": "GPS captured: {lat}, {lon}. There's no address lookup yet, so please still fill in your state/LGA/city below.",
+  "@gpsCapturedNote": {
+    "placeholders": {
+      "lat": { "type": "String" },
+      "lon": { "type": "String" }
+    }
+  },
+  "rememberLocation": "Remember last used location",
+  "locationUsageNote": "Your location is used to provide relevant alerts.",
+
+  "currentFloodRisk": "CURRENT FLOOD RISK",
+  "notMonitoredYet": "AfriShield isn't monitoring your set location yet — showing {location} as sample data.",
+  "@notMonitoredYet": {
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "cantReachBackend": "Can't reach AfriShield, and there's no saved data yet.",
+  "tryAgain": "Try again",
+  "highRiskMessage": "Your area is at high risk of flooding.",
+  "mediumRiskMessage": "Stay alert and monitor local updates.",
+  "lowRiskMessage": "No immediate flood threat detected.",
+  "statRainfall": "Rainfall",
+  "statLast24Hours": "Last 24 hours",
+  "statRiverLevel": "River Level",
+  "statCurrent": "Current",
+  "statRiskScore": "Risk Score",
+  "stayPrepared": "STAY PREPARED",
+  "actionRecommended": "ACTION RECOMMENDED",
+  "continueMonitoring": "Continue monitoring local updates and weather conditions.",
+  "shareAlert": "SHARE ALERT",
+  "safetyGuidanceButton": "Safety Guidance",
+  "viewFullAlert": "View Full Alert",
+  "settingsTooltip": "Settings",
+
+  "floodRiskAlertTitle": "FLOOD RISK ALERT",
+  "filterAll": "All",
+  "filterHigh": "High",
+  "filterMedium": "Medium",
+  "filterLow": "Low",
+  "noRegionsAtRiskLevel": "No regions at this risk level right now.",
+
+  "floodAlertAppBarTitle": "FLOOD ALERT",
+  "alertNotFound": "Alert not found.",
+  "readAloudTooltip": "Read aloud",
+  "stopTooltip": "Stop",
+  "floodRiskSuffix": "{riskLevel} FLOOD RISK",
+  "@floodRiskSuffix": {
+    "placeholders": {
+      "riskLevel": { "type": "String" }
+    }
+  },
+  "yourCurrentLocation": "Your Current Location",
+  "localWarningLabel": "Local Warning",
+  "englishTranslationLabel": "English Translation",
+  "whatYouShouldDo": "What you should do",
+  "stepMoveToHigherGround": "Move to higher ground",
+  "stepAvoidRivers": "Avoid rivers and flooded roads",
+  "stepKeepPhoneCharged": "Keep your phone charged",
+  "stepFollowAuthorities": "Follow local authority instructions",
+  "emergencyDialogTitle": "Emergency line not set up yet",
+  "emergencyDialogBody": "AfriShield doesn't have a verified emergency number for this country yet — showing the wrong one could send someone to the wrong service. Use your local emergency number directly for now.",
+  "callEmergencyLine": "CALL EMERGENCY LINE",
+  "emergencyCallConfirmTitle": "Call emergency line?",
+  "emergencyCallConfirmBody": "This calls {country}'s general emergency number, {number}. Sourced from public listings, not independently verified for your exact area — use your own knowledge of local emergency numbers if you have it.",
+  "@emergencyCallConfirmBody": {
+    "placeholders": {
+      "country": { "type": "String" },
+      "number": { "type": "String" }
+    }
+  },
+  "cancelButton": "Cancel",
+  "callButton": "Call",
+  "shareAlertTemplate": "{riskLevel} flood risk in {location}: {message}",
+  "@shareAlertTemplate": {
+    "placeholders": {
+      "riskLevel": { "type": "String" },
+      "location": { "type": "String" },
+      "message": { "type": "String" }
+    }
+  },
+
+  "floodRiskMapTitle": "🗺️  FLOOD RISK MAP",
+  "searchLocationHint": "Search location...",
+  "viewAlertButton": "VIEW ALERT",
+
+  "reportAHazardTitle": "⚠️  REPORT A HAZARD",
+  "whatAreYouSeeing": "What are you seeing?",
+  "reportsSubtitle": "Help us understand what's happening in your community.",
+  "yourLocationLabel": "Your Location:",
+  "attachGpsLocation": "Attach my current GPS location",
+  "gpsAttachedLabel": "GPS attached: {lat}, {lon}",
+  "@gpsAttachedLabel": {
+    "placeholders": {
+      "lat": { "type": "String" },
+      "lon": { "type": "String" }
+    }
+  },
+  "describeWhatYoureSeeingHint": "Describe what you're seeing...",
+  "addPhoto": "ADD PHOTO",
+  "photoAttachedFallback": "Photo attached",
+  "takePhoto": "Take Photo",
+  "chooseFromGallery": "Choose from Gallery",
+  "submitReport": "Submit Report",
+  "couldNotAccessCamera": "Could not access the camera/gallery: {error}",
+  "@couldNotAccessCamera": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "couldNotSendReportTitle": "Couldn't send report",
+  "couldNotSendReportBody": "This report wasn't sent — {error}. Nothing was recorded; you can try again.",
+  "@couldNotSendReportBody": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "reportSentTitle": "Report sent",
+  "reportSentPhotoFailedTitle": "Report sent, photo failed",
+  "reportSentBody": "Thanks — \"{category}\" at {location} has been sent to AfriShield's team.",
+  "@reportSentBody": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "location": { "type": "String" }
+    }
+  },
+  "reportSentPhotoFailedBody": "Thanks — \"{category}\" at {location} was sent, but the photo could not be uploaded ({error}). The report itself was still recorded.",
+  "@reportSentPhotoFailedBody": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "location": { "type": "String" },
+      "error": { "type": "String" }
+    }
+  },
+  "categoryWaterRising": "Water Rising",
+  "categoryHeavyRainfall": "Heavy Rainfall",
+  "categoryFloodedRoad": "Flooded Road",
+  "categoryFloodedHome": "Flooded Home",
+  "categoryOther": "Other",
+
+  "safetyGuidanceTitle": "SAFETY GUIDANCE",
+  "prepareBeforeFlooding": "Prepare before flooding happens",
+  "beforeAFlood": "Before a flood!",
+  "beforeFlood1": "Keep important documents and essential items in a safe place.",
+  "beforeFlood2": "Know where you can move to higher ground.",
+  "beforeFlood3": "Keep your phone charged.",
+  "duringAFlood": "During a flood!",
+  "duringFlood1": "Move to a safe location.",
+  "duringFlood2": "Avoid walking or driving through floodwater.",
+  "duringFlood3": "Follow instructions from local authorities.",
+  "afterAFlood": "After a flood!",
+  "afterFlood1": "Avoid contaminated water.",
+  "afterFlood2": "Report damaged infrastructure.",
+  "afterFlood3": "Continue monitoring official updates.",
+
+  "settingsTitle": "⚙️  SETTINGS",
+  "locationTile": "Location",
+  "alertPreferenceTile": "Alert Preference",
+  "manageYourWarnings": "Manage your warnings",
+  "languageTile": "Language",
+  "alertChannelsTile": "Alert Channels",
+  "alertChannelsSubtitle": "SMS • WhatsApp • App",
+  "accessibilityTile": "Accessibility",
+  "accessibilitySubtitle": "Text size • Voice alerts • Contrast",
+  "followUsOn": "Follow us on:",
+  "aboutTile": "About",
+  "aboutSubtitleWithVersion": "About AfriShield • v1.0.0",
+
+  "alertChannelsAppBarTitle": "⚠️  ALERT CHANNELS",
+  "howWouldYouLikeAlerts": "How would you like to receive alerts?",
+  "preferredChannelsNote": "We'll use your preferred channels to deliver important warnings.",
+  "mobileAppChannelTitle": "Mobile App",
+  "mobileAppChannelSubtitle": "Receive alerts directly in AfriShield.",
+  "pushNotWiredNote": "Real — via Firebase Cloud Messaging, when configured.",
+  "pushEnabled": "Push notifications enabled.",
+  "pushDisabled": "Push notifications turned off.",
+  "pushNoRegionYet": "No monitored region for you yet, so push can't be set up.",
+  "pushUnavailable": "Push notifications aren't available yet — Firebase isn't configured.",
+  "whatsappChannelTitle": "WhatsApp",
+  "whatsappChannelSubtitle": "Receive alerts through WhatsApp.",
+  "notBuiltNote": "Not built on the backend yet.",
+  "smsChannelTitle": "SMS",
+  "smsChannelSubtitle": "Receive alerts via SMS even without internet.",
+  "smsRealNote": "Real — sent via Africa's Talking.",
+  "ussdChannelTitle": "USSD",
+  "ussdChannelSubtitle": "Receive alerts on basic feature phones.",
+  "ussdNote": "Built, but not yet verified against a real carrier.",
+  "noSmartphoneTitle": "No smartphone? No problem.",
+  "noSmartphoneBody": "AfriShield is designed to make critical warnings accessible beyond the app.",
+  "savePreferences": "Save Preferences",
+  "preferencesSaved": "Preferences saved.",
+
+  "accessibilityAppBarTitle": "ACCESSIBILITY",
+  "textSize": "Text size",
+  "previewTextAtSize": "Preview text at the size below.",
+  "previewSampleText": "Flood risk is HIGH. Move to higher ground.",
+  "voiceAlerts": "Voice alerts",
+  "voiceAlertsSubtitle": "Adds a \"Read Aloud\" button to alert details — for anyone who can't read the local script, or is visually impaired.",
+  "highContrast": "High contrast",
+  "highContrastSubtitle": "Increases text and border contrast throughout the app.",
+
+  "aboutAppBarTitle": "ABOUT",
+  "aboutBody": "AfriShield helps communities receive timely, plain-language warnings about floods that may affect them — in their own language, over SMS, USSD, voice, or this app, whichever actually reaches them.",
+  "versionLabel": "Version 1.0.0",
+  "copyrightLabel": "© AfriShield AI 2026",
+
+  "navHome": "Home",
+  "navAlert": "Alert",
+  "navMaps": "Maps",
+  "navReports": "Reports",
+
+  "unknownTime": "unknown time",
+  "showingSavedData": "Showing saved data from {when} — no connection right now.",
+  "@showingSavedData": {
+    "placeholders": {
+      "when": { "type": "String" }
+    }
+  }
+}

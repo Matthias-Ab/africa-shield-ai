@@ -5,6 +5,1482 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-29 — Merged Habiba's frontend dashboard work (was stuck unmerged since 2026-08-16)
+
+### Completed
+- Checked all remote branches while investigating what the frontend team
+  had done — found `origin/habiba-dashboard-expansion` with two commits
+  (`51720a8`, 2026-08-16, "Complete frontend dashboard with real API
+  data"; `81b6031`, 2026-08-23, "Expand flood alerts and regional risk
+  dashboard") that had never been merged into `master`. A prior session
+  had started an integration (`integration/habiba-onto-master`, last
+  touched 2026-08-24) but never finished merging it back.
+- Verified no conflict risk before merging: nobody had touched
+  `frontend-web/` on `master` since the integration branch was last
+  synced, and a merge simulation against the current `master` tip
+  applied cleanly.
+- **Merged `origin/habiba-dashboard-expansion` into `master`** (merge
+  commit `84cd4c9`). This is real, substantial work, not a formality —
+  it fills in real content for `Alerts.jsx`, `Analytics.jsx`,
+  `HelpSupport.jsx`, `LiveFloodMap.jsx`, `Regions.jsx`, and
+  `Settings.jsx` (the exact 6 pages flagged as empty placeholders
+  earlier this session, on 2026-08-28 — that finding was accurate for
+  `master` at the time, but wrong about the state of the team's actual
+  work, which existed and just hadn't been integrated), plus expanded
+  `Reports.jsx`, `RecentAlerts.jsx`, `RegionDetails.jsx`,
+  `RegionTable.jsx`, and `RiskMap.jsx`.
+- Verified after merging, not just assumed: `npm run build` succeeds
+  (`vite build`, 20s, no errors), `npm run lint` shows only pre-existing
+  unused-variable warnings (no errors), and spot-checked that
+  `Alerts.jsx`/`Analytics.jsx`/`Regions.jsx`/`LiveFloodMap.jsx`
+  genuinely call `fetch()`/`useEffect` for live data rather than just
+  looking complete.
+
+### Not yet started
+- `Reports.jsx`'s own code comment already says "A community-report
+  POST endpoint is not currently available" — that's no longer true
+  (`POST /api/hazard-reports`, built 2026-08-28) but the page's
+  `handleSubmit` hasn't been wired to it yet.
+- The frontend cleanup items from `todo.md` (hardcoded API URLs, unused
+  `mockData.js`, a Tailwind typo, unused-variable lint warnings) are
+  unaffected by this merge and still open.
+- Nobody has told Habiba this was merged, or checked whether she has
+  further uncommitted/unpushed local work beyond what's on
+  `origin/habiba-dashboard-expansion`.
+
+---
+
+## 2026-08-29 — Wokwi tunnel fix, real emergency numbers, real ML validation data
+
+### Completed
+- **Wokwi ESP32 simulation — backend side fully proven end-to-end,
+  switched from `ngrok` to `cloudflared`.** Found that `ngrok`'s free
+  tier force-redirects plain `http://` to `https://`, which
+  `sketch.ino`'s `HTTPClient` doesn't follow — `cloudflared tunnel --url
+  http://localhost:8000` (no account needed) serves `https://` directly
+  with no redirect, verified with `curl` (clean `200 OK`, no `Location`
+  header). Updated `sketch.ino` to use `WiFiClientSecure` +
+  `setInsecure()` instead of a plain `HTTPClient`. Sent a full
+  low-reading → high-reading sequence through a live `cloudflared`
+  tunnel via `curl` standing in for the device: correctly scored
+  low/high and the high reading correctly auto-triggered a real
+  (simulated) SMS alert with `"trigger": "automatic"` — the exact path
+  Wokwi would exercise. **The one thing not re-confirmed:** whether
+  Wokwi's simulated ESP32 actually completes a TLS handshake to an
+  external host — a prior attempt against `ngrok`'s `https://` endpoint
+  got `connection refused` during the handshake itself, never confirmed
+  whether that was Wokwi-specific or an `ngrok` interop issue. Needs
+  someone to open wokwi.com and click Run to close this out. See
+  `hardware/wokwi-flood-sensor/README.md` for full detail.
+- **Real per-country emergency numbers for all 54 countries** — the
+  mobile app's "Call Emergency Line" button was deliberately inert since
+  2026-08-27 (no verified data existed). Sourced from Wikipedia's "List
+  of emergency telephone numbers," read directly from the article's
+  wikitext table (not an AI-summarized paraphrase — cross-checked after
+  an initial AI-summarized pass looked inconsistent for a couple of
+  countries) — most entries there are themselves cited to a government,
+  embassy, telecom, or ITU source. See
+  `mobile-app/lib/data/emergency_numbers.dart` for the full list and its
+  honesty caveat: this is real, cited data, not independently
+  re-verified per country, and the UI says so before dialing. Wired via
+  a new `url_launcher` dependency; confirms with the user (showing the
+  exact number) before placing a real `tel:` call.
+- **Real ML training/validation data — a second, much better attempt
+  after the 2026-08-17 GDACS attempt found almost nothing usable.**
+  Investigated (via a research pass) several sources not tried on
+  2026-08-17; the **Dartmouth Flood Observatory (DFO)** — an
+  independent, non-satellite-derived global flood catalog, free, no
+  login, republished via HDX — was the winner:
+  - Text-matched DFO's master list (4,029 global events) against our 10
+    city names, filtered one false positive (Cairo, Illinois, USA vs.
+    Cairo, Egypt), got **49 real, dated flood events across all 10
+    cities**, 1985–2010 — committed as
+    `backend/app/data/dfo_flood_events.json`. This directly fixes GDACS's
+    coverage problem (7 of 9 cities got zero real events on 2026-08-17).
+  - DFO's events are compiled independently of GloFAS, fixing GDACS's
+    other, more serious problem: GDACS's own river-flood events were
+    partly auto-derived from the same GloFAS discharge series used as a
+    model feature — real label leakage. DFO has no such circularity.
+  - New `backend/app/models/fetch_real_training_data_dfo.py` pairs these
+    events with real Open-Meteo rainfall + GloFAS discharge, 1985–2010.
+    **Found and fixed a real bug while building this:**
+    `fetch_rainfall_series()`/`fetch_discharge_series()` in the existing
+    `fetch_real_training_data.py` silently ignored any caller-supplied
+    date range and always used that file's own hardcoded 2010–2022
+    window — the first full run of the new script silently got 2010–2022
+    data back while claiming to cover 1985–2010, which would have gone
+    unnoticed without independently checking the actual date range of
+    the returned data rather than trusting the row counts. Fixed by
+    adding optional `start`/`end` parameters (default-preserving the old
+    behavior for the GDACS script).
+  - **A second real, previously-undiscovered limitation found while
+    debugging a suspiciously-low result:** GloFAS discharge data has
+    **zero coverage at all** for Maputo and Mogadishu's coordinates (100%
+    missing, every single day 1985–2010), and for the other 8 cities,
+    only starts 1997-01-01 (100% missing 1985–1996, complete 1997–2010).
+    Not a bug — Open-Meteo's API genuinely returns `null` for these
+    (location, date) pairs. This is new information: the 2026-08-17
+    investigation used a 2010–2022 window and never hit this, since it
+    never queried earlier dates.
+  - **Still blocked from a full production retrain, same fundamental
+    issue as 2026-08-17:** GloFAS gives discharge (m³/s), not the
+    production model's `river_level_m` (meters) — not convertible
+    without river-specific data that doesn't exist. Also, the live
+    `POST /api/sensor-reading` inference path receives a raw
+    `river_level_m` with no historical context, so even a model trained
+    on a "discharge percentile relative to 26 years of history" feature
+    couldn't be fed at inference time anyway — this isn't just a training
+    limitation, it's a pipeline-compatibility one.
+  - **What this real data was used for instead: genuine validation, not
+    retraining.** New `backend/app/models/validate_against_dfo.py`
+    evaluates the *existing* rules-based and trained-ML models (using
+    each city's own relative discharge percentile as an approximation
+    for "how high is the river," clearly flagged as an approximation, not
+    a real river-level reading) against 239 real, usable DFO-confirmed
+    flood-days (the 7 cities with both events and discharge coverage
+    overlapping). **Real result:** rules-based model recall 41% (22%
+    false-positive rate), trained ML model recall 28% (13.7%
+    false-positive rate) — genuine numbers from real data, now cited in
+    `docs/pitch-notes.md`'s new "Real-data validation" section instead of
+    the vaguer "cite GDACS as external validation" plan from 2026-08-17.
+
+### Not yet started
+- Wokwi's actual TLS-handshake behavior against `cloudflared` — needs a
+  human to click Run in the Wokwi web UI (not doable from this
+  environment without either a Wokwi account or working browser access,
+  neither available this session).
+- Emergency numbers are cited, real data but not independently
+  re-verified per country against each government's own current source
+  — flagged in the UI and in `emergency_numbers.dart`'s doc comment as a
+  follow-up item, same standing as an unreviewed translation.
+- No newer (post-2010) real flood-label source has been found or tried
+  yet — DFO's archive itself stops there. A second, more recent source
+  layered on top would be the next step for anyone continuing this.
+
+---
+
+## 2026-08-28 — Push notifications (backend + mobile) and a real geo dataset
+
+### Completed
+- **Real State/City data for all 54 countries**, replacing free-text
+  fields. Filtered the open, CC-licensed
+  `dr5hn/countries-states-cities-database` down from its 46MB worldwide
+  file to just our 54 countries — 1,117 real states/regions, 4,638 real
+  cities/towns, an 89KB asset (`mobile-app/assets/geo/states_cities.json`,
+  loaded by `mobile-app/lib/data/geo_data.dart`). Spot-checked several
+  countries by hand (Nigeria's 37 states including the FCT, Kenya's 47
+  counties, Egypt's 27 governorates, Comoros' 3 islands) — genuine
+  administrative data, not fabricated.
+  - `LocationSetupScreen`'s State and City fields are now real
+    search-and-pick screens (`GeoPickerScreen`, mirroring
+    `CountryScreen`'s existing search UX) instead of free text, cascading
+    (picking a State clears any previously typed City, since it almost
+    certainly doesn't belong to the new State).
+  - **LGA stays free text, deliberately** — no dataset found gives a
+    reliable, consistent third administrative tier across all 54
+    countries; faking one would be worse than admitting the gap.
+- **Real push notifications (Firebase Cloud Messaging), backend and
+  mobile, following the exact same honest-degradation pattern as
+  SMS/voice:**
+  - Backend: `app/models/push_gateway.py` (`is_configured()`/
+    `send_push()`, mirrors `sms_gateway.py`), a new device registry
+    (`app/routes/push_tokens.py` + `app/data/push_tokens.json`,
+    committed empty like `subscribers.json`), and `send_alert_for_region`
+    now also pushes to every registered device for a region — additive
+    to whichever channel (`sms`/`voice`) was used, not a third channel
+    choice. New `push_status` field (`"sent"`/`"simulated"`/`"failed"`/
+    `"no_recipients"`) on `POST /api/alerts/send`'s response and every
+    `GET /api/alerts` log entry. Tested end-to-end via curl: register →
+    send → `push_status: "simulated"` (no Firebase project yet) →
+    unregister → send → `push_status: "no_recipients"`.
+  - Mobile: `lib/services/push_service.dart` wraps `firebase_messaging`,
+    catching every real failure mode (placeholder credentials, no
+    permission, no VAPID key on web) into one honest "unavailable" result
+    rather than guessing which one occurred. The Settings > Alert
+    Channels "Mobile App" toggle is now real and interactive (was
+    permanently disabled before) — enabling it registers a token against
+    whichever region `pickMyRegion()` (new shared helper in
+    `lib/providers/region_selection.dart`, factored out of
+    `HomeScreen`'s previously-private region-matching logic, now also
+    used here) resolves as "mine"; if there's no real region match yet,
+    or Firebase isn't configured, the toggle stays off and says why
+    instead of turning on and doing nothing.
+  - **No Firebase project has actually been created** — that's an
+    external console step nobody has done (same category of gap as "no
+    real Africa's Talking account yet" on `todo.md`'s Critical list).
+    `lib/firebase_options.dart` is placeholder values with the exact
+    setup steps in its doc comment. Until that's done, push cleanly
+    reports itself unavailable everywhere; nothing crashes or fakes a
+    success.
+- `flutter analyze` and `flutter test` both pass clean on all of the
+  above. Backend push endpoints verified manually via curl (see above).
+
+### Not yet started
+- Nobody has created the actual Firebase project yet, so push has never
+  actually delivered a real notification to a real device — only the
+  graceful-unavailable path has been exercised.
+- Could not visually click through the "Mobile App" toggle in a live
+  browser this session (the Chrome extension used for that wasn't
+  connected) — verified via `flutter analyze`/`flutter test` and the fact
+  that the app boots without crashing (Firebase init is lazy, only
+  attempted when the toggle is used), but not via an actual tap.
+- Native-speaker review still outstanding for the ~10 new mobile UI
+  strings this added (push enabled/disabled/unavailable messages, etc.)
+  — same standing item as the rest of `lib/l10n/*.arb`.
+
+---
+
+## 2026-08-28 — Mobile: UI chrome translated into all 7 backend languages
+
+### Completed
+- Real Flutter localization, replacing the locale-only scaffolding that
+  existed before (`supportedLocales` was wired for RTL, but every
+  screen's own text was hardcoded English). Added `generate: true` +
+  `l10n.yaml` + `lib/l10n/app_{en,sw,ar,so,fr,pt,am}.arb` (~150 keys
+  each) and wired every screen and widget with real UI text — all of
+  `lib/screens/**` and `lib/widgets/**` — to `AppLocalizations.of(context)`
+  instead of literal strings.
+- `MaterialApp.locale` in `app.dart` is now driven live by
+  `OnboardingProvider.language` via a new `languageLocaleCodes` map in
+  `lib/data/languages.dart` — changing Settings > Language actually
+  changes the app's own UI language now, not just alert text.
+- Deliberately **not** translated, to avoid breaking behavior: data that
+  comes from the backend at runtime (region names, `alert_message_en`/
+  `alert_message_local`, risk-level words like "HIGH"/"MEDIUM"/"LOW");
+  the `hazardCategories` values in `reports_screen.dart` (still sent to
+  `POST /api/hazard-reports` in English, and still used as the icon
+  lookup key — only the *displayed* category label is translated,
+  via a new `_categoryLabel()` mapping); the 54-country list and
+  language names in `lib/data/`.
+- Yoruba and Hausa have no `.arb` file (matching their existing "alerts
+  not translated yet" gap) — `app.dart` falls back to English UI chrome
+  for those two rather than crashing or guessing.
+- **Every one of the 6 non-English translations is an unreviewed AI
+  draft** — flagged explicitly here because this is a *different* set of
+  strings than the alert wording, so Swahili/Arabic/Somali's prior
+  native-speaker review (2026-08-17) does not cover it. Treat all 6
+  languages as equally unreviewed for this UI-chrome set, same standing
+  policy as French/Portuguese/Amharic's alert text.
+- `flutter analyze` and `flutter test` both still pass clean after the
+  full pass — verified by grepping for any remaining hardcoded English
+  `Text(...)`/`hintText`/`tooltip` literals across `lib/screens/` and
+  `lib/widgets/`; none found.
+
+### Not yet started
+- Native-speaker review of all 6 non-English `.arb` files.
+- `ApiException`/`LocationException` messages (thrown from service
+  classes with no `BuildContext`) are still English-only regardless of
+  the selected language — localizing them would need passing localized
+  strings into the service layer, which wasn't attempted here.
+- `lib/widgets/region_card.dart` and `risk_badge.dart` were left
+  untouched — grepped and confirmed unused anywhere in the app (likely
+  leftover from before the Figma rebuild), so there's no live UI to
+  localize there.
+- RTL (Arabic) layout wasn't manually re-checked screen-by-screen beyond
+  what Flutter's locale-driven `Directionality` handles automatically —
+  worth a visual pass once someone can actually run the Arabic locale on
+  a device.
+
+---
+
+## 2026-08-28 — Mobile: real GPS and hazard-report photo attachment
+
+### Completed
+- **Real GPS via `geolocator`, replacing two UI-only stubs.** New
+  `lib/services/location_service.dart` wraps `Geolocator` with real error
+  handling (services off, permission denied/denied forever) — every
+  failure surfaces as a real message, never a silent fallback.
+  - Onboarding's Location Setup screen: "Use my current location" now
+    fetches a real fix and shows the raw coordinates. **No reverse
+    geocoding** — State/LGA/City still need manual entry, since a
+    coordinate isn't an address; this is captured honestly in the UI
+    copy rather than pretending to auto-fill.
+  - Reports tab: "Attach my current GPS location" fetches a fresh fix at
+    submit time (not reused from onboarding, since a report should
+    reflect where you are now) and sends it as `latitude`/`longitude` on
+    `POST /api/hazard-reports`.
+  - Added Android (`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`) and
+    iOS (`NSLocationWhenInUseUsageDescription`) permission entries.
+- **Real photo attachment for hazard reports**, both sides:
+  - Backend: new `POST /api/hazard-reports/{id}/photo` (multipart;
+    JPEG/PNG/WebP only, 8MB cap) and `GET /api/hazard-reports/{id}/photo`.
+    Stored as a plain file on local disk
+    (`app/data/hazard_report_photos/`, gitignored) — same lightweight
+    approach as the rest of this backend, not object storage. Tested
+    manually: create → upload → `has_photo` flips true → photo downloads
+    back byte-identical; 404/415/413 error paths all verified.
+  - Mobile: `image_picker` (camera or gallery) replaces the "ADD PHOTO"
+    stub, with a thumbnail preview and a remove button. Uses
+    `readAsBytes()` + `MultipartFile.fromBytes` (not a file path), so
+    this works on web too, where picked files have no filesystem path.
+  - **Partial-failure case handled honestly:** if the report itself sends
+    but the photo upload fails, the dialog says exactly that ("report
+    sent, but the photo could not be uploaded") instead of claiming full
+    success or silently dropping the photo.
+- Added Android (`CAMERA`/`READ_MEDIA_IMAGES`) and iOS
+  (`NSCameraUsageDescription`/`NSPhotoLibraryUsageDescription`)
+  permission entries for the photo picker.
+- `flutter analyze` and `flutter test` both pass clean after all of the
+  above.
+
+### Not yet started
+- Reverse geocoding (coordinate → address) — would need a geocoding
+  service; `geocoding`-style plugins don't support Flutter web, which is
+  the only platform actually testable in this environment right now
+  (no Android emulator/SDK installed), so this was deliberately not
+  attempted rather than shipped broken on the one testable platform.
+- The web dashboard's Reports page is still not wired to
+  `GET /api/hazard-reports` (see the 2026-08-28 entry below).
+
+---
+
+## 2026-08-28 — Citizen hazard/help reporting: backend endpoint built
+
+### Completed
+- New `POST /api/hazard-reports` / `GET /api/hazard-reports` endpoints —
+  a citizen can report a hazard they're seeing, or flag
+  `"needs_assistance": true` if they need help, and it's persisted to
+  `backend/app/data/hazard_reports.json` (gitignored, same runtime-state
+  pattern as `alert_log.json`). See `docs/api-contract.md` for the full
+  request/response shape and `backend/app/routes/hazard_reports.py`.
+- `category` is intentionally freeform on the backend, not a server-
+  enforced enum, even though the mobile UI offers a fixed list
+  (`hazardCategories` in `mobile-app/lib/models/hazard_report.dart`) —
+  other channels (USSD, web) may want to send their own categories, and
+  "Other" already covers anything not in the list.
+- Tested manually end-to-end against a locally running backend: posted a
+  routine report and a `needs_assistance: true` report, confirmed both
+  round-trip correctly through `GET /api/hazard-reports`.
+- **Mobile app's Reports tab wired to the real endpoint.**
+  `ApiService.submitHazardReport()` posts `category`/`description`/
+  `location_name` to `POST /api/hazard-reports`; `ReportsScreen` shows a
+  real success dialog on `201`, or a real error dialog (nothing faked)
+  if the send fails — same "don't overclaim" pattern as
+  `RegionProvider`'s live/cached/error states. `needs_assistance` isn't
+  sent from the mobile UI — the Figma design has no "I need help"
+  toggle, so every mobile-submitted report defaults to `false` on that
+  field; it's only reachable today by calling the API directly.
+
+### Not yet started
+- The web dashboard's Reports page (`frontend-web/src/pages/Reports.jsx`)
+  is still an empty placeholder — not wired to `GET /api/hazard-reports`.
+- No dispatch/routing of any kind — a `needs_assistance: true` report
+  just sits in the log for now. Deciding who sees it and how fast is a
+  separate, unscoped piece of work.
+- Photo upload and GPS were both still-missing at the time this entry was
+  written; both are now done — see the GPS/photo entry above (same date).
+
+---
+
+## 2026-08-27 — Flutter mobile app: Figma design implemented
+
+### Completed
+- Team shared the Figma design ("AfriShield AI App") as one PDF export per
+  screen. Read all ~20 exports (onboarding flow, Home in both High/Low risk
+  states, Alerts in all 4 filter states, Alert Details, Alert Channels,
+  Risk Map, Report a Hazard, Safety Guidance, Settings) and rebuilt the app
+  to match: full onboarding (Splash → Welcome → Language → Country →
+  Location Setup), a 4-tab main app (Home / Alert / Maps / Reports) with a
+  floating pill nav bar matching the design, and Settings reached from
+  Home's app bar rather than as a 5th tab, exactly as designed.
+- Real, not placeholder, where the design called for real: `flutter_map`
+  (OpenStreetMap) for the Risk Map screen — the same tile-source family the
+  web dashboard's Leaflet map uses; `flutter_tts` for a genuine "Read Aloud"
+  accessibility feature (on-device text-to-speech reading the alert +
+  safety steps aloud); `share_plus` for the real system share sheet on
+  "Share Alert"; app-wide text-scale and high-contrast settings actually
+  applied via a `MediaQuery` override in `app.dart`, not just a settings
+  screen that does nothing.
+- Found and flagged two real gaps between the Figma design and what
+  actually exists, rather than quietly papering over them:
+  - The language list has 9 languages (adds Yoruba and Hausa); the backend
+    only generates alert text in 7. Yoruba/Hausa are still selectable, each
+    tagged "alerts not translated yet" in the UI.
+  - The Location Setup screen's State/LGA/City fields are dropdowns in the
+    design, but there's no real administrative-boundary dataset for all 54
+    countries to populate them from — built as plain text fields instead of
+    faking that data.
+- Deliberately left non-functional, with an honest explanation in the UI
+  rather than a silent no-op: the "Call Emergency Line" button (no verified
+  per-country emergency number exists — dialing a guessed one could
+  actively mislead someone), "Use my current location" (no `geolocator`
+  wired in yet), and the Reports tab's hazard-reporting form (no backend
+  endpoint exists for community reports — confirmed against `todo.md`'s
+  roadmap; submitting shows a local-only confirmation, explained as such).
+- `flutter analyze` and `flutter test` both pass clean.
+
+### Not yet started
+- A real backend endpoint for hazard reports.
+- `geolocator` integration for GPS-based location.
+- A real State/LGA/City geo dataset.
+- A verified emergency-number source per country.
+- Push notifications into the app itself (backend still only sends via
+  SMS/USSD/voice).
+- Translated UI strings for the 7 (or 9) supported languages.
+
+---
+
+## 2026-08-27 — Flutter mobile app: scoped citizen-facing, structural scaffold built
+
+### Completed
+- **Decided the app's audience before writing any code:** citizen-facing,
+  as an additional channel alongside SMS/USSD/voice — not a replacement,
+  and not an admin tool (the web dashboard already covers that). Reasoning:
+  "offline-first" only makes sense for someone in the field during a flood
+  who may lose connectivity mid-event; an authority already has the web
+  dashboard from an office. A citizen app only makes sense as *extra*
+  reach for the smartphone-owning segment — the project's actual
+  differentiator is still reaching people who don't have one.
+- Created `mobile-app/` (Flutter, Android + iOS targets) with a real
+  layered structure: `config/` (API base URL via `--dart-define`, not
+  hardcoded — the web dashboard's opposite choice cost real cleanup time,
+  see `todo.md`), `models/` (mirror `GET /api/regions` and
+  `GET /api/alerts` field-for-field), `services/` (real HTTP calls, no
+  mocking, plus a `SharedPreferences`-backed cache), `providers/` (region
+  + alert state with live-data-falls-back-to-cache logic, exposed to the
+  UI as `LoadStatus` so it can honestly show "cached" vs "live" — same
+  no-overclaiming standard as the rest of the project), `screens/`, and
+  `widgets/`.
+- Screens are functional placeholders, not final design: region list
+  (color-coded by risk), region detail (risk, alert text in the local
+  language + English, alert history), full alert history, and a settings
+  screen for picking a region + one of the 7 supported languages. All of
+  it is wired to the real backend — running it against a live
+  `uvicorn` instance actually loads real regions and real alert history.
+- `flutter analyze` and `flutter test` both pass clean.
+- Declared the same 7 locales the backend supports
+  (`backend/app/models/translations.py`) as the app's supported locales,
+  enabling things like Arabic RTL — but the UI's own strings aren't
+  translated yet, only prepared to be.
+
+### Not yet started
+- **The actual visual design** — waiting on Figma from the team; nothing
+  in `mobile-app/` right now is meant to be final UI.
+- A map screen (no mapping package chosen/wired in yet).
+- Push notifications — the backend's automatic-alert system sends real
+  SMS/voice today, not a push into this app. That needs its own delivery
+  mechanism (e.g. Firebase Cloud Messaging) and a backend trigger; out of
+  scope for this scaffold.
+- Translated UI chrome for the 7 languages (structure is ready; strings
+  aren't written).
+
+---
+
+## 2026-08-20 — Safety-priority line for women/children in high-risk alerts
+
+### Completed
+- Closed a real gap flagged in `todo.md` since the pitch-brief work
+  earlier the same day: "women" and "children" are two of the groups
+  the jury scorecard's Social Impact & Inclusion criterion names
+  explicitly, and until now nothing in the system had been deliberately
+  designed for either — voice alerts, local-language text, and
+  feature-phone delivery served disabilities/elderly/underserved
+  communities, but the other two were unaddressed.
+- **Added a safety-priority clause to every "high" risk alert template**
+  in `backend/app/models/translations.py`, in all 7 languages — naming
+  children, elderly people, and pregnant/nursing individuals as
+  priorities during evacuation. This is standard humanitarian
+  evacuation guidance (the same category IFRC/UNICEF flood materials
+  use), not a new personal-data field or subscriber attribute — no
+  schema change, no new privacy surface.
+- Deliberately scoped to `"high"` only — `medium`/`low` templates have
+  no evacuation instruction for this clause to attach to.
+- Updated the 4 example payloads in `docs/api-contract.md` that quoted
+  the old "high" message text verbatim so they match the real output.
+
+### Flags for the team
+- **This new clause is unreviewed by a native speaker in all 7
+  languages — including Swahili, Arabic, and Somali**, whose *original*
+  sentence was already confirmed correct on 2026-08-17. That review
+  didn't cover this new addition; don't assume it inherited that
+  review. Same status the newer French/Portuguese/Amharic content
+  already carries.
+- Adding a sentence can push a "high" SMS from one 160-character GSM-7
+  segment into two, which roughly doubles that message's per-alert send
+  cost — worth accounting for before quoting "$0.01-$0.03 per alert" as
+  a flat figure in the pitch or BMC.
+
+---
+
+## 2026-08-18 — Automatic threshold-triggered alerts (sensor path only)
+
+### Completed
+- Closed a real todo item: previously every alert required a person to
+  press "send" — `POST /api/alerts/send` was the only way anything went
+  out, even a device reporting a dangerously high reading.
+- **Refactored `backend/app/routes/alerts.py`** to extract
+  `send_alert_for_region(location_name, channel, trigger)` — the actual
+  work `POST /api/alerts/send` was already doing (look up the region,
+  score it, find subscribers, send via SMS/voice, log the result) pulled
+  out of the FastAPI route handler so it can be called from elsewhere
+  without duplicating it. The route itself is now a thin wrapper that
+  calls this function with `trigger="manual"` and translates
+  `LookupError` into the existing 404. Verified this refactor changed
+  nothing about `/api/alerts/send`'s existing behavior.
+- **Added `maybe_auto_trigger(location_name, risk_level)`** in the same
+  file: tracks each region's last-seen risk level in the new
+  `backend/app/data/region_alert_state.json`, and calls
+  `send_alert_for_region(..., trigger="automatic")` — but only the first
+  time a region's level becomes `"high"`, not on every subsequent
+  reading that's still `"high"`. Dropping back below `"high"` and rising
+  into it again re-arms it. Without this, a Wokwi/ESP32 sensor reporting
+  every 15 seconds would re-send the same alert to the same subscribers
+  every 15 seconds while a flood was ongoing — worse than not automating
+  it at all.
+- **Wired this into `POST /api/sensor-reading` only.** Considered also
+  wiring it into `POST /api/risk-check` and deliberately did not:
+  `risk-check` also backs the judge/dashboard "what-if" slider demo (see
+  `docs/frontend-feature-spec.md`) — a real SMS firing every time someone
+  drags a demo slider into the red during a pitch would be a bad
+  surprise, not a feature. Automatic alerting only makes sense where a
+  "high" reading represents a genuinely new real event, which is true
+  for a sensor reading and not true for someone testing the UI.
+- Tested by pointing the Wokwi-simulated device at the Lagos region
+  (which has zero subscribers seeded) specifically so the transition
+  logic could be verified without sending a real SMS to a real phone.
+- Added `"trigger": "manual" | "automatic"` to every `GET /api/alerts`
+  entry, and to `.gitignore`'d `region_alert_state.json` /
+  `alert_log.json` (runtime state, not seed data).
+- Documented in `backend/README.md` and `docs/api-contract.md`.
+
+### Not yet started
+- A scheduled job re-scoring `regions.json` itself on a timer, for
+  regions with no live sensor feeding them — this session only covers
+  the sensor-reading path.
+
+---
+
+## 2026-08-17 — Added Addis Ababa as a 10th sample city, so Amharic is exercised live
+
+### Completed
+- Closed the gap flagged in the immediately preceding entry: with no
+  Ethiopian sample city, Amharic was mapped and correctly reachable via
+  a manual `POST /api/risk-check` call, but invisible on the live
+  dashboard (`GET /api/regions`) — unlike every other language, which
+  has at least one real sample city exercising it. Team decided to add
+  one rather than leave the gap.
+- Added `"Addis Ababa, Ethiopia"` to `backend/app/data/regions.json`
+  (lat 9.0320, lon 38.7469, rainfall 65mm/24h, river 2.6m, population
+  estimate 5,200,000) — the sample set is now 10 cities, not 9.
+  Inputs chosen (same "tuned to look sane for the demo, not derived from
+  real hydrological data" methodology used for every other sample city)
+  to land in the `medium` bucket (score 0.65), keeping the risk-level
+  spread a reasonable 3 high / 4 medium / 3 low across all 10 — not a
+  perfectly even split (10 doesn't divide by 3), but not lopsided either.
+- Verified end-to-end against the running server: `GET /api/regions`
+  now returns 10 entries; Addis Ababa's entry has `"local_language":
+  "Amharic"`, the city name correctly localized to "አዲስ አበባ" inside
+  `alert_message_local`, and the ML model independently agrees on the
+  bucket (`ml_risk_level: "medium"`, `ml_risk_score: 0.66` vs. the
+  rules-based 0.65) — same "second opinion, not a contradiction"
+  pattern every other sample city already showed.
+- Updated every place that said "9 sample cities" as a live claim:
+  `backend/app/models/risk_model.py`'s sanity-check docstring (added
+  Addis Ababa's score, updated the spread from 3/3/3 to 3/4/3),
+  `backend/app/models/translations.py` (several comments, including
+  removing the now-stale "not exercised by /api/regions" caveat on the
+  Amharic mapping), `docs/api-contract.md`, `docs/architecture.md`,
+  `docs/frontend-feature-spec.md`, `backend/README.md`, and both
+  `docs/translation-review/amharic-review.txt` (rewrote the "not
+  reachable live" context note — it's live now) and `portuguese-review.txt`
+  (simple count fix).
+- **Also caught and fixed a real, separate gap while regenerating
+  `docs/mock-data.json` for this change: Mogadishu's entry there still
+  said "Mogadishu" in the Somali text, not "Muqdisho."** The live API
+  has correctly said "Muqdisho" since the city-name-localization session
+  earlier today — `mock-data.json` was just never updated for that one
+  entry at the time. Fixed now, verified against live output rather than
+  assumed. Also added the new Addis Ababa entry to `mock-data.json`'s
+  `regions` list, pulled from a live server response, not hand-typed.
+
+### In Progress / Partially Done
+- Nothing left half-finished.
+
+### Not Yet Started
+- **`docs/Africa-Shield-AI-Overview.pdf` and `docs/API-Schema-Reference.pdf`
+  are now stale** (still describe 9 regions and the pre-fix language
+  mappings) — per existing project convention, these are snapshots
+  regenerated on request from an HTML source not committed to the repo,
+  not automatically kept in sync with every data change. Flagging as
+  due for a refresh before any pitch/judge-facing use, not fixing
+  automatically here.
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Chose Addis Ababa specifically** (not some other Ethiopian city) —
+  it's the capital, largest city, and the same choice already used
+  throughout this session's Amharic work (`LOCALIZED_CITY_NAMES`, the
+  review packet, testing), so adding it as the sample city kept
+  everything consistent rather than introducing a second Ethiopian city
+  name to track.
+- **Chose inputs landing in `medium` rather than re-tuning for an exact
+  3/3/3-equivalent split** — 10 cities can't split evenly into 3
+  buckets, and `medium` (4 cities) was judged a fine place for the
+  4th, being reused, non-extreme bucket; not a finding that needed deep
+  analysis, just a demo-plausibility call same as every prior sample
+  city's inputs.
+- **Finding the stale Mogadishu entry in `mock-data.json` while doing
+  this work is a useful reminder for the team:** the "verify against
+  the live server, not just the diff" discipline this project uses
+  caught it. If a doc-regeneration step is ever skipped for one entry
+  while updating others, it's easy to miss silently — worth a quick
+  `mock-data.json`-vs-live diff pass periodically, not just when a
+  specific field is being touched.
+
+### Flags for the Team
+- **The sample-city count is 10 now, not 9** — anything outside this
+  repo (pitch deck drafts, slides, prior conversation notes) that says
+  "9 sample cities" is now stale.
+- **Regenerate `docs/Africa-Shield-AI-Overview.pdf` and
+  `docs/API-Schema-Reference.pdf`** before handing either to a judge —
+  both still reflect the pre-this-week state.
+- **Amharic and Portuguese are both live and demoable now** (Addis
+  Ababa and Maputo respectively) but both still need native-speaker
+  review — see `docs/translation-review/`.
+
+---
+
+## 2026-08-17 — Aligned language coverage with the African Union's official languages; fixed a live Mozambique bug
+
+### Completed
+- Team decision: expand language coverage to match the African Union's
+  6 official languages (Arabic, English, French, Portuguese, Spanish,
+  Kiswahili), substituting Amharic for Spanish per the organizer's own
+  guidance (Spanish isn't relevant to our flood-risk regions). Target
+  set: English, Arabic, French, Portuguese, Swahili, Amharic — plus
+  Somali, kept as a 7th since it predates this alignment and is already
+  reviewed/live via Mogadishu. Followed the exact same pattern used for
+  the French addition earlier the same day: real translated templates
+  (flagged unreviewed where they are), country→language mapping, an
+  explicit ambiguous-country skip list, doc/mock-data regeneration, and
+  testing against the running server.
+- **Checked Maputo's mapping first, as a priority, before adding
+  anything — and found the same bug DRC had before the French fix.**
+  `LOCAL_LANGUAGE_BY_COUNTRY["mozambique"]` was `"English"`. This
+  wasn't a hidden bug exactly — the code comment already said
+  "Mozambique's real primary language is Portuguese, not covered here"
+  — but the *live output* for Maputo, one of our 9 sample cities and the
+  team's most real-data-validated one (the Dec 2025-Jan 2026 flood
+  event confirmed in the real-training-data investigation), was still
+  wrong every time `/api/regions` or `/api/risk-check` was called for
+  it. Fixed to `"Portuguese"`.
+- **Added Portuguese**, real (non-machine-translated-and-forgotten)
+  templates, flagged AI-drafted/unreviewed same as French:
+  - `ALERT_TEMPLATES["Portuguese"]` — high/medium/low, standard
+    post-1990-orthographic-reform spelling (shared across Portugal and
+    Lusophone Africa/Brazil, not a Brazil-vs-Portugal split).
+  - Mapped Mozambique (the bug fix above) plus Angola, Guinea-Bissau,
+    Cabo Verde (both "cabo verde" and "cape verde" keys, since it's
+    called both in English), São Tomé and Príncipe (both the accented
+    and plain-ASCII spelling, since `country_from_location()` doesn't
+    strip accents before lowercasing — verified Python's exact `.lower()`
+    output for the accented form before adding the key, not assumed),
+    and Equatorial Guinea.
+  - **Equatorial Guinea is a deliberate inclusion, not a guess** —
+    Spanish and French are also co-official there, but the team
+    explicitly named it as one of the countries to map to Portuguese in
+    this session's instructions. Documented in code as "not a guess made
+    by whoever last edited this file," to distinguish it from the
+    genuinely-skipped ambiguous cases below.
+  - City names: only Maputo is currently live, and "Maputo" is already
+    its Portuguese name — no `LOCALIZED_CITY_NAMES` entries needed for
+    Portuguese yet.
+- **Added Amharic** — Ethiopia's official language:
+  - `ALERT_TEMPLATES["Amharic"]` — high/medium/low, written in Ge'ez
+    script. **Flagged explicitly, more strongly than any other language
+    in this file, as the least confident draft** — Amharic is
+    linguistically further from the team's other languages than
+    French/Portuguese are from English, and this was drafted with less
+    confidence than the others. `docs/translation-review/amharic-review.txt`
+    repeats this warning for whoever reviews it.
+  - `LOCALIZED_CITY_NAMES["Amharic"]["Addis Ababa"] = "አዲስ አበባ"` — added
+    even though no sample city is in Ethiopia yet, so the mapping is
+    complete and ready rather than discovered missing later.
+  - **No sample city in `regions.json` is in Ethiopia — Amharic is NOT
+    exercised by `GET /api/regions` today.** Tested it via a manual
+    `POST /api/risk-check` call for "Addis Ababa, Ethiopia" instead (see
+    Findings below for the recommendation on whether to add a real
+    sample city for this).
+- **Skipped as genuinely ambiguous, per the same discipline the French
+  addition used** (Congo-Brazzaville, Djibouti):
+  - Djibouti (still skipped) — Arabic, French, and Somali all plausible.
+  - Comoros — French and Arabic co-official; ambiguous between two of
+    our seven languages.
+  - Eritrea — none of our seven languages is actually its primary one
+    (Tigrinya is, which isn't in our set); Arabic and English are both
+    used administratively there but neither is clearly "the" answer, so
+    left unmapped (falls back to English) rather than picking one.
+- **Verified against the running server, not just by reading the diff:**
+  `GET /api/regions`'s Maputo entry now returns `"local_language":
+  "Portuguese"` with real Portuguese text; a manual risk-check for
+  "Luanda, Angola" (not a sample city, a mapping-only check) correctly
+  resolved to Portuguese; a manual risk-check for "Addis Ababa, Ethiopia"
+  correctly resolved to Amharic with the city name localized to
+  "አዲስ አበባ" inside the sentence.
+- Regenerated `docs/mock-data.json`'s Maputo entry to match the live
+  output exactly. Updated `docs/api-contract.md`, `docs/architecture.md`,
+  `backend/README.md`, and `docs/frontend-feature-spec.md` everywhere
+  they said "five languages" or otherwise undercounted the language set
+  — corrected to accurately say 7 languages total (6 AU-aligned + Somali),
+  not "six," after catching that exact inconsistency in this session's
+  own first draft of the wording.
+- Added `docs/translation-review/portuguese-review.txt` and
+  `amharic-review.txt` (demo city Maputo and Addis Ababa respectively),
+  matching the existing packet format.
+
+### In Progress / Partially Done
+- Nothing left half-finished — both languages work end-to-end
+  (Portuguese live via Maputo, Amharic reachable via manual risk-check).
+
+### Not Yet Started
+- **Native-speaker review of Portuguese and Amharic** — both unreviewed
+  AI drafts, same status French is in. Amharic should be treated as the
+  most likely of the two (of all 7 languages, really) to need real
+  correction — see the explicit warning in its review packet.
+- **Whether to add an Ethiopian sample city to `regions.json` — an open
+  decision, not made in this session.** Told the team plainly: without
+  one, Amharic is invisible on the live dashboard and only reachable via
+  a manual API call, which undercuts demoing it as a real feature.
+  Adding one is a small, contained change (one more entry in
+  `regions.json`, matching the existing 9-city format) but touches the
+  "9 sample cities" framing referenced throughout the docs, so it's a
+  team call, not something to do silently.
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Maputo's bug was a real, live-output problem, not just a stale
+  comment** — worth stating plainly since it could have been an
+  embarrassing live-demo moment (a judge asking about the "most
+  validated" city and getting an English message when Portuguese was
+  expected). Treated as a priority fix per the team's explicit framing,
+  fixed before any new language was added, not after.
+- **Chose to verify the exact `.lower()` output for "São Tomé and
+  Príncipe" before adding it as a dict key**, rather than assume ASCII
+  folding — Python's `.lower()` preserves and lowercases accented
+  characters rather than stripping them, so `country_from_location()`'s
+  lookup needs the accented lowercase form to match. Added both the
+  accented and a plain-ASCII fallback key to cover a caller who types it
+  either way.
+- **Caught and fixed an internal inconsistency before it reached the
+  docs:** an early draft of this session's docstring said "six agreed
+  languages" while listing seven names. Corrected everywhere (code
+  comments, `api-contract.md`, `architecture.md`, `backend/README.md`)
+  to consistently say 7 total, explaining the 6-AU-aligned-plus-Somali
+  split, rather than leaving a number that doesn't match its own list.
+- **Did not re-audit Rwanda/Burundi's existing French mapping** even
+  though both have significant Swahili use — out of scope for this
+  session (which was about adding Portuguese/Amharic and fixing
+  Mozambique, not re-opening the French list), and neither is currently
+  ambiguous in a way this session's instructions asked to check.
+
+### Flags for the Team
+- **Portuguese and Amharic still need native-speaker review** —
+  `docs/translation-review/portuguese-review.txt` (demo: Maputo) and
+  `amharic-review.txt` (demo: Addis Ababa, flagged as the highest-risk
+  draft of all 7 languages) are ready to hand off.
+- **Decide on an Ethiopian sample city.** Without one, Amharic support
+  is real but invisible in any live demo of the dashboard — flagging
+  this as a decision point, not deciding it here.
+- **If Maputo's old (wrong) English output was referenced anywhere
+  outside this repo** (screenshots, prior pitch materials, a PDF export)
+  **it's now stale** — same caveat as the DRC/French fix from earlier
+  today.
+
+---
+
+## 2026-08-17 — Translation review: Swahili/Arabic/Somali confirmed, city names localized, French added
+
+### Completed
+- Prepared and handed off a translation-review packet
+  (`docs/translation-review/{arabic,swahili,somali}-review.txt`) to the
+  team's native speakers — plain-text, demo data filled in instead of
+  the `{location}` placeholder, an English gloss next to each line, and
+  a section listing not-yet-translated UI strings (USSD menu, subscribe/
+  unsubscribe confirmations, voice fallback line) so reviewers could
+  flag whether those are worth localizing too, without us inventing
+  translations for them ahead of a decision.
+- **All three came back confirmed correct** — Swahili, Arabic, and
+  Somali are no longer flagged as unreviewed AI drafts in
+  `backend/app/models/translations.py`'s docstring/comments.
+- **Reviewer feedback: city names should appear in the local language,
+  not the English/Latin name.** Previously every language's message
+  dropped in the plain English city name (e.g. "Cairo" inside an Arabic
+  sentence). Added `LOCALIZED_CITY_NAMES` to `translations.py` —
+  `{"Arabic": {"Cairo": "القاهرة"}, "Somali": {"Mogadishu": "Muqdisho"}}`
+  — and `build_alert_messages()` now looks up the local name for
+  `alert_message_local` only; `alert_message_en` is unaffected. Swahili
+  needed no entries — Nairobi/Dar es Salaam/Kampala are already their
+  Swahili names.
+- **Added French as a 5th agreed language**, to reach more Francophone
+  African countries per the team's request. `ALERT_TEMPLATES["French"]`
+  added (AI-written, unreviewed — same status the other three were in
+  before this session). `LOCAL_LANGUAGE_BY_COUNTRY["drc"]` corrected
+  from `"English"` to `"French"` — French is DRC's actual official
+  language; the old English mapping was only ever an arbitrary fallback
+  for a language outside the previously-agreed four. Kinshasa is a live
+  sample city in `regions.json`, so this is exercised by `/api/regions`
+  immediately, not just a hypothetical.
+  - Also added 15 more Francophone countries not yet in `regions.json`
+    (Senegal, Mali, Côte d'Ivoire, Cameroon, Niger, Chad, Burkina Faso,
+    Benin, Togo, Guinea, Gabon, Madagascar, Central African Republic,
+    Rwanda, Burundi) — same "map ahead of having a sample city there"
+    reasoning the team used for Somalia before Mogadishu was added.
+  - **Deliberately did not add Congo-Brazzaville/Republic of the
+    Congo** — its country name is too easily confused with DRC ("Congo")
+    to add safely without a real example to test the parsing against.
+- Verified all of the above against the running server, not just by
+  reading the diff: `POST /api/risk-check` for Cairo now returns
+  `القاهرة` in `alert_message_local`; Mogadishu returns `Muqdisho`;
+  `GET /api/regions`'s Kinshasa entry now shows `"local_language":
+  "French"` with a real French sentence; a test call for "Dakar,
+  Senegal" (not a real sample city, just a mapping check) correctly
+  resolved to French too.
+- Regenerated `docs/mock-data.json`'s Cairo entries (both the `regions`
+  list and `risk_check_example`) and Kinshasa's `regions` entry to match
+  the live output exactly — same zero-drift discipline as every prior
+  contract-affecting change.
+- Updated `docs/api-contract.md`, `docs/architecture.md`,
+  `backend/README.md`, and `docs/frontend-feature-spec.md` everywhere
+  they listed "four languages" or the old DRC→English mapping.
+- Updated the three existing review packets to say "CONFIRMED CORRECT"
+  instead of "never reviewed," with their demo text updated to the new
+  localized-city-name output — kept as accurate reference material, not
+  left stale now that the review happened. Added
+  `docs/translation-review/french-review.txt` for the next reviewer,
+  using Kinshasa as the demo city and flagging that the wording will be
+  reused across all the newly-added Francophone countries (worth a
+  regional-neutrality check, not just a grammar check).
+
+### In Progress / Partially Done
+- Nothing left half-finished — the language/city-name change is
+  complete and verified end-to-end.
+
+### Not Yet Started
+- **French alert wording is unreviewed** — same status Arabic/Swahili/
+  Somali were in until today. `docs/translation-review/french-review.txt`
+  is ready to hand to a French speaker whenever one's available.
+- City-name localization was only added for Arabic and Somali (the two
+  languages where reviewers actually asked for it) — if a French speaker
+  says a French/francized city name is expected for a specific city
+  (uncommon, but some cities do have distinct French exonyms), that's a
+  small addition to `LOCALIZED_CITY_NAMES`, not a rework.
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Chose to localize the city name only inside `alert_message_local`,
+  never `alert_message_en`.** `alert_message_en` is meant to be readable
+  by anyone regardless of local language (e.g. for team/judge review),
+  so keeping it in plain English city names throughout was an easy,
+  low-risk call — no reviewer asked for this to change, and changing it
+  would arguably reduce clarity for that message's actual purpose.
+  Voice/USSD/SMS purposes reflect `alert_message_local`, so they all
+  benefit from the same fix automatically for both languages.
+- **DRC's language correction (English → French) is a live output
+  change on an existing endpoint field (`local_language`,
+  `alert_message_local` for Kinshasa), not just an additive field.**
+  Flagging this explicitly per the standing "don't change the contract
+  without saying so" instruction — no field was renamed/removed/retyped,
+  but an existing region's *value* changed. This is a deliberate,
+  requested correction (DRC's old English mapping was never claimed to
+  be linguistically correct, just an arbitrary fallback), not drift.
+- **Chose a broad but conservative set of Francophone countries to add
+  ahead of time**, excluding any country name ambiguous enough to
+  misroute (Congo-Brazzaville vs. DRC being the clearest risk) or where
+  French isn't clearly the primary/most natural choice among this app's
+  five languages (e.g. skipped Djibouti — Arabic, French, and Somali are
+  all plausible there, and guessing wrong is worse than leaving it
+  unmapped to the English default).
+
+### Flags for the Team
+- **Only French is left unreviewed now.** Get a French speaker to check
+  `docs/translation-review/french-review.txt` before relying on it in a
+  demo where DRC/Kinshasa (or any other French-mapped country) comes up.
+- **If the team adds a sample city in a newly-mapped French country**
+  (Senegal, Mali, Côte d'Ivoire, etc.) **to `regions.json`, it'll
+  automatically get French alert text** — no code change needed, this
+  was the point of mapping ahead of time.
+- **`docs/mock-data.json` and the live API will now disagree with any
+  screenshot/notes taken before this session** for Cairo (city name) and
+  Kinshasa (whole language) — expected, not a regression, if anyone
+  notices the difference from older material.
+
+---
+
+## 2026-08-17 — Investigated real ML training data; found it doesn't cleanly support a retrain
+
+### Completed
+- Team lead asked to investigate replacing `train_ml_model.py`'s synthetic
+  training data with real historical data, explicitly permitting an
+  honest "not feasible cleanly" outcome rather than forcing a retrain.
+  Scoped strictly to ML training data — no other files touched beyond
+  what's listed below.
+- Confirmed the "intentionally isolated, contained swap" claim in
+  `docs/architecture.md` is accurate: `generate_synthetic_training_data()`
+  returns `(X, y)` and everything downstream (the `Pipeline`, the
+  train/test split, the save step) doesn't care where `X`/`y` came from.
+  The blocker turned out to be data availability, not code structure.
+- **Checked 4 sources, actually querying each live (not from memory),
+  via 5 parallel research passes:**
+  - **EM-DAT** (emdat.be): registration-gated even for the public query
+    tool — confirmed by hitting the live page, not just reading their
+    docs. An open HDX mirror exists but is aggregated to country/year
+    counts, no city granularity. Ruled out: not usable in this timeframe.
+  - **ICPAC East Africa Hazards Watch**: no documented raw-data API —
+    the Floods Watch layer shows categorical High/Medium/Low discharge
+    buckets, not measured mm/m values, and only covers 4 of our 9 cities
+    (the IGAD region) to begin with. Ruled out: wrong data shape even if
+    accessible.
+  - **NASA EONET**: genuinely free, no key — confirmed with a real
+    successful call. But its "floods" category returned essentially
+    nothing for Africa (0 events across every query tried), and every
+    returned event's `sources` field pointed back to GDACS — it's a thin
+    GDACS mirror, not independent data. Ruled out: empty.
+  - **GDACS** (gdacs.org): genuinely free, no key, real historical depth
+    (confirmed events back to 2010+). This one actually works.
+  - **Bonus check, not in the original source list:** Open-Meteo's
+    Historical Weather API (ERA5 reanalysis, free, keyless, to 1950) and
+    Flood API (GloFAS reanalysis, free, keyless, 1984–2022) both work —
+    confirmed with real successful calls returning real daily values for
+    our cities. This closes the "no free river-adjacent data exists"
+    assumption from the original brief, with a caveat: GloFAS gives river
+    **discharge in m³/s**, not **level in meters** — a different
+    quantity, not a drop-in substitute for `river_level_m`.
+- **Built and actually ran `backend/app/models/fetch_real_training_data.py`**
+  end-to-end against the live APIs (not just written and left untested):
+  pulls real daily rainfall + real daily discharge for all 9 cities from
+  `regions.json` (2010-01-01 to 2022-07-31, the window GloFAS's July 2022
+  cutoff forces), and labels each day using real GDACS flood events
+  within 150km and ±3 days, defaulting everything else to "low."
+  - Hit and fixed two real bugs while running it: GDACS returns an empty
+    204 body (not JSON) for a country with zero matching events (crashed
+    the first run on Egypt), and Open-Meteo's flood-api endpoint
+    occasionally resets the connection under rapid repeated calls (added
+    retry/backoff + a 1-second pace between requests).
+  - **Actual result: 41,355 (city, date) rows written to
+    `backend/app/data/real_training_data.csv`. Only 14 of them (0.034%)
+    carry a real GDACS-confirmed elevated-risk label — 7 days each for
+    Maputo and Mogadishu, the only 2 of 9 cities with any matching event
+    at all.** The other 7 cities, including Cairo (zero GDACS flood
+    events in the entire window — consistent with the Nile being
+    dam-regulated), got zero real positive labels. Several of the
+    *closest* real events for other cities (e.g. Nairobi, Dar es Salaam)
+    turned out to date from 2023–2024 — just past GloFAS's July 2022
+    cutoff, so the best available real evidence for those cities isn't
+    even in the usable window.
+  - **Found a second, more serious problem while inspecting a live GDACS
+    response, not from the coverage numbers alone:** many GDACS river
+    flood events carry `"source": "GLOFAS"` — the event label is itself
+    partly auto-generated from a GloFAS discharge threshold crossing.
+    Since discharge is also this dataset's proposed input feature, using
+    GDACS-GloFAS events as the label risks real leakage/circularity, not
+    just class imbalance — a model could partly re-derive the label from
+    the same series it's handed as input, rather than learning a genuine
+    relationship.
+- **Decision: did not retrain or touch `train_ml_model.py`/`ml_risk_model.pkl`.**
+  Both problems found (severe label scarcity/imbalance — 7 of 9 cities
+  with zero real positive examples — and the discharge/label leakage
+  risk) are real data-quality issues, not solvable with more engineering
+  time. Forcing a retrain on this data would produce a model that looks
+  more "validated" than it actually is, which cuts against this project's
+  established pattern of flagging what's real vs. simulated/synthetic
+  rather than overstating it.
+
+### In Progress / Partially Done
+- Nothing left half-finished — the investigation reached a clear,
+  evidence-backed conclusion, not an inconclusive stopping point.
+
+### Not Yet Started
+- Nothing new opened by this session. The underlying "train on real data"
+  item in `todo.md` is updated to reflect this finding rather than left
+  as if it were still simply undone.
+
+### Findings & Decisions
+- **Recommendation: keep the synthetic-trained model for the demo, and
+  cite the real sources as external validation/context instead of a
+  training-data replacement.** E.g., a pitch slide showing real rainfall
+  + real GDACS-confirmed flood dates for Nairobi or Dar es Salaam,
+  annotated with what the rules-based/ML thresholds would have said on
+  those real days, is honest, uses real external data, and doesn't carry
+  the leakage/imbalance problems a forced retrain would.
+- `backend/app/data/real_training_data.csv` (41,355 rows, generated
+  2026-08-17) is left in place as a real, inspectable artifact — useful
+  for that pitch-slide idea above — but is explicitly NOT wired into
+  `train_ml_model.py`. Regenerate by rerunning the fetch script rather
+  than hand-editing it; it will change slightly run-to-run only if
+  Open-Meteo's or GDACS's underlying data is revised.
+- `backend/requirements.txt` gained one line, `requests>=2.30` — the new
+  fetch script's only new dependency (it was already installed
+  transitively via the `africastalking` SDK, but wasn't declared
+  directly until now).
+
+### Flags for the Team
+- **If anyone is tempted to "just retrain on the CSV anyway" for a bigger
+  pitch claim: don't, without addressing the leakage issue first.** A
+  judge asking "is this trained on real flood data?" deserves the honest
+  answer this session arrived at — real data was seriously investigated
+  and partially assembled, but doesn't yet support a clean retrain — not
+  a technically-true-but-misleading "yes."
+- **The 150km/±3-day event-matching radius in `fetch_real_training_data.py`
+  is a judgment call, clearly marked as one in the code** (`EVENT_RADIUS_KM`,
+  `EVENT_WINDOW_DAYS`) — loosening it would manufacture more positive
+  labels without addressing why they're scarce (few real GDACS-logged
+  events near most of our cities in this specific window), so it's not a
+  quick fix for the imbalance problem, just a way to hide it.
+- **`docs/architecture.md`'s "Two risk scores, on purpose" section's
+  documented upgrade path ("swap out `generate_synthetic_training_data()`
+  for a real dataset loader") was correct about the code being a
+  contained swap** — the barrier turned out to be real-world data
+  availability, not the codebase. Worth knowing before anyone assumes
+  this is still just an engineering task waiting to be picked up.
+
+---
+
+## 2026-08-17 — IoT sensor ingestion: POST /api/sensor-reading + Wokwi ESP32 simulation
+
+### Completed
+- Team lead specced an IoT/hardware addition: an ESP32-WROOM-32 (chosen
+  over Arduino Uno for built-in WiFi) with exactly two analog sensors —
+  a rain sensor (YL-83/FC-37 style) and a water level sensor — chosen
+  deliberately minimal because they map directly onto the risk model's
+  two existing inputs (`rainfall_mm_24h`, `river_level_m`). No real
+  hardware exists yet; this session built the backend ingestion path and
+  a Wokwi (browser-based ESP32 simulator) simulation to demo it, per
+  explicit instructions not to touch the frontend or change
+  `/api/risk-check`, `/api/regions`, or `/api/alerts`.
+- **Design decision: reused `/api/risk-check`'s scoring logic via a
+  shared function, not a duplicate implementation.** Refactored
+  `backend/app/routes/risk.py` to extract `build_risk_check_response()`
+  — the exact same computation `POST /api/risk-check` already did, just
+  no longer inlined in that route handler. `risk_check()` itself now
+  just calls it. Verified this refactor changed nothing observable: same
+  Cairo/Egypt example (`risk_score: 0.42`, Arabic alert text) came back
+  identical before and after, tested against the running server, not
+  just read from the diff.
+- **New `backend/app/routes/sensors.py`** (`POST /api/sensor-reading`):
+  accepts `{device_id, rainfall_mm_24h, river_level_m, timestamp}`,
+  resolves `device_id` → region via the new `backend/app/data/devices.json`
+  (404 on an unregistered device rather than guessing a location), then
+  calls `build_risk_check_response()` — so a device reading is scored by
+  exactly the same code path as a manual risk-check, not a second
+  implementation that could drift from the first. `rainfall_mm_24h`/
+  `river_level_m` reuse the identical `allow_inf_nan=False` field
+  constraint `RiskCheckRequest` uses, so they're rejected by the same
+  `RequestValidationError` handler in `app/main.py` that already fixes
+  the NaN/Infinity-crash bug — confirmed by sending a literal `NaN` and
+  getting a clean 422, not a 500.
+- **Decided this needed a genuinely separate route, not a bare alias**,
+  because the request shapes differ in a real way: `/api/risk-check`
+  takes a human-provided `location_name`/`latitude`/`longitude` directly;
+  a device only knows its own `device_id` and must have its location
+  resolved server-side. An alias would have forced the ESP32 firmware to
+  know and send its own human-readable location, which doesn't match how
+  a real IoT fleet is provisioned (the backend knows where a device is
+  installed, not the device itself).
+- **New `backend/app/data/devices.json`**: a device-to-region registry
+  (`device_id` → `location_name`/`latitude`/`longitude`), same
+  seed-by-hand pattern as `subscribers.json`. Seeded with one demo entry,
+  `"esp32-demo-01"` → `"Lagos, Nigeria"` — a deliberate default since the
+  team's spec didn't include a location field in the device payload (by
+  design, per the request), not a silent guess: flagging it explicitly
+  here and in the docs in case a different demo region was intended.
+- **New `hardware/wokwi-flood-sensor/`**: a Wokwi (wokwi.com, browser-based,
+  no local toolchain needed) ESP32 simulation.
+  - `sketch.ino`: reads two simulated analog sensors (potentiometers
+    standing in for the rain/water-level sensors' voltage output on
+    GPIO34/GPIO35 — input-only ADC pins, chosen to avoid conflicting with
+    WiFi), converts each 0–4095 raw ADC reading onto the same scale the
+    backend expects (0–100mm rainfall, 0–4m river level — matching
+    `risk_model.py`'s caps), syncs real UTC time over NTP (Wokwi's
+    simulated network supports it), and POSTs a JSON reading to
+    `/api/sensor-reading` every 15 seconds, printing what it sends (and
+    the backend's response) to Serial. No external libraries beyond the
+    ESP32 core's built-in `WiFi.h`/`HTTPClient.h` — kept dependency-free
+    and readable per the instruction that whoever demos this may have
+    never touched embedded code before.
+  - `diagram.json`: ESP32 devkit + two potentiometers wired to
+    GPIO34/GPIO35, each with a `label` attr naming which real sensor it
+    simulates. Not run through the actual Wokwi simulator to confirm
+    pixel-perfect part/pin names (no access to Wokwi's simulator from
+    this environment) — flagged as unverified below.
+  - `README.md`: setup + the exact answer to "how do I test this
+    end-to-end" — see Findings below, since this had a real, specific
+    constraint (Wokwi can't reach `localhost`) that needed a concrete
+    workaround, not a hand-wave.
+- Updated `docs/api-contract.md` (new `POST /api/sensor-reading` section),
+  `docs/architecture.md` (diagram + a new "IoT sensor ingestion" section,
+  updated the stale "Add low-cost IoT sensor integration" Future
+  Improvements line), both top-level `README.md`s, and `todo.md` (marked
+  the IoT-ingestion item done, added the still-open "test Wokwi against a
+  real backend" item under Critical).
+
+### In Progress / Partially Done
+- The backend half is complete and tested end-to-end (`curl` standing in
+  for the ESP32: happy path, unknown device → 404, NaN → clean 422, and
+  output verified byte-for-byte identical to `/api/risk-check` for the
+  same inputs). The Wokwi half exists as files but **has not been run
+  inside Wokwi's actual simulator** — this environment has no browser/
+  Wokwi access, so `sketch.ino`/`diagram.json` are written correctly
+  against Wokwi's documented conventions (confirmed from prior knowledge
+  of their format, not verified live) but unverified end-to-end.
+
+### Not Yet Started
+- **Actually running the Wokwi simulation** (open it at wokwi.com, paste
+  in these two files, verify the diagram wires cleanly with no red
+  error markers, watch the Serial Monitor) — needs a human with browser
+  access, which this environment doesn't have.
+- **Testing the full loop against a real locally-running backend** —
+  needs `ngrok` (or similar) to expose `localhost:8000` publicly, since
+  Wokwi's simulated ESP32 cannot reach `localhost` (that address means
+  "the Wokwi simulator itself" from inside the simulation, not the host
+  computer). Documented as the primary answer to "how do I test this,"
+  not just a footnote — see `hardware/wokwi-flood-sensor/README.md`.
+- Real ESP32 hardware — this was never in scope for this session (Wokwi
+  simulation only, per the plan as given).
+- Everything else already tracked in `todo.md`.
+
+### Findings & Decisions
+- **Answering "how do I test this end-to-end," the specific ask this
+  session's instructions called out:** run the backend locally
+  (`uvicorn app.main:app --reload`), run `ngrok http 8000` in a second
+  terminal to get a public URL, paste that URL (the `http://`, not
+  `https://`, form — ngrok exposes both — to avoid TLS/certificate
+  handling in the sketch) into `SERVER_URL` in `sketch.ino`, then run the
+  Wokwi simulation. This is the standard, documented way to bridge
+  Wokwi's simulated network to a real local server — Wokwi's own
+  "Wokwi-GUEST" WiFi network gives the simulated ESP32 real internet
+  access, but "real internet" still doesn't include a developer's own
+  `localhost`.
+- **What won't work as expected, flagged rather than discovered live:**
+  (1) hardcoding `http://localhost:8000` in the sketch — Wokwi will
+  resolve "localhost" to itself, not the host machine, so every request
+  will fail silently or time out; (2) HTTPS without either using ngrok's
+  plain-http forwarding or adding `WiFiClientSecure`/`setInsecure()` to
+  the sketch — chose the ngrok-http-URL route specifically to avoid
+  needing certificate-skipping code in a sketch meant to be read by
+  someone new to embedded work.
+- **Chose NTP time sync over `millis()`-since-boot for the device's
+  `timestamp` field** — Wokwi's simulated internet supports it with
+  ~10 lines of standard ESP32 code, and a fake relative timestamp would
+  have been actively misleading in a field meant to carry a real clock
+  reading, inconsistent with this project's pattern of not faking data
+  that looks real. (The response's own `timestamp` field, per the
+  response-shape-must-match-`/api/risk-check` requirement, is still
+  server-computed at scoring time, same meaning as everywhere else that
+  field appears — the device's reported timestamp is accepted/validated
+  but not part of what's returned.)
+- **`docs/api-contract.md`'s per-endpoint "3 endpoints" reference was
+  already stale** (there are 7 now, after this week's SMS/USSD/voice
+  additions) — corrected in the top-level `README.md` while already
+  editing that section; not a change introduced by this session's work,
+  just a pre-existing inaccuracy fixed in passing.
+
+### Flags for the Team
+- **The device-to-region mapping is a real design decision worth a
+  second look, not an obvious default.** The spec's minimum payload
+  (`device_id`, `rainfall_mm_24h`, `river_level_m`, `timestamp`) doesn't
+  include a location, so `devices.json` resolves it server-side — this
+  is the standard IoT-fleet pattern (a backend registry knows where a
+  device is installed; the device itself just knows its own ID), but if
+  a different design was intended (e.g. the ESP32 sending its own
+  location), that's a small, contained change to `sensors.py`, not a
+  rewrite.
+- **The demo device (`"esp32-demo-01"`) was mapped to Lagos, Nigeria by
+  default** — arbitrary, since nothing in the spec named a region. Change
+  `backend/app/data/devices.json` (and `DEVICE_ID`/the pin-to-sensor
+  comments in `sketch.ino` if the region matters for the demo narrative)
+  if a different city fits the pitch better.
+- **`hardware/wokwi-flood-sensor/diagram.json` has not been visually
+  confirmed inside Wokwi's editor** — Wokwi part/pin names
+  (`wokwi-esp32-devkit-v1`, `wokwi-potentiometer`, pin names like `D34`/
+  `GND.1`) were written from established convention, not verified
+  against a live Wokwi session. If Wokwi's editor shows a wiring error on
+  open, it's very likely a minor pin-name mismatch, fixable by dragging
+  the wire to the correct pin in Wokwi's visual editor — not a sign the
+  underlying approach is wrong.
+- **This is additive and isolated** — `/api/risk-check`, `/api/regions`,
+  and `/api/alerts` are unchanged in behavior (the risk.py edit was a
+  pure refactor, verified before/after), and the frontend wasn't touched,
+  per this session's explicit instructions.
+
+---
+
+## 2026-08-17 — Voice alerts (Social Impact & Inclusion): read jury scorecard, added Africa's Talking voice calls
+
+### Completed
+- Read the actual jury scorecard (`AI_for_All_Hackathon_Jury_Evaluation_Scorecard.docx`,
+  provided by the team lead) — this has the **exact point weights** per
+  criterion, which weren't known before (the earlier docs review only had
+  the criteria names, not weights): Problem & DRR Relevance 15, Innovation
+  & Creativity 15, **Social Impact & Inclusion 20**, **Functionality &
+  Prototype 20**, Feasibility & Scalability 10, Appropriate Use of
+  AI/Technology 10, Sustainability & Resource Efficiency 5, Presentation &
+  Pitch 5. Also read `AYAB-DRR_Training_Evaluation_Forms.docx` — confirmed
+  it's a training-satisfaction survey (Kirkpatrick Level 1), not relevant
+  to project features.
+- **Identified Social Impact & Inclusion (tied for the largest single
+  category, 20/100) as the weakest-covered criterion.** The scorecard
+  explicitly names "people with disabilities, women, children, elderly
+  people, and underserved groups." USSD already helps the
+  no-smartphone/underserved angle, but nothing addressed disability or
+  literacy access specifically.
+- **Added voice alerts** as the highest points-per-effort fix, reusing
+  the Africa's Talking account/credentials already set up for SMS/USSD
+  rather than a new integration:
+  - **New `backend/app/models/voice_gateway.py`**: wraps
+    `africastalking.Voice.call()` behind `is_configured()`/`place_call()`,
+    same pattern as `sms_gateway.py`. Outbound voice calls are two-step in
+    Africa's Talking's model — `place_call()` starts the call, then
+    Africa's Talking calls back once answered, expecting XML instructions.
+    Since that callback carries no memory of *why* the call was placed,
+    added a `_pending_messages` dict keyed by phone number, written by
+    `place_call()` and read (and cleared) by the callback — confirmed
+    this bridging approach against the SDK's actual `Voice.call()`
+    signature (`callFrom, callTo`) by reading its source directly.
+  - **New `backend/app/routes/voice.py`** (`POST /api/voice/callback`):
+    the webhook Africa's Talking calls when a voice alert connects.
+    Returns Africa's Talking's XML "Voice Actions" format (`<Say>`), not
+    JSON — `xml.sax.saxutils.escape()` used on the message to avoid
+    malformed XML if a message ever contains `&`/`<`/`>`. Falls back to a
+    generic spoken line if no message is queued for that number, rather
+    than saying nothing.
+  - `backend/app/routes/alerts.py`: `SendAlertRequest` gained a
+    `channel: Literal["sms", "voice"] = "sms"` field (additive, default
+    preserves old behavior exactly). `channel="voice"` calls
+    `voice_gateway.place_call()` instead of `sms_gateway.send_sms()`,
+    logging `"Voice call"` / `"Voice call (simulated)"` instead of the
+    SMS equivalents — same subscriber list, same fallback-when-
+    unconfigured-or-no-subscribers safety as the SMS path.
+  - `backend/app/config.py`: added `AT_VOICE_NUMBER` (the sandbox app's
+    Voice number — separate from the SMS sender, per Africa's Talking's
+    account model). `backend/.env.example` documents it.
+  - `backend/app/main.py`: registered the new `voice` router, updated app
+    description and root endpoint list.
+- **Verified end-to-end with the server running locally**: confirmed
+  `POST /api/alerts/send` with `"channel": "voice"` correctly returns
+  `"channel": "Voice call (simulated)"` (no `AT_VOICE_NUMBER` configured
+  in this environment); confirmed `POST /api/voice/callback` returns
+  well-formed `<Say>` XML with the correct fallback line when no message
+  is queued (the actual "message queued then read back" path can't be
+  tested without real Africa's Talking credentials placing a real call —
+  see Not Yet Started). Test-generated `alert_log.json` entries were
+  deleted before committing, same discipline as the previous session.
+- Updated `docs/api-contract.md` (new `POST /api/voice/callback` section,
+  updated `/api/alerts/send`'s request/response to cover `channel`),
+  `docs/architecture.md` ("Real SMS/USSD alerts" renamed "Real
+  SMS/USSD/Voice alerts", with the Social-Impact rationale explained),
+  both `README.md`s, and this entry.
+
+### In Progress / Partially Done
+- Nothing left half-finished in the code — the voice channel works
+  end-to-end in simulated mode, same as SMS did before its first real
+  test.
+
+### Not Yet Started
+- **Real end-to-end voice test** — nobody has placed an actual Africa's
+  Talking sandbox voice call yet. Needs `AT_VOICE_NUMBER` set, a public
+  callback URL (e.g. `ngrok`) pointed at `/api/voice/callback`, and a
+  real test call to confirm the `_pending_messages` handoff works against
+  Africa's Talking's real timing/behavior, not just the logic in isolation.
+- **Non-English `<Say>` text-to-speech is unverified** — flagged
+  explicitly in `docs/architecture.md` and `api-contract.md`. If Africa's
+  Talking's voice synthesis doesn't handle Arabic/Swahili/Somali well,
+  the fallback for those regions would need to be an English voice
+  message rather than `alert_message_local` — a one-line change in
+  `alerts.py` if needed, but shouldn't be assumed fine without testing.
+- Everything listed as Not Yet Started in the entry below (real AT
+  credentials for SMS too, USSD real-sandbox test, automatic
+  threshold-triggered sends, real subscriber outreach at scale, ML
+  real-data training, translation review, pitch deck, Innovation Canvas,
+  sustainability/scalability narrative) — consolidated into a new
+  top-level `todo.md` this session so they're tracked in one place
+  instead of scattered across log entries.
+
+### Findings & Decisions
+- **Chose voice over other Social-Impact options** (e.g. a
+  vulnerability/accessibility indicator per region, community reporting)
+  because it reuses infrastructure already built this week (same Africa's
+  Talking account, same subscriber list, same alert-text generation) —
+  highest points-per-effort given the real deadline is Sep 17–19, not a
+  rebuild of the recipient/messaging model.
+- **Voice and SMS share one subscriber list** (`subscribers.json`) rather
+  than a per-channel preference — a subscriber added via USSD gets both
+  channels available to send to, since USSD's subscribe flow doesn't ask
+  which channel they want. Simple for a hackathon demo; a real product
+  would let someone choose SMS-only vs. voice-only.
+- Learning the scorecard's exact weights changes prioritization concretely:
+  Social Impact & Inclusion and Functionality & Prototype are tied for
+  the largest categories (20 each, 40% of the total combined) — this is
+  why voice (Social Impact) was chosen as this session's build, over e.g.
+  a Sustainability-focused change (worth only 5 points).
+
+### Flags for the Team
+- **Whoever sets up the real Africa's Talking sandbox account (still not
+  done — see previous entry) should also grab the Voice number while
+  they're in the dashboard** and add `AT_VOICE_NUMBER` to `.env` alongside
+  `AT_USERNAME`/`AT_API_KEY` — one signup covers all three channels.
+- **Test a real voice call to your own phone before the pitch**, same as
+  the SMS flag from the previous entry — don't find out live that the
+  `_pending_messages` handoff or Africa's Talking's TTS doesn't behave as
+  expected.
+- **`todo.md` (new, repo root) now tracks every open item across both
+  sessions in one place** — check there instead of scanning old
+  progress-log entries for what's left.
+
+---
+
+## 2026-08-17 — Real SMS/USSD alerts via Africa's Talking
+
+### Completed
+- Team decision: since the real deadline is now known to be 2026-09-17 to
+  2026-09-19 (see the entry below), not 2026-08-29, chose to build real
+  SMS/USSD alerts now rather than leave them simulated — this is the
+  single highest-leverage remaining item against the "Appropriate Use of
+  AI/Technology" judging criterion identified in the docs review below.
+- **New `backend/app/config.py`**: centralized env config (`AT_USERNAME`,
+  `AT_API_KEY`, `AT_SENDER_ID`), loaded via `python-dotenv` from a `.env`
+  file. **New `backend/.env.example`** documents the keys; `.env` itself
+  was already gitignored (`.env.*` pattern, `.env.example` excluded) from
+  the original skeleton session, so no gitignore change was needed.
+- **New `backend/app/models/sms_gateway.py`**: wraps the `africastalking`
+  SDK behind `is_configured()`/`send_sms()`. Verified the exact SDK
+  version installed (`africastalking==2.0.3`) exposes `initialize(username,
+  api_key)` and `SMS.send(message, recipients, sender_id=...)` by reading
+  its source directly rather than assuming API shape from memory/docs.
+- **New `backend/app/data/subscribers.json`**: recipient list
+  (`{"phone_number", "location_name"}` pairs), starts empty (`[]`).
+  Populated by the new USSD subscribe flow, or by hand for testing.
+- **Rewrote `backend/app/routes/alerts.py`**: `GET /api/alerts` now
+  returns real send history from `app/data/alert_log.json` (created on
+  first send) once anything exists there, falling back to the original
+  hardcoded `mock-data.json` list otherwise — so the endpoint is never
+  empty on a fresh clone. **New `POST /api/alerts/send`**: looks up a
+  region, computes its current risk + local-language alert text (same
+  functions the other endpoints already use), finds its subscribers, and
+  sends via Africa's Talking if configured and there's at least one
+  subscriber — otherwise logs a clearly labeled `"SMS (simulated)"` entry
+  instead. Every call appends to `alert_log.json`, real or simulated.
+- **New `backend/app/routes/ussd.py`** (`POST /api/ussd`): Africa's
+  Talking USSD webhook implementing a 3-option menu — check a region's
+  flood risk, subscribe this phone number to a region's alerts (writes to
+  `subscribers.json`), or unsubscribe from all regions. No smartphone or
+  SMS credit needed to use it, which is the point of USSD for this
+  project's "last-mile" framing.
+- `backend/app/main.py`: registered the new `ussd` router, updated the
+  app description and root endpoint list to include both new routes.
+- `backend/requirements.txt`: added `africastalking>=2.0`,
+  `python-multipart>=0.0.9` (needed for FastAPI to parse USSD's
+  form-encoded webhook body), `python-dotenv>=1.0`.
+- **Verified end-to-end with the server running locally**, not just by
+  reading the code: `GET /api/alerts` correctly falls back to the mock
+  list on a clean state; `POST /api/alerts/send` for Lagos correctly
+  returns `"channel": "SMS (simulated)"` and `"recipients": 0` with zero
+  subscribers (no `AT_API_KEY` set in this session's test); walked the
+  full USSD menu tree via raw form-encoded POSTs (welcome → check risk →
+  region list → Lagos risk result; welcome → subscribe → region list →
+  Lagos subscribe confirmation) and confirmed `subscribers.json` was
+  written correctly; re-sent the Lagos alert and confirmed `recipients`
+  went from 0 to 1, reflecting the new subscriber. Test-generated
+  `subscribers.json`/`alert_log.json` entries were reset to empty/deleted
+  before committing — they're runtime state, not seed data.
+- Updated `docs/api-contract.md` (new sections for both endpoints, updated
+  `GET /api/alerts` section to describe the log/fallback behavior and the
+  new `recipients` field), `docs/architecture.md` (diagram + a new "Real
+  SMS/USSD alerts" section, moved the old "integrate a real SMS/USSD
+  gateway" line out of Future Improvements), `README.md`, and
+  `backend/README.md` (setup instructions for `.env`, new endpoints,
+  a "SMS/USSD alerts" how-to-test section).
+
+### In Progress / Partially Done
+- Nothing left half-finished from this session's scope — both endpoints
+  work end-to-end in simulated mode; only real Africa's Talking sandbox
+  credentials are needed to flip sends from simulated to real, and that's
+  a config step (`.env`), not a code change.
+
+### Not Yet Started
+- **Nobody has actually created an Africa's Talking sandbox account yet**
+  — `AT_USERNAME`/`AT_API_KEY` are unset in this environment, so every
+  send so far has been simulated. Whoever owns this next should sign up
+  at https://account.africastalking.com/ (free), fill in `backend/.env`,
+  and send one real test SMS to their own phone before the pitch.
+- USSD hasn't been tested against Africa's Talking's actual USSD
+  simulator/sandbox (only tested locally via raw form-encoded curl
+  requests standing in for their webhook call) — needs a public URL
+  (e.g. `ngrok`) pointed at a running server and a sandbox USSD channel
+  configured to call it.
+- Automatic threshold-triggered sends (a scheduled job firing
+  `/api/alerts/send` when a region crosses into `high`) — this session
+  only built on-demand sending.
+- Real subscriber registration/outreach at scale — today's subscriber
+  list is either hand-seeded or grown one USSD session at a time.
+- Everything else already listed as Not Yet Started in prior entries
+  (real historical ML training data, native-speaker translation review,
+  pitch deck, Innovation Canvas, sustainability/scalability narrative).
+
+### Findings & Decisions
+- **Chose on-demand sending (`POST /api/alerts/send`, called manually or
+  from a dashboard button) over automatic threshold-triggered sending**
+  for this pass — far less to build and demo, and equally convincing for
+  a judge ("here's a real SMS arriving on my phone") without needing a
+  background scheduler. Automatic triggering is a documented next step,
+  not abandoned.
+- **Both SMS and the USSD risk-check screen send `alert_message_local`,
+  not `alert_message_en`** — consistent with the whole project's
+  "last-mile, local-language" framing. (First draft of the USSD handler
+  used `message_en` for that screen; caught and fixed before this entry,
+  not left as a known inconsistency.)
+- **USSD region menu uses each city's short name only** (e.g. "Lagos",
+  not "Lagos, Nigeria") to keep each screen short — USSD screens have a
+  tight length limit on many carriers, and 9 full "City, Country" lines
+  risked overflowing it. Not verified against a real carrier's exact
+  limit this session; flagged as a real risk if regions expand.
+
+### Flags for the Team
+- **`docs/mock-data.json`'s alert examples don't have a `recipients`
+  field** — that field only appears on entries created by the new
+  `/api/alerts/send` log, not the old hardcoded fallback list. Frontend:
+  if you display `recipients`, handle it being absent/undefined on
+  fallback entries.
+- **Nobody has real Africa's Talking credentials configured yet** — see
+  Not Yet Started above. Don't be surprised every alert still says
+  `"(simulated)"` until someone completes that step.
+- **`backend/app/data/subscribers.json` and `alert_log.json` are runtime
+  state, not seed data** — they'll change as people test locally. Check
+  `git diff` before committing either file; don't commit test phone
+  numbers or fake send history.
+
+---
+
+## 2026-08-17 — Frontend PR review + corrected the real hackathon deadline
+
+### Completed
+- Reviewed Habiba's frontend dashboard PR (#1 "habiba-frontend", merged as `152343f`: `RiskOverview`, `RiskMap`, `RiskDistribution`, `RegionTable`, `RecentAlerts`, `AlertCard`/`AlertDetails`/`RegionDetails`, `Sidebar`/`Topbar`/`StatCard`, plus stub pages for Alerts/Analytics/Regions/Reports/HelpSupport/Settings). Verified her "complete dashboard with real API data" claim against the actual code rather than taking it at face value.
+- Confirmed **4 of 5 widgets genuinely fetch live from `GET /api/regions`** (`RiskOverview`, `RiskMap`, `RiskDistribution`, `RegionTable`) and correctly handle both the flat and `risk_score_breakdown`-nested score fields on the right 0–1 scale — the backend/frontend contract is working as designed.
+- Read the entire `docs/` folder, including the hackathon organizers' materials (`docs/helpfull-from-the-online-session/AYAB DRR AI for All Hackathon_Ideation deck.pdf` and `AI 4 All Hackathon information brief_AYAB_DRR.pdf`), to check the team's plan against the actual program structure.
+
+### In Progress / Partially Done
+- Nothing half-finished from this session — this was a review + planning pass, no code was changed (frontend was explicitly left untouched per team-lead instruction; backend needed no fix).
+
+### Not Yet Started
+- Fixing the frontend issues found in this review (see Findings) — deliberately left to the frontend team, not done this session.
+- Pitch deck (`docs/pitch-notes.md` is still a placeholder).
+- An Innovation Canvas artifact (problem/AI solution/tech & data sources/partners/impact/risks/scalability) — implied as expected deliverable by the organizers' ideation deck, not started.
+- A "Sustainability & Resource Efficiency" / scalability narrative — not addressed anywhere in current docs, and it's one of the official judging criteria.
+- Real SMS/USSD gateway (`/api/alerts` is still an intentional stub) — flagged again here specifically because Africa's Talking integration is the most direct way to score on the "Appropriate Use of AI/Technology" criterion.
+
+### Findings & Decisions
+- **Frontend review findings (not fixed this session, left for the frontend team):** `http://localhost:8000` is hardcoded as a literal API base URL in 4 separate files (`RegionTable.jsx`, `RiskMap.jsx`, `RiskOverview.jsx`, `RiskDistribution.jsx`) — will break on any non-local deployment; `src/data/mockData.js` (~290 lines) is dead code, not imported anywhere; `RecentAlerts.jsx` uses a hardcoded local array rather than `GET /api/alerts` (defensible given that endpoint is a deliberate stub, but should be labeled as such in the UI rather than blending in with the live widgets); `Dashboard.jsx` has a stray `py-` Tailwind class (likely a typo/no-op); the same fetch/loading/error boilerplate is copy-pasted across 4 components instead of one shared hook. New dependencies added (`leaflet`, `react-leaflet`, `framer-motion`, `lucide-react`, `react-router-dom`) are all reasonable, low-risk choices.
+- **⚠️ Deadline correction — this is the important one.** `docs/progress-log.md` and `docs/api-contract.md` have been treating **2026-08-29** as *the* hackathon deadline. Per the official 2026 AYAB DRR / AI for All Hackathon brief, that date is only the end of the **Innovation Labs** build sprint. The actual program has three phases: Virtual Boot Camp (2026-08-14 to 2026-08-15, done), Innovation Labs (2026-08-15 to 2026-08-29, in progress now), and **Regional Hackathon & Demo Days (2026-09-17 to 2026-09-19)** — the real judged event, where only **5 of 12 teams** advance to pitch live to an international jury. Winner receives €1000 to finish the prototype. None of our docs currently reflect a plan for making that cut or preparing for a live jury Q&A.
+- **Official judging criteria** (2026 brief, supersedes any older/generic weighting): Problem & DRR Relevance, Innovation & Creativity, Social Impact & Inclusion, Functionality & Prototype, Feasibility & Scalability, Appropriate Use of AI/Technology (incl. Robotics/IoT/GIS), Sustainability & Resource Efficiency, Presentation & Pitch. No published weights.
+- Backend work to date maps well onto "Appropriate Use of AI" (real rules-based scoring + a genuinely trained, honestly-caveated ML second opinion, per the 2026-08-10 entries below) — the weaker criteria right now are Sustainability & Resource Efficiency and Feasibility & Scalability, neither of which any doc currently addresses.
+- The rest of `docs/helpfull-from-the-online-session/` (Flutter, Robotics, Web-Dev-AI-session, Nour Said session slides) is generic training material, not hackathon-specific requirements. `Project's building tools.pdf` is a useful non-mandatory free-tooling cheat sheet (GDACS, ReliefWeb, Africa's Talking, etc.) worth revisiting when scoping the SMS/USSD gateway.
+
+### Flags for the Team
+- **Aug 29 is not the finish line — treat it as an internal milestone, not the deadline.** The real judged demo is 2026-09-17 to 2026-09-19, and only 5 of 12 teams get a pitch slot. Anyone planning around "we're done Aug 29" should replan around a pitch-ready state by mid-September instead.
+- **Frontend team:** the API-URL/mock-data/typo issues above are yours whenever convenient — nothing broken today, just tech debt worth cleaning up before a real deployment or before Sept.
+- **No one owns the pitch deck or Innovation Canvas yet** — both are effectively blank as of this entry and both map directly to judging criteria ("Presentation & Pitch," and the canvas covers several others at once). Worth assigning owners soon given the real deadline is now known to be further out but with a harder cut (top-5) at the end of it.
+
+---
+
 ## 2026-08-10 — API enrichment: closed 4 gaps a frontend teammate flagged
 
 ### Completed

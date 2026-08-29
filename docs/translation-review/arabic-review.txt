@@ -1,0 +1,80 @@
+AFRICA SHIELD AI — ARABIC TRANSLATION REVIEW
+==============================================
+
+STATUS: CONFIRMED CORRECT by a native Arabic speaker (2026-08-17).
+Source file: backend/app/models/translations.py (lines ~110-115).
+Used for: SMS alerts, USSD "check flood risk" reply, and voice call
+text-to-speech (spoken aloud when someone answers a voice alert).
+
+Demo city used below: Cairo, Egypt (Egypt is the only one of our 9
+sample cities currently mapped to Arabic).
+
+UPDATE (2026-08-17): per this review, the city name is now written in
+Arabic script ("القاهرة") instead of Latin script ("Cairo") inside the
+Arabic sentence. This file has been updated to show the current,
+corrected live output.
+
+--------------------------------------------------
+1. HIGH RISK
+--------------------------------------------------
+Arabic (as sent):
+خطر الفيضانات مرتفع في القاهرة. انتقل إلى مكان مرتفع وتجنب ضفاف النهر.
+
+Intended meaning (English gloss, for reference only — not the source
+text, just what we think it says):
+"Flood risk is HIGH in Cairo. Move to a high place and avoid riverbanks."
+
+--------------------------------------------------
+2. MEDIUM RISK
+--------------------------------------------------
+Arabic (as sent):
+خطر الفيضانات متوسط في القاهرة. توخَّ الحذر وتابع التحديثات المحلية.
+
+Intended meaning (English gloss):
+"Flood risk is MEDIUM in Cairo. Be cautious and follow local updates."
+
+--------------------------------------------------
+3. LOW RISK
+--------------------------------------------------
+Arabic (as sent):
+خطر الفيضانات منخفض في القاهرة. لا حاجة لاتخاذ إجراء في الوقت الحالي.
+
+Intended meaning (English gloss):
+"Flood risk is LOW in Cairo. No need to take action at this time."
+
+
+REVIEW OUTCOME
+================
+All 3 messages confirmed correct. City name changed to Arabic script
+("القاهرة") per reviewer feedback. This text is right-to-left — the
+system sends it as plain text with no RTL formatting markers; the
+frontend is responsible for RTL display.
+
+
+ADDITIONAL MESSAGES — NOT YET TRANSLATED AT ALL
+=================================================
+These only exist in English today, regardless of which local language a
+region is mapped to. We have NOT decided yet whether to translate these
+— flagging them now so you can tell us whether they're worth localizing
+too, and if so, we'll come back with drafts for review. No action needed
+unless you want to weigh in.
+
+USSD menu (what someone sees when they dial in on any phone):
+  "Welcome to Africa Shield AI
+   1. Check flood risk
+   2. Subscribe to alerts
+   3. Unsubscribe from alerts"
+
+  "Select a region:" (shown after picking option 1 or 2)
+
+  "You are now subscribed to flood alerts for {region}." (after
+  subscribing)
+
+  "You have been unsubscribed from all flood alerts." (after
+  unsubscribing)
+
+  "Invalid selection." (bad input)
+
+Voice call fallback line (spoken only if something goes wrong and no
+alert message was found for the call):
+  "This is Africa Shield AI. No specific alert was found for this call."

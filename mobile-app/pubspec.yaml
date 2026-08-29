@@ -1,0 +1,138 @@
+name: afrishield_mobile
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+
+  # Backend API calls (GET /api/regions, GET /api/alerts).
+  http: ^1.2.2
+  # App-wide state (selected region, language, cached data) without more
+  # ceremony than this project needs.
+  provider: ^6.1.2
+  # Real OSM map (same tile source family as the web dashboard's Leaflet
+  # map in frontend-web/), not a static image standing in for one.
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  # "Share Alert" button (real system share sheet).
+  share_plus: ^10.1.4
+  # "Voice alerts" accessibility setting — real text-to-speech, not a stub
+  # switch. Matters here specifically: the backend's whole voice-call
+  # channel exists to reach people who can't read text (see
+  # docs/architecture.md's Social Impact notes), so this is the same idea
+  # inside the app, not a generic nice-to-have.
+  flutter_tts: ^4.2.0
+  # Offline-first: cache the last-known regions/alerts response so the app
+  # still shows something useful with no connectivity.
+  shared_preferences: ^2.3.3
+  intl: ^0.19.0
+  # Used directly (not just transitively via `http`) for the hazard-report
+  # photo upload's MIME content type.
+  http_parser: ^4.1.2
+  # Real device GPS for "Use my current location" (onboarding + hazard
+  # reports) — not a stub.
+  geolocator: ^13.0.2
+  # Real camera/gallery photo picking for hazard report attachments.
+  image_picker: ^1.1.2
+  # Real tel: dialing for "Call Emergency Line" — see
+  # lib/data/emergency_numbers.dart for the real, cited number data.
+  url_launcher: ^6.3.1
+  # Real push notifications (Firebase Cloud Messaging) for the "Mobile
+  # App" alert channel — see lib/services/push_service.dart and
+  # lib/firebase_options.dart for why this degrades gracefully without a
+  # real Firebase project configured.
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^5.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # Generates AppLocalizations from lib/l10n/*.arb (see l10n.yaml) — real
+  # UI-chrome translations for the 7 backend-supported languages, not
+  # just the locale-declaration scaffolding this used to be.
+  generate: true
+
+  # Real State/City administrative data for all 54 countries — see
+  # lib/data/geo_data.dart. Filtered from the open, CC-licensed
+  # dr5hn/countries-states-cities-database (github.com/dr5hn/
+  # countries-states-cities-database) down to just the countries this app
+  # lists; not fabricated data.
+  assets:
+    - assets/geo/states_cities.json
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

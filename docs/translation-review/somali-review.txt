@@ -1,0 +1,82 @@
+AFRICA SHIELD AI — SOMALI TRANSLATION REVIEW
+===============================================
+
+STATUS: CONFIRMED CORRECT by a native Somali speaker (2026-08-17).
+Source file: backend/app/models/translations.py (lines ~127-131).
+Used for: SMS alerts, USSD "check flood risk" reply, and voice call
+text-to-speech (spoken aloud when someone answers a voice alert).
+
+Demo city used below: Mogadishu, Somalia (our only sample city mapped
+to Somali).
+
+UPDATE (2026-08-17): per this review, the city name is now written using
+the Somali name ("Muqdisho") instead of the English name ("Mogadishu")
+inside the Somali sentence. This file has been updated to show the
+current, corrected live output.
+
+--------------------------------------------------
+1. HIGH RISK
+--------------------------------------------------
+Somali (as sent):
+Khatarta daadka ee Muqdisho waa SARE. U guuri meel sare kana fogow
+xeebaha webiga.
+
+Intended meaning (English gloss, for reference only):
+"The flood risk in Mogadishu is HIGH. Move to a high place and stay
+away from the riverbanks."
+
+--------------------------------------------------
+2. MEDIUM RISK
+--------------------------------------------------
+Somali (as sent):
+Khatarta daadka ee Muqdisho waa DHEXDHEXAAD. La soco warbixinnaha
+maxaliga ah.
+
+Intended meaning (English gloss):
+"The flood risk in Mogadishu is MODERATE. Follow local updates."
+
+--------------------------------------------------
+3. LOW RISK
+--------------------------------------------------
+Somali (as sent):
+Khatarta daadka ee Muqdisho waa HOOSE. Wax tallaabo lagama qaadanayo
+hadda.
+
+Intended meaning (English gloss):
+"The flood risk in Mogadishu is LOW. No action is being taken at this
+time."
+
+
+REVIEW OUTCOME
+================
+All 3 messages confirmed correct. City name changed to the Somali name
+("Muqdisho") per reviewer feedback.
+
+
+ADDITIONAL MESSAGES — NOT YET TRANSLATED AT ALL
+=================================================
+These only exist in English today, regardless of which local language a
+region is mapped to. We have NOT decided yet whether to translate these
+— flagging them now so you can tell us whether they're worth localizing
+too, and if so, we'll come back with drafts for review. No action needed
+unless you want to weigh in.
+
+USSD menu (what someone sees when they dial in on any phone):
+  "Welcome to Africa Shield AI
+   1. Check flood risk
+   2. Subscribe to alerts
+   3. Unsubscribe from alerts"
+
+  "Select a region:" (shown after picking option 1 or 2)
+
+  "You are now subscribed to flood alerts for {region}." (after
+  subscribing)
+
+  "You have been unsubscribed from all flood alerts." (after
+  unsubscribing)
+
+  "Invalid selection." (bad input)
+
+Voice call fallback line (spoken only if something goes wrong and no
+alert message was found for the call):
+  "This is Africa Shield AI. No specific alert was found for this call."

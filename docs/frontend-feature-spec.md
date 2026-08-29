@@ -51,7 +51,7 @@ personally causing a flood alert to fire is not.
 
 **Data:** `POST /api/risk-check`. Give the judge two inputs — rainfall
 (mm/24h) and river level (m) — as sliders or number fields, plus a location
-name (can default to one of the 9 sample cities, or let them type
+name (can default to one of the 10 sample cities, or let them type
 anything).
 
 Example request:
@@ -82,10 +82,16 @@ risk" button (or auto-submit on slider release with debounce). Show the
 resulting risk-level chip + both alert messages updating live.
 
 **Note:** any `location_name` works — the backend parses the country from
-the string after the last comma (`"City, Country"`) to pick a language. If
-you type a location whose country isn't Nigeria/Kenya/Egypt/Tanzania/
-Uganda/Ghana/Mozambique/DRC/Somalia, it'll fall back to English. That's
-expected, not a bug.
+the string after the last comma (`"City, Country"`) to pick a language.
+DRC maps to French and Mozambique maps to Portuguese (both corrected
+2026-08-17 — each is that country's actual official language; Mozambique
+in particular was a live bug, not just a documentation gap, since Maputo
+is a sample city). Ethiopia maps to Amharic, and Addis Ababa was added
+as a 10th sample city the same day so this is exercised live too — see
+`docs/progress-log.md`'s 2026-08-17 entries. If you type a location
+whose country isn't explicitly mapped (see `LOCAL_LANGUAGE_BY_COUNTRY`
+in `backend/app/models/translations.py` for
+the full list), it'll fall back to English. That's expected, not a bug.
 
 ---
 
