@@ -2,18 +2,31 @@ import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../config/env.dart';
 import '../firebase_options.dart';
 
-/// Real push-notification registration (Firebase Cloud Messaging) for the
-/// "Mobile App" alert channel — see `AlertChannelsScreen`. Degrades
-/// honestly, not silently: until a real Firebase project's config is in
-/// `lib/firebase_options.dart` (see that file's doc comment), obtaining a
-/// device token fails, `enable()` returns `false`, and the caller shows
-/// "not available yet" instead of a fake "on" state.
+/// A real Firebase project is configured now (`lib/firebase_options.dart`,
+/// set up 2026-08-29 via `flutterfire configure` — see that file's doc
+/// comment) — Android and iOS push should work as-is once built for those
+/// platforms (untested here, no device/emulator available in this
+/// environment). **Web push additionally needs a VAPID key**
+/// (Project Settings > Cloud Messaging > Web configuration > Web Push
+/// certificates in the Firebase console) passed to [_webVapidKey] below —
+/// without it, `getToken()` on web fails the same way it did before any
+/// Firebase project existed. Every other failure mode (permission denied,
+/// no registered app for a platform, etc.) still degrades the same
+/// honest way: `enable()` returns `false`, never a fake success.
 class PushService {
+  /// Fill in once available from Firebase Console > Project Settings >
+  /// Cloud Messaging > Web configuration > Web Push certificates. Only
+  /// used on web (`FirebaseMessaging.getToken` ignores it on
+  /// Android/iOS) — not a secret, this key is meant to be public/client-
+  /// side, same as everything in `firebase_options.dart`.
+  static const String? _webVapidKey = null;
+
   bool _initTried = false;
   bool _initialized = false;
   String? _token;
@@ -29,7 +42,9 @@ class PushService {
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
         return false;
       }
-      final token = await FirebaseMessaging.instance.getToken();
+      final token = await FirebaseMessaging.instance.getToken(
+        vapidKey: kIsWeb ? _webVapidKey : null,
+      );
       if (token == null) return false;
       _token = token;
       _initialized = true;

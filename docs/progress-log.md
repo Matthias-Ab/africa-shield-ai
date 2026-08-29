@@ -5,6 +5,68 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-29 — Real Firebase project created; `flutterfire configure` wired into the mobile app
+
+### Completed
+- **Created a real Firebase project**, `afrishield-ai-flood`. This took
+  more steps than expected because of two separate account-level
+  restrictions, not code issues:
+  - The first Google account used hit "You've reached the project limit
+    for your account" when creating a project in the Firebase console.
+  - Switched to a second Google account and created a project there via
+    the browser, but `firebase projects:list` under the CLI login for
+    that same account showed no projects — a genuine account/project
+    mismatch (confirmed by checking which email the CLI's local config
+    was actually authenticated as). Rather than keep debugging that,
+    created the Firebase project fresh via the CLI instead:
+    `firebase projects:create afrishield-ai-flood` — this succeeded for
+    the underlying GCP project, but the following "add Firebase
+    resources" step failed with `403 PERMISSION_DENIED` on
+    `firebase.googleapis.com:addFirebase` (confirmed via
+    `firebase-debug.log`, not just the summary error) — a known
+    restriction on fresh Google accounts calling that API directly.
+    Worked around it by adding Firebase to the *existing* GCP project via
+    the Firebase console's "Add project" flow (browser calls, unlike raw
+    API calls, aren't subject to the same restriction) — this succeeded.
+- **Ran `flutterfire configure`** from `mobile-app/` against the now
+  Firebase-enabled project:
+  ```
+  flutterfire configure --project=afrishield-ai-flood --platforms=android,ios,web \
+    --android-package-name=com.afrishield.afrishield_mobile \
+    --ios-bundle-id=com.afrishield.afrishieldMobile --yes --overwrite-firebase-options
+  ```
+  Generated real `lib/firebase_options.dart` (replacing the old
+  placeholder values), `android/app/google-services.json`, and
+  `mobile-app/firebase.json`; auto-applied the standard
+  `com.google.gms.google-services` Gradle plugin to
+  `android/app/build.gradle.kts` and `android/settings.gradle.kts`
+  (superseding an earlier no-plugin workaround that existed only because
+  there was no real project to point it at yet).
+- Updated `PushService` to pass a (currently `null`) web VAPID key to
+  `FirebaseMessaging.instance.getToken()` only on web
+  (`kIsWeb`) — Android/iOS ignore that parameter.
+- Verified nothing broke: `flutter pub get`, `flutter analyze` ("No
+  issues found!"), `flutter test` (all passed), and a fresh
+  `flutter run -d chrome` all succeeded with the new config in place.
+- Updated `mobile-app/README.md` (feature table, Structure section,
+  Known gaps) to describe the real project instead of the old
+  placeholder state.
+
+### Not yet started
+- **Web Push VAPID key** — needed before `getToken()` works in a
+  browser. Generate at Project Settings > Cloud Messaging > Web
+  configuration > Web Push certificates, then fill into
+  `PushService._webVapidKey`.
+- **Backend service-account credential** — a separate credential from
+  Project Settings > Service Accounts > Generate new private key, needed
+  in `backend/.env`'s `FIREBASE_SERVICE_ACCOUNT_JSON` before the backend
+  can actually send any push notification (the mobile-side config alone
+  only lets the app *receive*, not the backend *send*).
+- Android/iOS push registration is wired up but untested — no
+  device/emulator available in this environment.
+
+---
+
 ## 2026-08-29 — Localized runtime error messages; cross-verified 10 countries' emergency numbers
 
 Closing out the two remaining mobile gaps that didn't need an account,

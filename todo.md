@@ -277,16 +277,26 @@ Presentation & Pitch 5.
       section below). LGA stays free text — no equally reliable third
       administrative tier exists across all 54 countries in the dataset
       used.
-- [ ] **Create a real Firebase project and drop its config into
-      `mobile-app/lib/firebase_options.dart` (via `flutterfire configure`)
-      and a service-account key into `backend/.env`'s
-      `FIREBASE_SERVICE_ACCOUNT_JSON` (2026-08-28).** Same category of
-      gap as the Africa's Talking account under "Critical" above — the
-      push notification code is built and tested end-to-end with
-      simulated/unavailable states, but nobody has done this external
-      console step yet, so no real push notification has ever actually
-      been delivered to a real device. Free at
-      https://console.firebase.google.com/.
+- [x] ~~Create a real Firebase project and drop its config into
+      `mobile-app/lib/firebase_options.dart` via `flutterfire configure`~~
+      **Done 2026-08-29** — real project `afrishield-ai-flood`, real
+      config generated for Android/iOS/Web, `google-services.json` and
+      the Gradle plugin wired in. `flutter analyze`/`flutter test` still
+      pass; `flutter run -d chrome` boots clean. See
+      `docs/progress-log.md`'s 2026-08-29 "Real Firebase project
+      created" entry for the full account/permissions saga. **Two
+      narrower steps remain before push actually works end-to-end:**
+      - [ ] Generate a **Web Push VAPID key** (Project Settings > Cloud
+            Messaging > Web configuration > Web Push certificates) and
+            fill it into `PushService._webVapidKey` — needed for push to
+            work in a browser at all.
+      - [ ] Generate a **backend service-account key** (Project Settings
+            > Service Accounts > Generate new private key) and set
+            `backend/.env`'s `FIREBASE_SERVICE_ACCOUNT_JSON` to its path
+            — needed before the backend can actually send anything (the
+            mobile-side config alone only lets the app *receive*).
+      - [ ] Android/iOS token registration is wired up but still
+            untested on a real device/emulator.
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
 - [ ] **Community-reporting feature — backend + mobile app fully wired,

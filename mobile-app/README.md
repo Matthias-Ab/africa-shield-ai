@@ -33,7 +33,7 @@ About.
 | Region risk, alert text, map pins | **Real** — `GET /api/regions` |
 | Alert filtering by risk level | **Real** — computed from the same data |
 | SMS alert channel toggle | **Real channel** (backend sends via Africa's Talking); the toggle itself is just a local preference, doesn't yet call a backend "opt in" endpoint |
-| "Mobile App" (push notification) channel | **Real** — Firebase Cloud Messaging. Toggling it on requests a device token and registers it with `POST /api/push-tokens`; toggling off calls `DELETE /api/push-tokens/{token}`. **Won't actually deliver anything yet** — no Firebase project has been created for this app (see `lib/firebase_options.dart`), so `PushService` cleanly reports "unavailable" and the toggle explains that rather than pretending to succeed |
+| "Mobile App" (push notification) channel | **Real** — Firebase Cloud Messaging, against a real project (`afrishield-ai-flood`, configured 2026-08-29 via `flutterfire configure` — see `lib/firebase_options.dart`). Toggling it on requests a device token and registers it with `POST /api/push-tokens`; toggling off calls `DELETE /api/push-tokens/{token}`. Android/iOS should work once built for those platforms (untested — no device/emulator in this environment). **Web still needs a VAPID key** (`PushService._webVapidKey`, currently `null`) before it can get a token in the browser; the backend also still needs its own service-account credential in `backend/.env`'s `FIREBASE_SERVICE_ACCOUNT_JSON` before it can actually send anything |
 | WhatsApp / USSD channels | **Not built.** Switches are disabled with an inline note explaining why — see `screens/settings/alert_channels_screen.dart` |
 | Voice alerts (text-to-speech "Read Aloud") | **Real** — `flutter_tts`, on-device, no backend involved |
 | Text size / high contrast | **Real** — applied app-wide via `AccessibilityProvider` + `MediaQuery` override in `app.dart` |
@@ -58,7 +58,7 @@ lib/
   models/region.dart, alert.dart, hazard_report.dart
   services/api_service.dart, cache_service.dart, location_service.dart,
            push_service.dart
-  firebase_options.dart                  — Firebase config (placeholder — see its doc comment)
+  firebase_options.dart                  — real Firebase config (afrishield-ai-flood) — see its doc comment
   l10n/app_en.arb, app_sw.arb, app_ar.arb, app_so.arb, app_fr.arb,
        app_pt.arb, app_am.arb  — UI chrome translations (see l10n.yaml)
   providers/
@@ -94,11 +94,17 @@ a real error state, not fake data.
 
 ## Known gaps worth tackling next
 
-- **No real Firebase project exists yet** — `lib/firebase_options.dart` is
-  all placeholder values (see its doc comment for the exact setup steps:
-  create a project, run `flutterfire configure`, add a service-account
-  key to `backend/.env`). Until then, the "Mobile App" channel's toggle
-  honestly reports push as unavailable rather than pretending to work.
+- **Firebase project is real now** (`afrishield-ai-flood`, configured
+  2026-08-29 via `flutterfire configure` — see `lib/firebase_options.dart`'s
+  doc comment), but two setup steps remain: a Web Push VAPID key
+  (`PushService._webVapidKey`, currently `null` — Project Settings > Cloud
+  Messaging > Web configuration > Web Push certificates) so push works in
+  the browser, and a service-account key in `backend/.env`'s
+  `FIREBASE_SERVICE_ACCOUNT_JSON` (Project Settings > Service Accounts >
+  Generate new private key) so the backend can actually send anything.
+  Until both are in place, Android/iOS token registration should work but
+  is untested (no device/emulator here), and web/backend push don't work
+  yet.
 - No third administrative tier (LGA) with reliable coverage across all 54
   countries — stays free text. GPS also still gives raw coordinates, not
   an address, so it doesn't help fill this in either.
