@@ -92,17 +92,27 @@ Presentation & Pitch 5.
         shared hook.
   - [ ] Label `RecentAlerts.jsx`'s data as simulated in the UI, or wire it
         to the now-real `GET /api/alerts`.
-  - [ ] Wire `Reports.jsx` to the now-real `GET /api/hazard-reports`
-        (backend built 2026-08-28, see `docs/api-contract.md`) — it's
-        currently an empty placeholder with no logic at all.
-  - [ ] **6 of the 8 dashboard pages are empty placeholder stubs** — just
-        a heading and one static sentence, no data fetching, no
-        components: `Alerts.jsx`, `Analytics.jsx`, `HelpSupport.jsx`,
-        `LiveFloodMap.jsx`, `Regions.jsx`, `Settings.jsx`. Only
-        `Dashboard.jsx` is actually built out. Not previously tracked
-        here — found 2026-08-28. Decide: build these for real before the
-        demo, or give each an intentional "coming soon" treatment so they
-        don't look broken if a judge clicks through the nav.
+  - [ ] Wire `Reports.jsx`'s submit handler to the now-real `POST
+        /api/hazard-reports` (backend built 2026-08-28, see
+        `docs/api-contract.md`) — the page itself is real (fetches
+        `GET /api/regions` for context) but its own code comment says
+        "A community-report POST endpoint is not currently available,"
+        and `handleSubmit` just sets local `submitted` state without
+        persisting anywhere. That backend endpoint exists now.
+  - [x] **All 8 dashboard pages are real — resolved 2026-08-29 by
+        merging Habiba's `origin/habiba-dashboard-expansion` branch,
+        which had been sitting unmerged since 2026-08-16/23.** The
+        2026-08-28 finding that 6 of 8 pages were empty placeholders was
+        accurate for what was on `master` at the time, but Habiba had
+        already built out `Alerts.jsx`, `Analytics.jsx`,
+        `HelpSupport.jsx`, `LiveFloodMap.jsx`, `Regions.jsx`, and
+        `Settings.jsx` (plus expanded `Reports.jsx`,
+        `RecentAlerts.jsx`, `RegionDetails.jsx`, `RegionTable.jsx`, and
+        `RiskMap.jsx`) on a branch that never got integrated. Verified
+        after merging: `npm run build` succeeds, `npm run lint` shows
+        only pre-existing unused-variable warnings (no errors), and
+        Alerts/Analytics/Regions/LiveFloodMap all genuinely fetch live
+        data (`fetch()`/`useEffect`) rather than just looking real.
 
 ## Innovation & Creativity (15 pts) / Appropriate Use of AI & Tech (10 pts)
 

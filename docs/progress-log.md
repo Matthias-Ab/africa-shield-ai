@@ -5,6 +5,51 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-29 — Merged Habiba's frontend dashboard work (was stuck unmerged since 2026-08-16)
+
+### Completed
+- Checked all remote branches while investigating what the frontend team
+  had done — found `origin/habiba-dashboard-expansion` with two commits
+  (`51720a8`, 2026-08-16, "Complete frontend dashboard with real API
+  data"; `81b6031`, 2026-08-23, "Expand flood alerts and regional risk
+  dashboard") that had never been merged into `master`. A prior session
+  had started an integration (`integration/habiba-onto-master`, last
+  touched 2026-08-24) but never finished merging it back.
+- Verified no conflict risk before merging: nobody had touched
+  `frontend-web/` on `master` since the integration branch was last
+  synced, and a merge simulation against the current `master` tip
+  applied cleanly.
+- **Merged `origin/habiba-dashboard-expansion` into `master`** (merge
+  commit `84cd4c9`). This is real, substantial work, not a formality —
+  it fills in real content for `Alerts.jsx`, `Analytics.jsx`,
+  `HelpSupport.jsx`, `LiveFloodMap.jsx`, `Regions.jsx`, and
+  `Settings.jsx` (the exact 6 pages flagged as empty placeholders
+  earlier this session, on 2026-08-28 — that finding was accurate for
+  `master` at the time, but wrong about the state of the team's actual
+  work, which existed and just hadn't been integrated), plus expanded
+  `Reports.jsx`, `RecentAlerts.jsx`, `RegionDetails.jsx`,
+  `RegionTable.jsx`, and `RiskMap.jsx`.
+- Verified after merging, not just assumed: `npm run build` succeeds
+  (`vite build`, 20s, no errors), `npm run lint` shows only pre-existing
+  unused-variable warnings (no errors), and spot-checked that
+  `Alerts.jsx`/`Analytics.jsx`/`Regions.jsx`/`LiveFloodMap.jsx`
+  genuinely call `fetch()`/`useEffect` for live data rather than just
+  looking complete.
+
+### Not yet started
+- `Reports.jsx`'s own code comment already says "A community-report
+  POST endpoint is not currently available" — that's no longer true
+  (`POST /api/hazard-reports`, built 2026-08-28) but the page's
+  `handleSubmit` hasn't been wired to it yet.
+- The frontend cleanup items from `todo.md` (hardcoded API URLs, unused
+  `mockData.js`, a Tailwind typo, unused-variable lint warnings) are
+  unaffected by this merge and still open.
+- Nobody has told Habiba this was merged, or checked whether she has
+  further uncommitted/unpushed local work beyond what's on
+  `origin/habiba-dashboard-expansion`.
+
+---
+
 ## 2026-08-29 — Wokwi tunnel fix, real emergency numbers, real ML validation data
 
 ### Completed
