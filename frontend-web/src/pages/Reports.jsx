@@ -1,12 +1,13 @@
+
 import {
-  AlertTriangle,
   Accessibility,
+  AlertTriangle,
   BellRing,
   CheckCircle2,
   ChevronRight,
   ClipboardList,
-  Clock3,
   Globe2,
+  Image,
   Languages,
   MapPin,
   Radio,
@@ -22,41 +23,61 @@ const REGIONS_API_URL = "http://localhost:8000/api/regions";
 const REPORTS_API_URL = "http://localhost:8000/api/hazard-reports";
 
 function Reports() {
+  // ============================================================
+  // REGIONAL DATA
+  // ============================================================
+
   const [regions, setRegions] = useState([]);
-  const [reports, setReports] = useState([]);
-
   const [loadingRegions, setLoadingRegions] = useState(true);
-  const [loadingReports, setLoadingReports] = useState(true);
+  const [regionError, setRegionError] = useState("");
 
-  const [regionError, setRegionError] = useState(false);
-  const [reportsError, setReportsError] = useState(false);
+  // ============================================================
+  // COMMUNITY HAZARD REPORTS
+  // ============================================================
+
+  const [hazardReports, setHazardReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [reportsError, setReportsError] = useState("");
+
+  // ============================================================
+  // FORM STATE
+  // ============================================================
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
   const [form, setForm] = useState({
-    location_name: "",
-    category: "",
+    region: "",
+    incidentType: "",
+    severity: "",
+    peopleAffected: "",
     description: "",
-    needs_assistance: false,
-    latitude: "",
-    longitude: "",
   });
 
-  // =========================================================
-  // FETCH REGIONAL RISK DATA
-  // =========================================================
+  // ============================================================
+  // PHOTO STATE
+  // ============================================================
+
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoError, setPhotoError] = useState("");
+
+  // ============================================================
+  // FETCH REGIONS
+  // ============================================================
 
   const fetchRegions = useCallback(async () => {
     try {
       setLoadingRegions(true);
-      setRegionError(false);
+      setRegionError("");
 
       const response = await fetch(REGIONS_API_URL);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch regional data");
+        throw new Error(
+          `Regional API returned status ${response.status}`
+        );
       }
 
       const data = await response.json();
@@ -64,70 +85,85 @@ function Reports() {
       setRegions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching regional data:", error);
-      setRegionError(true);
+
+      setRegionError(
+        error.message || "Unable to load regional data."
+      );
     } finally {
       setLoadingRegions(false);
     }
   }, []);
 
-  // =========================================================
+  // ============================================================
   // FETCH COMMUNITY HAZARD REPORTS
-  // =========================================================
+  // ============================================================
 
-  const fetchReports = useCallback(async () => {
+  const fetchHazardReports = useCallback(async () => {
     try {
       setLoadingReports(true);
-      setReportsError(false);
+      setReportsError("");
 
       const response = await fetch(REPORTS_API_URL);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch community reports");
+        throw new Error(
+          `Hazard reports API returned status ${response.status}`
+        );
       }
 
       const data = await response.json();
 
-      setReports(Array.isArray(data) ? data : []);
+      setHazardReports(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching community reports:", error);
-      setReportsError(true);
+      console.error("Error fetching hazard reports:", error);
+
+      setReportsError(
+        error.message || "Unable to load community reports."
+      );
     } finally {
       setLoadingReports(false);
     }
   }, []);
 
-  // =========================================================
-  // INITIAL LOAD
-  // =========================================================
+  // ============================================================
+  // LOAD DATA WHEN PAGE OPENS
+  // ============================================================
 
   useEffect(() => {
     fetchRegions();
-    fetchReports();
-  }, [fetchRegions, fetchReports]);
+    fetchHazardReports();
+  }, [fetchRegions, fetchHazardReports]);
 
-  // =========================================================
-  // REFRESH BOTH DATA SOURCES
-  // =========================================================
+  // ============================================================
+  // CLEAN UP PHOTO PREVIEW URL
+  // ============================================================
 
-  const refreshAll = async () => {
-    await Promise.all([fetchRegions(), fetchReports()]);
-  };
+  useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
 
-  // =========================================================
+  // ============================================================
   // RISK SUMMARY
-  // =========================================================
+  // ============================================================
 
   const riskSummary = useMemo(() => {
     const high = regions.filter(
-      (region) => region.risk_level?.toLowerCase() === "high"
+      (region) =>
+        region.risk_level?.toLowerCase() === "high"
     ).length;
 
     const medium = regions.filter(
-      (region) => region.risk_level?.toLowerCase() === "medium"
+      (region) =>
+        region.risk_level?.toLowerCase() === "medium"
     ).length;
 
     const low = regions.filter(
-      (region) => region.risk_level?.toLowerCase() === "low"
+      (region) =>
+        region.risk_level?.toLowerCase() === "low"
     ).length;
 
     return {
@@ -138,75 +174,78 @@ function Reports() {
     };
   }, [regions]);
 
-  // =========================================================
+  // ============================================================
   // HIGH-RISK REGIONS
-  // =========================================================
+  // ============================================================
 
   const highRiskRegions = useMemo(() => {
     return regions
       .filter(
-        (region) => region.risk_level?.toLowerCase() === "high"
+        (region) =>
+          region.risk_level?.toLowerCase() === "high"
       )
       .sort((a, b) => {
-        const scoreA =
+        const scoreA = Number(
           a.risk_score ??
-          a.risk_score_breakdown?.risk_score ??
-          0;
+            a.risk_score_breakdown?.risk_score ??
+            0
+        );
 
-        const scoreB =
+        const scoreB = Number(
           b.risk_score ??
-          b.risk_score_breakdown?.risk_score ??
-          0;
+            b.risk_score_breakdown?.risk_score ??
+            0
+        );
 
         return scoreB - scoreA;
       });
   }, [regions]);
 
-  // =========================================================
-  // COMMUNITY REPORT SUMMARY
-  // =========================================================
-
-  const reportSummary = useMemo(() => {
-    const assistanceRequests = reports.filter(
-      (report) => report.needs_assistance
-    ).length;
-
-    return {
-      total: reports.length,
-      assistanceRequests,
-    };
-  }, [reports]);
-
-  // =========================================================
-  // HELPERS
-  // =========================================================
+  // ============================================================
+  // HELPER: REGION NAME
+  // ============================================================
 
   const getRegionName = (locationName, country) => {
     if (!locationName) {
       return "Unknown region";
     }
 
-    if (country && locationName.endsWith(`, ${country}`)) {
+    if (
+      country &&
+      locationName.endsWith(`, ${country}`)
+    ) {
       return locationName.replace(`, ${country}`, "");
     }
 
     return locationName.split(",")[0].trim();
   };
 
+  // ============================================================
+  // HELPER: RISK SCORE
+  // ============================================================
+
   const getRiskScore = (region) => {
-    const score =
+    const rawScore =
       region.risk_score ??
       region.risk_score_breakdown?.risk_score ??
       0;
 
-    if (typeof score !== "number") {
+    const score = Number(rawScore);
+
+    if (Number.isNaN(score)) {
       return 0;
     }
 
-    return score <= 1 ? Math.round(score * 100) : Math.round(score);
+    return score <= 1
+      ? Math.round(score * 100)
+      : Math.round(score);
   };
 
-  const formatDate = (dateString) => {
+  // ============================================================
+  // HELPER: FORMAT DATE
+  // ============================================================
+
+  const formatReportDate = (dateString) => {
     if (!dateString) {
       return "Unknown time";
     }
@@ -223,25 +262,91 @@ function Reports() {
     });
   };
 
-  // =========================================================
-  // FORM HANDLING
-  // =========================================================
+  // ============================================================
+  // FORM CHANGE
+  // ============================================================
 
   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value } = event.target;
 
     setForm((previous) => ({
       ...previous,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
 
     setSubmitted(false);
     setSubmitError("");
   };
 
-  // =========================================================
+  // ============================================================
+  // PHOTO CHANGE
+  // ============================================================
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0] || null;
+
+    setPhotoError("");
+    setSubmitError("");
+    setSubmitted(false);
+
+    if (!file) {
+      setSelectedPhoto(null);
+      setPhotoPreview("");
+      return;
+    }
+
+    // Backend maximum: 8 MB
+    if (file.size > 8 * 1024 * 1024) {
+      setSelectedPhoto(null);
+      setPhotoPreview("");
+      setPhotoError("Photo must be smaller than 8 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    // Backend-supported image types
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setSelectedPhoto(null);
+      setPhotoPreview("");
+      setPhotoError(
+        "Please upload a JPEG, PNG, or WebP image."
+      );
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedPhoto(file);
+
+    const previewUrl = URL.createObjectURL(file);
+    setPhotoPreview(previewUrl);
+  };
+
+  // ============================================================
+  // REMOVE SELECTED PHOTO
+  // ============================================================
+
+  const removeSelectedPhoto = () => {
+    setSelectedPhoto(null);
+    setPhotoPreview("");
+    setPhotoError("");
+
+    const photoInput =
+      document.getElementById("hazardPhoto");
+
+    if (photoInput) {
+      photoInput.value = "";
+    }
+  };
+
+  // ============================================================
   // SUBMIT COMMUNITY REPORT
-  // =========================================================
+  // ============================================================
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -251,105 +356,242 @@ function Reports() {
     setSubmitError("");
 
     try {
-      const payload = {
-        category: form.category,
-        description: form.description.trim() || null,
-        location_name: form.location_name,
-        needs_assistance: form.needs_assistance,
-        latitude:
-          form.latitude.trim() === ""
-            ? null
-            : Number(form.latitude),
+      // --------------------------------------------------------
+      // VALIDATION
+      // --------------------------------------------------------
 
-        longitude:
-          form.longitude.trim() === ""
-            ? null
-            : Number(form.longitude),
+      if (!form.region) {
+        throw new Error(
+          "Please select an affected region."
+        );
+      }
+
+      if (!form.incidentType) {
+        throw new Error(
+          "Please select an incident type."
+        );
+      }
+
+      if (!form.severity) {
+        throw new Error(
+          "Please select the severity."
+        );
+      }
+
+      if (!form.description.trim()) {
+        throw new Error(
+          "Please describe what is happening."
+        );
+      }
+
+      // --------------------------------------------------------
+      // BUILD DESCRIPTION
+      // --------------------------------------------------------
+
+      const reportDescription = [
+        form.description.trim(),
+        `Severity: ${form.severity}`,
+        form.peopleAffected
+          ? `Estimated people affected: ${form.peopleAffected}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      // --------------------------------------------------------
+      // ASSISTANCE FLAG
+      // --------------------------------------------------------
+
+      const needsAssistance =
+        form.severity === "Critical" ||
+        form.incidentType === "Evacuation needed";
+
+      // --------------------------------------------------------
+      // BACKEND PAYLOAD
+      // --------------------------------------------------------
+
+      const payload = {
+        category: form.incidentType,
+        description: reportDescription,
+        location_name: form.region,
+        needs_assistance: needsAssistance,
+        latitude: null,
+        longitude: null,
       };
 
-      // Validate coordinates if the user entered them
-      if (
-        payload.latitude !== null &&
-        !Number.isFinite(payload.latitude)
-      ) {
-        throw new Error("Latitude must be a valid number.");
+      console.log(
+        "Submitting hazard report:",
+        payload
+      );
+
+      // --------------------------------------------------------
+      // CREATE REPORT
+      // --------------------------------------------------------
+
+      const response = await fetch(
+        REPORTS_API_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      // --------------------------------------------------------
+      // READ RESPONSE
+      // --------------------------------------------------------
+
+      let responseData = null;
+
+      try {
+        responseData = await response.json();
+      } catch {
+        responseData = null;
       }
 
-      if (
-        payload.longitude !== null &&
-        !Number.isFinite(payload.longitude)
-      ) {
-        throw new Error("Longitude must be a valid number.");
-      }
-
-      const response = await fetch(REPORTS_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      // --------------------------------------------------------
+      // HANDLE REPORT ERROR
+      // --------------------------------------------------------
 
       if (!response.ok) {
-        let message = "Failed to submit the community report.";
+        const backendMessage =
+          responseData?.detail ||
+          `Server returned status ${response.status}`;
 
-        try {
-          const errorData = await response.json();
-
-          if (errorData?.detail) {
-            if (Array.isArray(errorData.detail)) {
-              message = errorData.detail
-                .map((item) => item.msg)
-                .join(", ");
-            } else {
-              message = errorData.detail;
-            }
-          }
-        } catch {
-          // Keep default error message
+        if (Array.isArray(backendMessage)) {
+          throw new Error(
+            backendMessage
+              .map(
+                (item) =>
+                  item.msg || "Validation error"
+              )
+              .join(", ")
+          );
         }
 
-        throw new Error(message);
+        throw new Error(
+          String(backendMessage)
+        );
       }
 
-      const createdReport = await response.json();
+      console.log(
+        "Hazard report created:",
+        responseData
+      );
 
-      // Add the newly created report immediately
-      setReports((previous) => [
-        ...previous,
-        createdReport,
-      ]);
+      // --------------------------------------------------------
+      // UPLOAD PHOTO
+      // --------------------------------------------------------
 
-      // Reset form
-      setForm({
-        location_name: "",
-        category: "",
-        description: "",
-        needs_assistance: false,
-        latitude: "",
-        longitude: "",
-      });
+      if (selectedPhoto && responseData?.id) {
+        const photoFormData = new FormData();
+
+        photoFormData.append(
+          "photo",
+          selectedPhoto
+        );
+
+        console.log(
+          "Uploading hazard report photo..."
+        );
+
+        const photoResponse = await fetch(
+          `${REPORTS_API_URL}/${responseData.id}/photo`,
+          {
+            method: "POST",
+            body: photoFormData,
+          }
+        );
+
+        let photoResponseData = null;
+
+        try {
+          photoResponseData =
+            await photoResponse.json();
+        } catch {
+          photoResponseData = null;
+        }
+
+        if (!photoResponse.ok) {
+          const photoBackendMessage =
+            photoResponseData?.detail ||
+            `Photo upload failed with status ${photoResponse.status}`;
+
+          throw new Error(
+            `Report was submitted, but the photo could not be uploaded: ${photoBackendMessage}`
+          );
+        }
+
+        console.log(
+          "Hazard report photo uploaded:",
+          photoResponseData
+        );
+      }
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
 
       setSubmitted(true);
+
+      // Clear form
+      setForm({
+        region: "",
+        incidentType: "",
+        severity: "",
+        peopleAffected: "",
+        description: "",
+      });
+
+      // Clear photo
+      setSelectedPhoto(null);
+      setPhotoPreview("");
+      setPhotoError("");
+
+      const photoInput =
+        document.getElementById("hazardPhoto");
+
+      if (photoInput) {
+        photoInput.value = "";
+      }
+
+      // Refresh live reports
+      await fetchHazardReports();
     } catch (error) {
-      console.error("Error submitting community report:", error);
+      console.error(
+        "Error submitting hazard report:",
+        error
+      );
 
       setSubmitError(
         error.message ||
-          "Unable to submit the report. Please try again."
+          "Report could not be submitted. Please make sure the FastAPI backend is running on port 8000."
       );
     } finally {
       setSubmitting(false);
     }
   };
 
+  // ============================================================
+  // REFRESH EVERYTHING
+  // ============================================================
+
+  const refreshAllData = async () => {
+    await Promise.all([
+      fetchRegions(),
+      fetchHazardReports(),
+    ]);
+  };
+
   return (
     <main className="min-h-full bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-7xl">
 
-        {/* =========================================================
+        {/* ======================================================
             PAGE HEADER
-        ========================================================= */}
+        ====================================================== */}
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -366,15 +608,18 @@ function Reports() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Connect ground-level community information with AfriShield
-              flood intelligence to support faster, more inclusive response.
+              Connect ground-level community information
+              with AfriShield flood intelligence to support
+              faster, more inclusive response.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={refreshAll}
-            disabled={loadingRegions || loadingReports}
+            onClick={refreshAllData}
+            disabled={
+              loadingRegions || loadingReports
+            }
             className="inline-flex h-10 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50 lg:self-auto"
           >
             <RefreshCw
@@ -385,13 +630,14 @@ function Reports() {
                   : ""
               }
             />
+
             Refresh data
           </button>
         </div>
 
-        {/* =========================================================
+        {/* ======================================================
             COMMUNITY IMPACT BANNER
-        ========================================================= */}
+        ====================================================== */}
 
         <div className="mt-7 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 p-6 text-white shadow-lg shadow-blue-100">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -407,19 +653,22 @@ function Reports() {
               </div>
 
               <h2 className="mt-4 text-xl font-extrabold sm:text-2xl">
-                The community can become part of the warning system.
+                The community can become part of the
+                warning system.
               </h2>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">
-                AI and environmental monitoring can identify flood risk,
-                while people on the ground provide valuable information
-                about what is actually happening in their communities.
+                AI and environmental monitoring can identify
+                flood risk, while people on the ground provide
+                valuable information about what is actually
+                happening in their communities.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:w-[420px]">
               <div className="rounded-xl bg-white/10 p-3 backdrop-blur">
                 <Radio size={17} />
+
                 <p className="mt-2 text-[10px] font-bold text-blue-100">
                   Radio
                 </p>
@@ -427,6 +676,7 @@ function Reports() {
 
               <div className="rounded-xl bg-white/10 p-3 backdrop-blur">
                 <BellRing size={17} />
+
                 <p className="mt-2 text-[10px] font-bold text-blue-100">
                   SMS
                 </p>
@@ -434,6 +684,7 @@ function Reports() {
 
               <div className="rounded-xl bg-white/10 p-3 backdrop-blur">
                 <Volume2 size={17} />
+
                 <p className="mt-2 text-[10px] font-bold text-blue-100">
                   Voice
                 </p>
@@ -441,6 +692,7 @@ function Reports() {
 
               <div className="rounded-xl bg-white/10 p-3 backdrop-blur">
                 <Users size={17} />
+
                 <p className="mt-2 text-[10px] font-bold text-blue-100">
                   Community
                 </p>
@@ -449,67 +701,15 @@ function Reports() {
           </div>
         </div>
 
-        {/* =========================================================
-            COMMUNITY REPORT STATISTICS
-        ========================================================= */}
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[1.3px] text-slate-400">
-                  COMMUNITY REPORTS
-                </p>
-
-                <p className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {loadingReports ? "—" : reportSummary.total}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  Ground-level reports received
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <ClipboardList size={20} />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-[1.3px] text-red-500">
-                  ASSISTANCE REQUESTS
-                </p>
-
-                <p className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {loadingReports
-                    ? "—"
-                    : reportSummary.assistanceRequests}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  Reports requesting immediate help
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-500">
-                <ShieldAlert size={20} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* =========================================================
+        {/* ======================================================
             MAIN GRID
-        ========================================================= */}
+        ====================================================== */}
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
 
-          {/* =======================================================
-              COMMUNITY REPORT FORM
-          ======================================================= */}
+          {/* ====================================================
+              REPORT FORM
+          ==================================================== */}
 
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-6 py-5">
@@ -528,8 +728,8 @@ function Reports() {
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-slate-400">
-                    Share information from the ground to support faster
-                    assessment and response.
+                    Share information from the ground to
+                    support faster assessment and response.
                   </p>
                 </div>
               </div>
@@ -539,21 +739,20 @@ function Reports() {
               onSubmit={handleSubmit}
               className="space-y-5 p-6"
             >
-
-              {/* Location */}
+              {/* REGION */}
 
               <div>
                 <label
-                  htmlFor="location_name"
+                  htmlFor="region"
                   className="mb-2 block text-xs font-bold text-slate-700"
                 >
-                  Affected location
+                  Affected region
                 </label>
 
                 <select
-                  id="location_name"
-                  name="location_name"
-                  value={form.location_name}
+                  id="region"
+                  name="region"
+                  value={form.region}
                   onChange={handleChange}
                   required
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
@@ -562,70 +761,134 @@ function Reports() {
                     Select a monitored region
                   </option>
 
-                  {regions.map((region, index) => (
-                    <option
-                      key={`${region.location_name}-${index}`}
-                      value={region.location_name}
-                    >
-                      {getRegionName(
-                        region.location_name,
-                        region.country
-                      )}{" "}
-                      — {region.country}
-                    </option>
-                  ))}
+                  {regions.map(
+                    (region, index) => (
+                      <option
+                        key={`${region.location_name}-${index}`}
+                        value={region.location_name}
+                      >
+                        {getRegionName(
+                          region.location_name,
+                          region.country
+                        )}{" "}
+                        — {region.country}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 
-              {/* Category */}
+              {/* INCIDENT + SEVERITY */}
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="incidentType"
+                    className="mb-2 block text-xs font-bold text-slate-700"
+                  >
+                    Incident type
+                  </label>
+
+                  <select
+                    id="incidentType"
+                    name="incidentType"
+                    value={form.incidentType}
+                    onChange={handleChange}
+                    required
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                  >
+                    <option value="">
+                      Select incident
+                    </option>
+
+                    <option value="Flooding">
+                      Flooding
+                    </option>
+
+                    <option value="Rising water">
+                      Rising water
+                    </option>
+
+                    <option value="Blocked road">
+                      Blocked road
+                    </option>
+
+                    <option value="Damaged infrastructure">
+                      Damaged infrastructure
+                    </option>
+
+                    <option value="Evacuation needed">
+                      People need evacuation
+                    </option>
+
+                    <option value="Other">
+                      Other
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="severity"
+                    className="mb-2 block text-xs font-bold text-slate-700"
+                  >
+                    Severity
+                  </label>
+
+                  <select
+                    id="severity"
+                    name="severity"
+                    value={form.severity}
+                    onChange={handleChange}
+                    required
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                  >
+                    <option value="">
+                      Select severity
+                    </option>
+
+                    <option value="Low">
+                      Low
+                    </option>
+
+                    <option value="Medium">
+                      Medium
+                    </option>
+
+                    <option value="High">
+                      High
+                    </option>
+
+                    <option value="Critical">
+                      Critical
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              {/* PEOPLE AFFECTED */}
 
               <div>
                 <label
-                  htmlFor="category"
+                  htmlFor="peopleAffected"
                   className="mb-2 block text-xs font-bold text-slate-700"
                 >
-                  Incident type
+                  Estimated people affected
                 </label>
 
-                <select
-                  id="category"
-                  name="category"
-                  value={form.category}
+                <input
+                  id="peopleAffected"
+                  name="peopleAffected"
+                  type="number"
+                  min="0"
+                  value={form.peopleAffected}
                   onChange={handleChange}
-                  required
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
-                >
-                  <option value="">
-                    Select incident
-                  </option>
-
-                  <option value="Flooding">
-                    Flooding
-                  </option>
-
-                  <option value="Rising water">
-                    Rising water
-                  </option>
-
-                  <option value="Blocked road">
-                    Blocked road
-                  </option>
-
-                  <option value="Damaged infrastructure">
-                    Damaged infrastructure
-                  </option>
-
-                  <option value="Evacuation needed">
-                    People need evacuation
-                  </option>
-
-                  <option value="Other">
-                    Other
-                  </option>
-                </select>
+                  placeholder="e.g. 150"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+                />
               </div>
 
-              {/* Description */}
+              {/* DESCRIPTION */}
 
               <div>
                 <label
@@ -647,71 +910,107 @@ function Reports() {
                 />
               </div>
 
-              {/* Assistance */}
-
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-red-100 bg-red-50/60 p-4">
-                <input
-                  type="checkbox"
-                  name="needs_assistance"
-                  checked={form.needs_assistance}
-                  onChange={handleChange}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
-                />
-
-                <span>
-                  <span className="block text-sm font-extrabold text-red-700">
-                    Immediate assistance needed
-                  </span>
-
-                  <span className="mt-1 block text-xs leading-5 text-red-500">
-                    Select this if people at the reported location
-                    need help, evacuation, or urgent response.
-                  </span>
-                </span>
-              </label>
-
-              {/* Optional GPS */}
+              {/* ==================================================
+                  PHOTO UPLOAD
+              ================================================== */}
 
               <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700">
-                    Location coordinates
-                  </label>
-
-                  <span className="text-[10px] font-semibold text-slate-400">
-                    Optional
+                <label
+                  htmlFor="hazardPhoto"
+                  className="mb-2 block text-xs font-bold text-slate-700"
+                >
+                  Add a photo
+                  <span className="ml-1 font-normal text-slate-400">
+                    (optional)
                   </span>
+                </label>
+
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 transition hover:border-blue-400 hover:bg-blue-50/40">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                        <Image size={18} />
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-bold text-slate-700">
+                          Upload evidence
+                        </p>
+
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          JPEG, PNG or WebP • Maximum 8 MB
+                        </p>
+                      </div>
+                    </div>
+
+                    <label
+                      htmlFor="hazardPhoto"
+                      className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-xs font-bold text-blue-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-blue-50"
+                    >
+                      <Image size={14} />
+                      Choose photo
+                    </label>
+
+                    <input
+                      id="hazardPhoto"
+                      name="hazardPhoto"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* PHOTO PREVIEW */}
+
+                  {selectedPhoto && photoPreview && (
+                    <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                      <div className="relative">
+                        <img
+                          src={photoPreview}
+                          alt="Selected hazard evidence"
+                          className="max-h-72 w-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={removeSelectedPhoto}
+                          disabled={submitting}
+                          className="absolute right-3 top-3 rounded-lg bg-black/70 px-3 py-1.5 text-[10px] font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 p-3">
+                        <p className="min-w-0 truncate text-xs font-bold text-slate-700">
+                          {selectedPhoto.name}
+                        </p>
+
+                        <p className="shrink-0 text-[10px] text-slate-400">
+                          {(
+                            selectedPhoto.size /
+                            (1024 * 1024)
+                          ).toFixed(2)}{" "}
+                          MB
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PHOTO ERROR */}
+
+                  {photoError && (
+                    <div className="mt-3 rounded-lg bg-red-50 px-3 py-2">
+                      <p className="text-[10px] font-semibold text-red-600">
+                        {photoError}
+                      </p>
+                    </div>
+                  )}
                 </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <input
-                    name="latitude"
-                    type="number"
-                    step="any"
-                    value={form.latitude}
-                    onChange={handleChange}
-                    placeholder="Latitude"
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
-                  />
-
-                  <input
-                    name="longitude"
-                    type="number"
-                    step="any"
-                    value={form.longitude}
-                    onChange={handleChange}
-                    placeholder="Longitude"
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
-                  />
-                </div>
-
-                <p className="mt-2 text-[10px] leading-5 text-slate-400">
-                  Coordinates are optional. If available, they help
-                  responders understand the precise location of the report.
-                </p>
               </div>
 
-              {/* Submit */}
+              {/* SUBMIT */}
 
               <div className="flex flex-col gap-4 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-2 text-[10px] leading-5 text-slate-400">
@@ -721,8 +1020,9 @@ function Reports() {
                   />
 
                   <span>
-                    Your report is sent directly to the AfriShield
-                    backend and stored for community response.
+                    Community information can complement
+                    automated flood monitoring and help
+                    identify situations requiring attention.
                   </span>
                 </div>
 
@@ -737,18 +1037,20 @@ function Reports() {
                         size={15}
                         className="animate-spin"
                       />
-                      Sending...
+
+                      Submitting...
                     </>
                   ) : (
                     <>
                       <Send size={15} />
+
                       Submit report
                     </>
                   )}
                 </button>
               </div>
 
-              {/* Success */}
+              {/* SUCCESS */}
 
               {submitted && (
                 <div className="flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
@@ -763,15 +1065,18 @@ function Reports() {
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-emerald-600">
-                      Your community report has been received by the
-                      AfriShield backend and is now part of the
-                      community response data.
+                      Your community hazard report has
+                      been received and added to the live
+                      community reports below.
+                      {selectedPhoto
+                        ? " Your photo was uploaded successfully."
+                        : ""}
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Error */}
+              {/* ERROR */}
 
               {submitError && (
                 <div className="flex items-start gap-3 rounded-xl border border-red-100 bg-red-50 p-4">
@@ -794,9 +1099,9 @@ function Reports() {
             </form>
           </section>
 
-          {/* =======================================================
+          {/* ====================================================
               HIGH RISK REGIONS
-          ======================================================= */}
+          ==================================================== */}
 
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-5 py-5">
@@ -809,8 +1114,8 @@ function Reports() {
               </h2>
 
               <p className="mt-1 text-xs leading-5 text-slate-400">
-                Current high-risk locations from the live monitoring
-                network.
+                Current high-risk locations from the live
+                monitoring network.
               </p>
             </div>
 
@@ -846,75 +1151,78 @@ function Reports() {
 
             {!loadingRegions && !regionError && (
               <div className="divide-y divide-slate-100">
-                {highRiskRegions.map((region, index) => (
-                  <div
-                    key={`${region.location_name}-${index}`}
-                    className="p-5 transition hover:bg-slate-50"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
-                          <MapPin size={16} />
+                {highRiskRegions.map(
+                  (region, index) => (
+                    <div
+                      key={`${region.location_name}-${index}`}
+                      className="p-5 transition hover:bg-slate-50"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                            <MapPin size={16} />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-extrabold text-slate-800">
+                              {getRegionName(
+                                region.location_name,
+                                region.country
+                              )}
+                            </p>
+
+                            <p className="mt-0.5 text-[10px] text-slate-400">
+                              {region.country}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-extrabold text-slate-800">
-                            {getRegionName(
-                              region.location_name,
-                              region.country
-                            )}
+                        <span className="rounded-full bg-red-50 px-2.5 py-1 text-[9px] font-extrabold uppercase text-red-600">
+                          HIGH
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-end justify-between">
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400">
+                            Risk score
                           </p>
 
-                          <p className="mt-0.5 text-[10px] text-slate-400">
-                            {region.country}
+                          <p className="mt-1 text-xl font-extrabold text-slate-900">
+                            {getRiskScore(region)}
+
+                            <span className="ml-1 text-[10px] font-semibold text-slate-400">
+                              /100
+                            </span>
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-[10px] font-semibold text-slate-400">
+                            Rainfall
+                          </p>
+
+                          <p className="mt-1 text-sm font-extrabold text-slate-700">
+                            {region.rainfall_mm_24h ?? 0}{" "}
+                            mm
                           </p>
                         </div>
                       </div>
 
-                      <span className="rounded-full bg-red-50 px-2.5 py-1 text-[9px] font-extrabold uppercase text-red-600">
-                        HIGH
-                      </span>
-                    </div>
-
-                    <div className="mt-4 flex items-end justify-between">
-                      <div>
-                        <p className="text-[10px] font-semibold text-slate-400">
-                          Risk score
-                        </p>
-
-                        <p className="mt-1 text-xl font-extrabold text-slate-900">
-                          {getRiskScore(region)}
-
-                          <span className="ml-1 text-[10px] font-semibold text-slate-400">
-                            /100
-                          </span>
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-[10px] font-semibold text-slate-400">
-                          Rainfall
-                        </p>
-
-                        <p className="mt-1 text-sm font-extrabold text-slate-700">
-                          {region.rainfall_mm_24h ?? 0} mm
-                        </p>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-red-500"
+                          style={{
+                            width: `${Math.min(
+                              getRiskScore(region),
+                              100
+                            )}%`,
+                          }}
+                        />
                       </div>
                     </div>
-
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-red-500"
-                        style={{
-                          width: `${Math.min(
-                            getRiskScore(region),
-                            100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
 
                 {highRiskRegions.length === 0 && (
                   <div className="flex min-h-[250px] flex-col items-center justify-center px-6 text-center">
@@ -928,8 +1236,8 @@ function Reports() {
                     </p>
 
                     <p className="mt-1 text-xs text-slate-400">
-                      The monitored network currently has no regions
-                      classified as high risk.
+                      The monitored network currently has
+                      no regions classified as high risk.
                     </p>
                   </div>
                 )}
@@ -974,56 +1282,71 @@ function Reports() {
           </section>
         </div>
 
-        {/* =========================================================
-            COMMUNITY REPORTS FROM BACKEND
-        ========================================================= */}
+        {/* ======================================================
+            LIVE COMMUNITY REPORTS
+        ====================================================== */}
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-blue-600">
-                LIVE COMMUNITY INPUT
-              </p>
+          <div className="border-b border-slate-100 px-6 py-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Radio size={19} />
+                </div>
 
-              <h2 className="mt-1 text-xl font-extrabold text-slate-900">
-                Recent Community Reports
-              </h2>
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-blue-600">
+                    LIVE COMMUNITY REPORTS
+                  </p>
 
-              <p className="mt-1 text-xs leading-5 text-slate-400">
-                Real reports submitted through the AfriShield
-                community reporting API.
-              </p>
+                  <h2 className="mt-1 text-xl font-extrabold text-slate-900">
+                    Ground-Level Hazard Reports
+                  </h2>
+
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    Reports submitted by communities and
+                    retrieved directly from the FastAPI
+                    hazard-report service.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+
+                <span className="text-[10px] font-extrabold text-blue-600">
+                  {hazardReports.length} REPORT
+                  {hazardReports.length === 1
+                    ? ""
+                    : "S"}
+                </span>
+              </div>
             </div>
-
-            <button
-              type="button"
-              onClick={fetchReports}
-              disabled={loadingReports}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-50"
-            >
-              <RefreshCw
-                size={13}
-                className={
-                  loadingReports ? "animate-spin" : ""
-                }
-              />
-              Refresh reports
-            </button>
           </div>
 
+          {/* LOADING */}
+
           {loadingReports && (
-            <div className="flex min-h-[180px] items-center justify-center">
-              <RefreshCw
-                size={22}
-                className="animate-spin text-blue-500"
-              />
+            <div className="flex min-h-[220px] items-center justify-center">
+              <div className="flex flex-col items-center">
+                <RefreshCw
+                  size={24}
+                  className="animate-spin text-blue-500"
+                />
+
+                <p className="mt-3 text-xs font-semibold text-slate-400">
+                  Loading community reports...
+                </p>
+              </div>
             </div>
           )}
 
+          {/* ERROR */}
+
           {!loadingReports && reportsError && (
-            <div className="flex min-h-[180px] flex-col items-center justify-center px-6 text-center">
+            <div className="flex min-h-[220px] flex-col items-center justify-center px-6 text-center">
               <AlertTriangle
-                size={22}
+                size={24}
                 className="text-red-500"
               />
 
@@ -1031,53 +1354,57 @@ function Reports() {
                 Community reports unavailable
               </p>
 
-              <p className="mt-1 text-xs text-slate-400">
-                Make sure the FastAPI backend is running on port 8000.
+              <p className="mt-1 max-w-md text-xs leading-5 text-slate-400">
+                {reportsError}
               </p>
 
               <button
                 type="button"
-                onClick={fetchReports}
-                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
+                onClick={fetchHazardReports}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
               >
+                <RefreshCw size={14} />
                 Try again
               </button>
             </div>
           )}
 
+          {/* EMPTY */}
+
           {!loadingReports &&
             !reportsError &&
-            reports.length === 0 && (
-              <div className="flex min-h-[180px] flex-col items-center justify-center px-6 text-center">
-                <ClipboardList
-                  size={25}
-                  className="text-slate-300"
-                />
+            hazardReports.length === 0 && (
+              <div className="flex min-h-[220px] flex-col items-center justify-center px-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                  <ClipboardList size={22} />
+                </div>
 
-                <p className="mt-3 text-sm font-bold text-slate-700">
+                <p className="mt-4 text-sm font-bold text-slate-700">
                   No community reports yet
                 </p>
 
-                <p className="mt-1 text-xs text-slate-400">
-                  Reports submitted through the community form will
-                  appear here.
+                <p className="mt-1 max-w-md text-xs leading-5 text-slate-400">
+                  When someone submits a hazard report,
+                  it will appear here automatically.
                 </p>
               </div>
             )}
 
+          {/* REPORT LIST */}
+
           {!loadingReports &&
             !reportsError &&
-            reports.length > 0 && (
+            hazardReports.length > 0 && (
               <div className="divide-y divide-slate-100">
-                {[...reports]
+                {[...hazardReports]
                   .reverse()
                   .map((report) => (
                     <div
                       key={report.id}
-                      className="p-5 transition hover:bg-slate-50"
+                      className="p-5 transition hover:bg-slate-50 sm:p-6"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="flex min-w-0 gap-3">
+                        <div className="flex min-w-0 gap-4">
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                               report.needs_assistance
@@ -1096,54 +1423,66 @@ function Reports() {
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="text-sm font-extrabold text-slate-800">
                                 {report.category ||
-                                  "Community report"}
+                                  "Hazard report"}
                               </h3>
 
                               {report.needs_assistance && (
-                                <span className="rounded-full bg-red-50 px-2 py-1 text-[9px] font-extrabold uppercase text-red-600">
+                                <span className="rounded-full bg-red-50 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wide text-red-600">
                                   Assistance needed
-                                </span>
-                              )}
-
-                              {report.has_photo && (
-                                <span className="rounded-full bg-indigo-50 px-2 py-1 text-[9px] font-extrabold uppercase text-indigo-600">
-                                  Photo
                                 </span>
                               )}
                             </div>
 
-                            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-400">
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
                               <span className="inline-flex items-center gap-1">
                                 <MapPin size={12} />
+
                                 {report.location_name ||
                                   "Unknown location"}
                               </span>
 
-                              <span className="inline-flex items-center gap-1">
-                                <Clock3 size={12} />
-                                {formatDate(report.submitted_at)}
+                              <span>
+                                {formatReportDate(
+                                  report.submitted_at
+                                )}
                               </span>
                             </div>
 
                             {report.description && (
-                              <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
+                              <div className="mt-3 whitespace-pre-line rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
                                 {report.description}
-                              </p>
+                              </div>
+                            )}
+
+                            {/* ATTACHED PHOTO */}
+
+                            {report.has_photo && (
+                              <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                <img
+                                  src={`${REPORTS_API_URL}/${report.id}/photo`}
+                                  alt={`Evidence for ${
+                                    report.category ||
+                                    "hazard report"
+                                  }`}
+                                  className="max-h-80 w-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
                             )}
                           </div>
                         </div>
 
-                        {report.has_photo && (
-                          <a
-                            href={`${REPORTS_API_URL}/${report.id}/photo`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold text-blue-600 transition hover:border-blue-200 hover:bg-blue-50"
-                          >
-                            View photo
-                            <ChevronRight size={13} />
-                          </a>
-                        )}
+                        <div className="flex shrink-0 items-center gap-2">
+                          {report.has_photo && (
+                            <span className="rounded-lg bg-indigo-50 px-2.5 py-1.5 text-[9px] font-bold text-indigo-600">
+                              PHOTO ATTACHED
+                            </span>
+                          )}
+
+                          <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[9px] font-bold text-emerald-600">
+                            RECEIVED
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1151,9 +1490,9 @@ function Reports() {
             )}
         </section>
 
-        {/* =========================================================
-            ACCESSIBILITY + COMMUNITY INCLUSION
-        ========================================================= */}
+        {/* ======================================================
+            ACCESSIBILITY
+        ====================================================== */}
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-6 py-5">
@@ -1172,9 +1511,10 @@ function Reports() {
                 </h2>
 
                 <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-400">
-                  Flood warnings should remain useful for people who may
-                  have limited internet access, disabilities, language
-                  barriers, or limited access to smartphones.
+                  Flood warnings should remain useful for
+                  people who may have limited internet access,
+                  disabilities, language barriers, or limited
+                  access to smartphones.
                 </p>
               </div>
             </div>
@@ -1191,8 +1531,9 @@ function Reports() {
               </h3>
 
               <p className="mt-2 text-xs leading-5 text-slate-400">
-                Voice alerts and audio communication can help people who
-                have difficulty reading text-based warnings.
+                Voice alerts and audio communication can help
+                people who have difficulty reading text-based
+                warnings.
               </p>
             </div>
 
@@ -1206,9 +1547,9 @@ function Reports() {
               </h3>
 
               <p className="mt-2 text-xs leading-5 text-slate-400">
-                Alerts can be adapted into languages understood by local
-                communities instead of relying only on technical or
-                national-level messaging.
+                Alerts can be adapted into languages understood
+                by local communities instead of relying only
+                on technical or national-level messaging.
               </p>
             </div>
 
@@ -1222,17 +1563,18 @@ function Reports() {
               </h3>
 
               <p className="mt-2 text-xs leading-5 text-slate-400">
-                Community leaders, local responders, radio networks and
-                other trusted channels can help reach people who are
-                difficult to reach through digital platforms.
+                Community leaders, local responders, radio
+                networks and other trusted channels can help
+                reach people who are difficult to reach through
+                digital platforms.
               </p>
             </div>
           </div>
         </section>
 
-        {/* =========================================================
+        {/* ======================================================
             DETECTION TO COMMUNITY WARNING
-        ========================================================= */}
+        ====================================================== */}
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-6 py-5">
@@ -1245,9 +1587,9 @@ function Reports() {
             </h2>
 
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-400">
-              AfriShield connects automated intelligence with information
-              from people on the ground and multiple communication
-              pathways.
+              AfriShield connects automated intelligence
+              with information from people on the ground and
+              multiple communication pathways.
             </p>
           </div>
 
@@ -1305,17 +1647,19 @@ function Reports() {
           </div>
         </section>
 
-        {/* =========================================================
+        {/* ======================================================
             FOOTER
-        ========================================================= */}
+        ====================================================== */}
 
         <div className="flex flex-col gap-2 px-1 py-6 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <span>
-            AfriShield Community Response • Live regional intelligence
+            AfriShield Community Response • Live regional
+            intelligence
           </span>
 
           <span className="flex items-center gap-1.5 font-semibold text-emerald-600">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+
             Monitoring network active
           </span>
         </div>
