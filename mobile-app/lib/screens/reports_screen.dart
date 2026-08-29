@@ -73,7 +73,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.reportAHazardTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16 + kBottomNavClearance),
         children: [
           Text(l10n.whatAreYouSeeing, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
           Text(l10n.reportsSubtitle,

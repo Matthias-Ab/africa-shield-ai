@@ -7,7 +7,7 @@ class AlertEvent {
   final String riskLevel;
   final String messageSent;
   final String channel;
-  final int recipients;
+  final int? recipients;
   final DateTime timestamp;
   final String? trigger;
 
@@ -16,20 +16,26 @@ class AlertEvent {
     required this.riskLevel,
     required this.messageSent,
     required this.channel,
-    required this.recipients,
+    this.recipients,
     required this.timestamp,
     this.trigger,
   });
 
   bool get isAutomatic => trigger == 'automatic';
 
+  /// `recipients`/`trigger` are only present on real-send-log entries —
+  /// see `GET /api/alerts`'s docs/api-contract.md note. The hardcoded
+  /// `mock-data.json` fallback (what a fresh backend with nothing sent
+  /// yet actually returns) has neither field, so both must parse as
+  /// nullable rather than force-cast, or a fresh install's first load
+  /// throws here and silently takes down the whole regions+alerts load.
   factory AlertEvent.fromJson(Map<String, dynamic> json) {
     return AlertEvent(
       locationName: json['location_name'] as String,
       riskLevel: json['risk_level'] as String,
       messageSent: json['message_sent'] as String,
       channel: json['channel'] as String,
-      recipients: (json['recipients'] as num).toInt(),
+      recipients: (json['recipients'] as num?)?.toInt(),
       timestamp: DateTime.parse(json['timestamp'] as String),
       trigger: json['trigger'] as String?,
     );

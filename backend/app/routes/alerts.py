@@ -10,6 +10,8 @@ from app.models.risk_model import risk_score_breakdown
 from app.models.sms_gateway import is_configured as is_sms_configured, send_sms
 from app.models.translations import build_alert_messages
 from app.models.voice_gateway import is_configured as is_voice_configured, place_call
+from app.models.push_gateway import is_configured as is_push_configured, send_push
+from app.routes.push_tokens import read_push_tokens
 
 router = APIRouter()
 
@@ -33,6 +35,7 @@ class SendAlertResponse(BaseModel):
     recipients: int
     timestamp: str
     trigger: str
+    push_status: str
 
 
 def _read_json(path: Path, default):
@@ -99,6 +102,23 @@ def send_alert_for_region(location_name: str, channel: str = "sms", trigger: str
         else:
             resolved_channel = "SMS (simulated)"
 
+    # Push is additive, not a channel choice — it rides alongside whatever
+    # `channel` was picked, for devices that opted in via
+    # POST /api/push-tokens (mobile app's Settings > Alert Channels >
+    # "Mobile App" toggle). A failure here never breaks the alert itself;
+    # SMS/voice already carries the message.
+    push_tokens = [t["token"] for t in read_push_tokens() if t["location_name"] == location_name]
+    if not push_tokens:
+        push_status = "no_recipients"
+    elif not is_push_configured():
+        push_status = "simulated"
+    else:
+        try:
+            send_push(push_tokens, f"{risk_level.upper()} flood risk: {location_name}", message_local)
+            push_status = "sent"
+        except Exception:
+            push_status = "failed"
+
     entry = {
         "location_name": location_name,
         "risk_level": risk_level,
@@ -107,6 +127,7 @@ def send_alert_for_region(location_name: str, channel: str = "sms", trigger: str
         "recipients": len(phone_numbers),
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "trigger": trigger,
+        "push_status": push_status,
     }
     _append_alert_log(entry)
     return entry
@@ -160,6 +181,13 @@ def send_alert(payload: SendAlertRequest) -> SendAlertResponse:
     Africa's Talking credentials aren't configured yet, or when the
     region has zero subscribers, so this endpoint is always safe to call,
     not just in a fully configured environment.
+
+    Also pushes a real notification (Firebase Cloud Messaging) to every
+    device registered for this region via `POST /api/push-tokens`,
+    regardless of `channel` — push is additive, not a third channel
+    choice. `push_status` in the response/log is `"sent"`, `"simulated"`
+    (no Firebase project configured — see
+    `app/models/push_gateway.py`), `"failed"`, or `"no_recipients"`.
 
     This is always `trigger: "manual"` in the log — see
     `POST /api/sensor-reading` for the automatic counterpart."""

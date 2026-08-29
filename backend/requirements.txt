@@ -6,3 +6,4 @@ africastalking>=2.0
 python-multipart>=0.0.9
 python-dotenv>=1.0
 requests>=2.30
+firebase-admin>=6.5

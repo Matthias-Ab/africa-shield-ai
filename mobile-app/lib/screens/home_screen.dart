@@ -4,10 +4,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
-import '../data/countries.dart';
-import '../models/region.dart';
 import '../providers/onboarding_provider.dart';
 import '../providers/region_provider.dart';
+import '../providers/region_selection.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/afrishield_logo.dart';
@@ -33,32 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RegionProvider>().load();
     });
-  }
-
-  /// Picks which region's data to show: an explicit choice from Settings,
-  /// otherwise the first region matching the onboarding country, otherwise
-  /// just the first monitored region with a "not your area yet" notice —
-  /// never silently invent numbers for somewhere that isn't monitored.
-  ({Region region, bool isRealMatch}) _pickRegion(
-    List<Region> regions,
-    SettingsProvider settings,
-    OnboardingProvider onboarding,
-  ) {
-    if (settings.selectedRegion != null) {
-      final match = regions.where((r) => r.locationName == settings.selectedRegion);
-      if (match.isNotEmpty) return (region: match.first, isRealMatch: true);
-    }
-    if (onboarding.country != null) {
-      final countryName = africanCountries
-          .firstWhere(
-            (c) => c.iso3 == onboarding.country,
-            orElse: () => Country(onboarding.country!, onboarding.country!),
-          )
-          .name;
-      final match = regions.where((r) => r.country == countryName);
-      if (match.isNotEmpty) return (region: match.first, isRealMatch: true);
-    }
-    return (region: regions.first, isRealMatch: false);
   }
 
   @override
@@ -90,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        final picked = _pickRegion(regionProvider.regions, settings, onboarding);
+        final picked = pickMyRegion(regions: regionProvider.regions, settings: settings, onboarding: onboarding)!;
         final region = picked.region;
         final color = AppColors.forRiskLevel(region.riskLevel);
         final bg = AppColors.bgForRiskLevel(region.riskLevel);
@@ -100,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: RefreshIndicator(
               onRefresh: regionProvider.load,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16 + kBottomNavClearance),
                 children: [
                   if (regionProvider.status == LoadStatus.cachedData)
                     Padding(
@@ -228,9 +201,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
+                                  // Local-language alert text, not English
+                                  // — this is what the region's own
+                                  // residents would actually receive.
                                   region.riskLevel.toLowerCase() == 'low'
                                       ? l10n.continueMonitoring
-                                      : region.alertMessageEn,
+                                      : region.alertMessageLocal,
                                   style: const TextStyle(fontSize: 12.5),
                                 ),
                               ],

@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
 
+/// Extra bottom padding for the four bottom-tab screens (Home/Alerts/Maps/
+/// Reports), so their scrollable content or last fixed element never sits
+/// under `RootShell`'s floating pill nav bar (`Positioned(bottom: 16)`,
+/// itself roughly 70px tall including its own padding — see
+/// `root_shell.dart`'s `_PillNavBar`). Screens reached via `Navigator.push`
+/// (Settings, Alert Detail, Safety Guidance, onboarding) render full-screen
+/// above `RootShell`'s Stack and never show the pill nav, so they don't
+/// need this.
+const double kBottomNavClearance = 100.0;
+
 /// Matches the Figma design (AfriShield AI App) — dark navy chrome, a cyan
 /// brand ring on the logo, and the same red/amber/green risk system used
 /// throughout: a bold color for text/icons, a soft pastel tint for card

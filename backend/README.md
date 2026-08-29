@@ -22,6 +22,11 @@ Without a filled-in `.env`, everything still runs — `POST /api/alerts/send`
 just labels every send as simulated instead of calling Africa's Talking.
 Get free sandbox credentials at https://account.africastalking.com/.
 
+Push notifications work the same way: without `FIREBASE_SERVICE_ACCOUNT_JSON`
+set, `push_status` in the alert log just says `"simulated"` instead of
+actually calling Firebase Cloud Messaging. Free to set up at
+https://console.firebase.google.com/ — see `app/models/push_gateway.py`.
+
 ## Run
 
 ```bash
@@ -48,7 +53,14 @@ shapes. Summary:
   Talking to its subscribers (`app/data/subscribers.json`), by SMS
   (default) or voice call (`"channel": "voice"`); simulates the send
   (clearly labeled) if the matching credentials aren't set or the region
-  has no subscribers yet.
+  has no subscribers yet. Also pushes a real notification (Firebase
+  Cloud Messaging) to every device registered for this region via
+  `POST /api/push-tokens`, additive alongside whichever channel was
+  picked — see `push_status` in the response.
+- `POST /api/push-tokens` / `DELETE /api/push-tokens/{token}` — real.
+  Registers/unregisters a mobile device's FCM token against a region, so
+  `POST /api/alerts/send` (manual or automatic) can push to it. See
+  `app/routes/push_tokens.py`.
 - `POST /api/ussd` — real. Africa's Talking USSD webhook: check a
   region's risk, or subscribe/unsubscribe a phone number, no smartphone
   needed. See `app/routes/ussd.py`.
@@ -134,6 +146,25 @@ shapes. Summary:
   configuration — see `POST /api/alerts/send`, `POST /api/ussd`, and
   `POST /api/voice/callback` in
   [`../docs/api-contract.md`](../docs/api-contract.md).
+
+## Push notifications
+
+- `app/models/push_gateway.py` wraps the `firebase-admin` SDK behind the
+  same `is_configured()`/`send_push()` shape as `sms_gateway.py`. Set
+  `FIREBASE_SERVICE_ACCOUNT_JSON` in `.env` (a path to a service-account
+  key from a free Firebase project) to send real pushes; leave it unset
+  to keep `push_status` reporting `"simulated"`.
+- `app/data/push_tokens.json` is the device registry —
+  `{"token": ..., "location_name": ...}` pairs, populated by
+  `POST /api/push-tokens` (the mobile app calls this when a user enables
+  the "Mobile App" alert channel in Settings). Starts empty.
+- Push is additive to every send in `POST /api/alerts/send` (manual or
+  automatic via `maybe_auto_trigger()`) — it's not a third `channel`
+  choice alongside `"sms"`/`"voice"`, since a device can want push
+  *and* SMS at once.
+- The mobile app also needs its own Firebase config to obtain a device
+  token in the first place, separate from this backend's service-account
+  key — see `mobile-app/lib/firebase_options.dart`'s doc comment.
 
 ## IoT sensor ingestion
 

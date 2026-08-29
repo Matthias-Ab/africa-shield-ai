@@ -74,6 +74,17 @@ Presentation & Pitch 5.
         shared hook.
   - [ ] Label `RecentAlerts.jsx`'s data as simulated in the UI, or wire it
         to the now-real `GET /api/alerts`.
+  - [ ] Wire `Reports.jsx` to the now-real `GET /api/hazard-reports`
+        (backend built 2026-08-28, see `docs/api-contract.md`) — it's
+        currently an empty placeholder with no logic at all.
+  - [ ] **6 of the 8 dashboard pages are empty placeholder stubs** — just
+        a heading and one static sentence, no data fetching, no
+        components: `Alerts.jsx`, `Analytics.jsx`, `HelpSupport.jsx`,
+        `LiveFloodMap.jsx`, `Regions.jsx`, `Settings.jsx`. Only
+        `Dashboard.jsx` is actually built out. Not previously tracked
+        here — found 2026-08-28. Decide: build these for real before the
+        demo, or give each an intentional "coming soon" treatment so they
+        don't look broken if a judge clicks through the nav.
 
 ## Innovation & Creativity (15 pts) / Appropriate Use of AI & Tech (10 pts)
 
@@ -196,21 +207,36 @@ Presentation & Pitch 5.
 - [ ] Expand beyond flooding to droughts, heatwaves, wildfires, cyclones,
       earthquakes.
 - [ ] **Offline-first Flutter mobile app — Figma design implemented
-      (2026-08-27); GPS + hazard-report photo added, UI chrome translated
-      into all 7 languages (2026-08-28).** See `mobile-app/README.md`'s
-      feature table for exactly what's real vs. UI-only. Full onboarding
-      flow (language/country/location), 4-tab app (Home/Alert/Maps/
-      Reports) all wired to the live backend, real OSM map, real
-      text-to-speech "Read Aloud" accessibility feature, real offline
-      cache, real `geolocator` GPS (onboarding + Reports tab), real photo
-      attachment on hazard reports, real `AppLocalizations`-driven UI
-      chrome switching live from Settings > Language. `flutter analyze`
-      and `flutter test` both pass. Still needed: a real geo dataset for
-      State/LGA/City (GPS gives raw coordinates, not an address, so this
-      is still free text), a verified per-country emergency number
-      source, push notifications, and native-speaker review of the 6
-      non-English UI translations (see the translation-review section
-      below).
+      (2026-08-27); GPS + hazard-report photo, UI chrome translated into
+      all 7 languages, real State/City geo data, and push notifications
+      added (2026-08-28).** See `mobile-app/README.md`'s feature table
+      for exactly what's real vs. UI-only. Full onboarding flow
+      (language/country/location), 4-tab app (Home/Alert/Maps/Reports)
+      all wired to the live backend, real OSM map, real text-to-speech
+      "Read Aloud" accessibility feature, real offline cache, real
+      `geolocator` GPS (onboarding + Reports tab), real photo attachment
+      on hazard reports, real `AppLocalizations`-driven UI chrome
+      switching live from Settings > Language, real State/City pickers
+      (1,117 states/regions, 4,638 cities from the open
+      `dr5hn/countries-states-cities-database`, see
+      `mobile-app/lib/data/geo_data.dart`) across all 54 countries, real
+      Firebase Cloud Messaging push wiring (Settings > Alert Channels >
+      "Mobile App"). `flutter analyze` and `flutter test` both pass.
+      Still needed: a verified per-country emergency number source, and
+      native-speaker review of the 6 non-English UI translations (see
+      the translation-review section below). LGA stays free text — no
+      equally reliable third administrative tier exists across all 54
+      countries in the dataset used.
+- [ ] **Create a real Firebase project and drop its config into
+      `mobile-app/lib/firebase_options.dart` (via `flutterfire configure`)
+      and a service-account key into `backend/.env`'s
+      `FIREBASE_SERVICE_ACCOUNT_JSON` (2026-08-28).** Same category of
+      gap as the Africa's Talking account under "Critical" above — the
+      push notification code is built and tested end-to-end with
+      simulated/unavailable states, but nobody has done this external
+      console step yet, so no real push notification has ever actually
+      been delivered to a real device. Free at
+      https://console.firebase.google.com/.
 - [ ] Real translation API instead of the hardcoded dictionary; expand
       language coverage.
 - [ ] **Community-reporting feature — backend + mobile app fully wired,

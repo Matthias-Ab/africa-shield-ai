@@ -5,6 +5,77 @@ first for current state; scroll down for history.
 
 ---
 
+## 2026-08-28 — Push notifications (backend + mobile) and a real geo dataset
+
+### Completed
+- **Real State/City data for all 54 countries**, replacing free-text
+  fields. Filtered the open, CC-licensed
+  `dr5hn/countries-states-cities-database` down from its 46MB worldwide
+  file to just our 54 countries — 1,117 real states/regions, 4,638 real
+  cities/towns, an 89KB asset (`mobile-app/assets/geo/states_cities.json`,
+  loaded by `mobile-app/lib/data/geo_data.dart`). Spot-checked several
+  countries by hand (Nigeria's 37 states including the FCT, Kenya's 47
+  counties, Egypt's 27 governorates, Comoros' 3 islands) — genuine
+  administrative data, not fabricated.
+  - `LocationSetupScreen`'s State and City fields are now real
+    search-and-pick screens (`GeoPickerScreen`, mirroring
+    `CountryScreen`'s existing search UX) instead of free text, cascading
+    (picking a State clears any previously typed City, since it almost
+    certainly doesn't belong to the new State).
+  - **LGA stays free text, deliberately** — no dataset found gives a
+    reliable, consistent third administrative tier across all 54
+    countries; faking one would be worse than admitting the gap.
+- **Real push notifications (Firebase Cloud Messaging), backend and
+  mobile, following the exact same honest-degradation pattern as
+  SMS/voice:**
+  - Backend: `app/models/push_gateway.py` (`is_configured()`/
+    `send_push()`, mirrors `sms_gateway.py`), a new device registry
+    (`app/routes/push_tokens.py` + `app/data/push_tokens.json`,
+    committed empty like `subscribers.json`), and `send_alert_for_region`
+    now also pushes to every registered device for a region — additive
+    to whichever channel (`sms`/`voice`) was used, not a third channel
+    choice. New `push_status` field (`"sent"`/`"simulated"`/`"failed"`/
+    `"no_recipients"`) on `POST /api/alerts/send`'s response and every
+    `GET /api/alerts` log entry. Tested end-to-end via curl: register →
+    send → `push_status: "simulated"` (no Firebase project yet) →
+    unregister → send → `push_status: "no_recipients"`.
+  - Mobile: `lib/services/push_service.dart` wraps `firebase_messaging`,
+    catching every real failure mode (placeholder credentials, no
+    permission, no VAPID key on web) into one honest "unavailable" result
+    rather than guessing which one occurred. The Settings > Alert
+    Channels "Mobile App" toggle is now real and interactive (was
+    permanently disabled before) — enabling it registers a token against
+    whichever region `pickMyRegion()` (new shared helper in
+    `lib/providers/region_selection.dart`, factored out of
+    `HomeScreen`'s previously-private region-matching logic, now also
+    used here) resolves as "mine"; if there's no real region match yet,
+    or Firebase isn't configured, the toggle stays off and says why
+    instead of turning on and doing nothing.
+  - **No Firebase project has actually been created** — that's an
+    external console step nobody has done (same category of gap as "no
+    real Africa's Talking account yet" on `todo.md`'s Critical list).
+    `lib/firebase_options.dart` is placeholder values with the exact
+    setup steps in its doc comment. Until that's done, push cleanly
+    reports itself unavailable everywhere; nothing crashes or fakes a
+    success.
+- `flutter analyze` and `flutter test` both pass clean on all of the
+  above. Backend push endpoints verified manually via curl (see above).
+
+### Not yet started
+- Nobody has created the actual Firebase project yet, so push has never
+  actually delivered a real notification to a real device — only the
+  graceful-unavailable path has been exercised.
+- Could not visually click through the "Mobile App" toggle in a live
+  browser this session (the Chrome extension used for that wasn't
+  connected) — verified via `flutter analyze`/`flutter test` and the fact
+  that the app boots without crashing (Firebase init is lazy, only
+  attempted when the toggle is used), but not via an actual tap.
+- Native-speaker review still outstanding for the ~10 new mobile UI
+  strings this added (push enabled/disabled/unavailable messages, etc.)
+  — same standing item as the rest of `lib/l10n/*.arb`.
+
+---
+
 ## 2026-08-28 — Mobile: UI chrome translated into all 7 backend languages
 
 ### Completed

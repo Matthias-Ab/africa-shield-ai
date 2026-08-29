@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routes import alerts, hazard_reports, regions, risk, sensors, ussd, voice
+from app.routes import alerts, hazard_reports, push_tokens, regions, risk, sensors, ussd, voice
 
 app = FastAPI(
     title="Africa Shield AI - Last-Mile Alert API",
@@ -23,7 +23,10 @@ app = FastAPI(
         "POST /api/hazard-reports lets a citizen report a hazard they're seeing or "
         "flag that they need help; GET /api/hazard-reports lists what's come in. "
         "POST /api/hazard-reports/{id}/photo attaches a photo to a report; "
-        "GET /api/hazard-reports/{id}/photo serves it back."
+        "GET /api/hazard-reports/{id}/photo serves it back. "
+        "POST /api/push-tokens registers a device for real push notifications "
+        "(Firebase Cloud Messaging) alongside SMS/voice, when configured — see "
+        ".env.example; DELETE /api/push-tokens/{token} unregisters one."
     ),
     version="0.1.0",
 )
@@ -43,6 +46,7 @@ app.include_router(ussd.router)
 app.include_router(voice.router)
 app.include_router(sensors.router)
 app.include_router(hazard_reports.router)
+app.include_router(push_tokens.router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -77,5 +81,6 @@ def root() -> dict:
             "/api/sensor-reading",
             "/api/hazard-reports",
             "/api/hazard-reports/{id}/photo",
+            "/api/push-tokens",
         ],
     }

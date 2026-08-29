@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../providers/onboarding_provider.dart';
+import '../../providers/region_provider.dart';
+import '../../providers/region_selection.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/push_service.dart';
 import '../../theme/app_theme.dart';
 
-/// Matches the Figma "Alert Channels" screen. **Only SMS is real today** —
-/// it's the one channel the backend actually sends
-/// (`POST /api/alerts/send`, tested against Africa's Talking). WhatsApp,
-/// USSD, and in-app push are still switches with nothing behind them yet;
-/// see `todo.md` for what's actually built versus planned.
+/// Matches the Figma "Alert Channels" screen. SMS and "Mobile App" (real
+/// push notifications, via `PushService`) are real; WhatsApp and USSD are
+/// still switches with nothing behind them yet — see `todo.md`.
 class AlertChannelsScreen extends StatefulWidget {
   const AlertChannelsScreen({super.key});
 
@@ -22,11 +26,14 @@ class _AlertChannelsScreenState extends State<AlertChannelsScreen> {
   static const _smsKey = 'channel_sms_v1';
   static const _ussdKey = 'channel_ussd_v1';
 
+  final _pushService = PushService();
+
   bool _mobileApp = false;
   bool _whatsapp = false;
   bool _sms = true;
   bool _ussd = false;
   bool _loaded = false;
+  bool _togglingPush = false;
 
   @override
   void initState() {
@@ -56,6 +63,51 @@ class _AlertChannelsScreenState extends State<AlertChannelsScreen> {
         .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.preferencesSaved)));
   }
 
+  /// Unlike the other three toggles (only persisted when "Save
+  /// Preferences" is tapped), push takes effect immediately — it's a
+  /// real network registration/unregistration, not just a stored
+  /// preference, so "on" in the UI should always mean "actually
+  /// registered," never "will register once you hit Save."
+  Future<void> _onToggleMobileApp(bool value) async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _togglingPush = true);
+
+    if (value) {
+      final regionProvider = context.read<RegionProvider>();
+      final settings = context.read<SettingsProvider>();
+      final onboarding = context.read<OnboardingProvider>();
+      final picked = pickMyRegion(regions: regionProvider.regions, settings: settings, onboarding: onboarding);
+      if (picked == null || !picked.isRealMatch) {
+        if (!mounted) return;
+        setState(() => _togglingPush = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.pushNoRegionYet)));
+        return;
+      }
+      final ok = await _pushService.enable(picked.region.locationName);
+      if (!mounted) return;
+      setState(() => _togglingPush = false);
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.pushUnavailable)));
+        return;
+      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_mobileAppKey, true);
+      if (!mounted) return;
+      setState(() => _mobileApp = true);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.pushEnabled)));
+    } else {
+      await _pushService.disable();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_mobileAppKey, false);
+      if (!mounted) return;
+      setState(() {
+        _mobileApp = false;
+        _togglingPush = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.pushDisabled)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
@@ -76,10 +128,10 @@ class _AlertChannelsScreenState extends State<AlertChannelsScreen> {
             icon: Icons.phone_iphone,
             title: l10n.mobileAppChannelTitle,
             subtitle: l10n.mobileAppChannelSubtitle,
-            enabled: false,
+            enabled: !_togglingPush,
             note: l10n.pushNotWiredNote,
             value: _mobileApp,
-            onChanged: (v) => setState(() => _mobileApp = v),
+            onChanged: _onToggleMobileApp,
           ),
           _ChannelTile(
             icon: Icons.chat_bubble_outline,

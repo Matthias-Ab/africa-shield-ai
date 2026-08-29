@@ -3,17 +3,21 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/countries.dart';
+import '../../data/geo_data.dart';
 import '../../providers/onboarding_provider.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
 import '../root_shell.dart';
+import 'geo_picker_screen.dart';
 
-/// State/Region, Local Government Area, and City/Community are plain text
-/// fields, not dropdowns — the Figma design shows them as dropdowns, but
-/// there's no real administrative-boundary dataset for all 54 countries to
-/// populate them from (only Nigeria's "LGA" terminology was shown in the
-/// mock). Faking that data for every country would be worse than a plain
-/// text field; wire up dropdowns once a real geo dataset is chosen.
+/// State/Region and City/Community are real pickers, sourced from
+/// `assets/geo/states_cities.json` (see `lib/data/geo_data.dart` for
+/// provenance) — 1,117 real states/regions and 4,638 real cities/towns
+/// across all 54 countries. Local Government Area stays a plain text
+/// field: no equally reliable third administrative tier exists across all
+/// 54 countries in the open dataset used here (Nigeria's own LGA
+/// terminology doesn't generalize), so faking one would be worse than a
+/// text field.
 class LocationSetupScreen extends StatefulWidget {
   final Country country;
   final bool fromSettings;
@@ -37,6 +41,17 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
   double? _gpsLatitude;
   double? _gpsLongitude;
 
+  List<GeoState>? _statesForCountry;
+
+  @override
+  void initState() {
+    super.initState();
+    loadGeoData().then((data) {
+      if (!mounted) return;
+      setState(() => _statesForCountry = data[widget.country.iso3] ?? []);
+    });
+  }
+
   @override
   void dispose() {
     _stateController.dispose();
@@ -45,9 +60,23 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
     super.dispose();
   }
 
+  GeoState? get _selectedState {
+    final states = _statesForCountry;
+    if (states == null || _stateController.text.isEmpty) return null;
+    for (final s in states) {
+      if (s.name == _stateController.text) return s;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // Null while still loading; empty list is a genuine "no data for this
+    // country yet" case (shouldn't happen for the current 54, but this
+    // keeps the field usable as free text if it ever does).
+    final hasStateData = (_statesForCountry ?? const []).isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.locationAppBarTitle)),
       body: Padding(
@@ -69,7 +98,12 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
             _FieldLabel(l10n.stateFieldLabel),
             TextField(
               controller: _stateController,
-              decoration: InputDecoration(hintText: l10n.stateFieldHint),
+              readOnly: hasStateData,
+              decoration: InputDecoration(
+                hintText: l10n.stateFieldHint,
+                suffixIcon: hasStateData ? const Icon(Icons.arrow_drop_down) : null,
+              ),
+              onTap: hasStateData ? _pickState : null,
             ),
             const SizedBox(height: 16),
             _FieldLabel(l10n.lgaFieldLabel),
@@ -79,10 +113,23 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
             ),
             const SizedBox(height: 16),
             _FieldLabel(l10n.cityFieldLabel),
-            TextField(
-              controller: _cityController,
-              decoration: InputDecoration(hintText: l10n.cityFieldHint),
-            ),
+            Builder(builder: (context) {
+              final canPickCity = _selectedState != null && _selectedState!.cities.isNotEmpty;
+              return TextField(
+                controller: _cityController,
+                readOnly: canPickCity,
+                decoration: InputDecoration(
+                  hintText: l10n.cityFieldHint,
+                  suffixIcon: canPickCity ? const Icon(Icons.arrow_drop_down) : null,
+                ),
+                // Only intercepts the tap to open a picker when there's
+                // real city data for the selected state — otherwise this
+                // is a normal free-text field (no state picked yet, or
+                // this state has no city data), so tapping just places
+                // the text cursor as usual.
+                onTap: canPickCity ? () => _pickCity(l10n) : null,
+              );
+            }),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -137,6 +184,46 @@ class _LocationSetupScreenState extends State<LocationSetupScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickState() async {
+    final states = _statesForCountry;
+    if (states == null || states.isEmpty) return;
+    final l10n = AppLocalizations.of(context)!;
+    final picked = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => GeoPickerScreen(
+          title: l10n.stateFieldLabel,
+          searchHint: l10n.stateFieldHint,
+          items: states.map((s) => s.name).toList(),
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _stateController.text = picked;
+      // A new state's city list is different (or empty) — a previously
+      // picked city almost certainly doesn't belong to it.
+      _cityController.clear();
+    });
+  }
+
+  Future<void> _pickCity(AppLocalizations l10n) async {
+    // Only ever called when a state with real city data is selected (see
+    // the `canPickCity` guard on this field's `onTap`) — otherwise the
+    // City field is plain free text and this never fires.
+    final state = _selectedState!;
+    final picked = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => GeoPickerScreen(
+          title: l10n.cityFieldLabel,
+          searchHint: l10n.cityFieldHint,
+          items: state.cities,
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _cityController.text = picked);
   }
 
   Future<void> _useCurrentLocation() async {

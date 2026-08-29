@@ -78,6 +78,11 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                 IconButton(
                   tooltip: _speaking ? l10n.stopTooltip : l10n.readAloudTooltip,
                   icon: Icon(_speaking ? Icons.stop_circle_outlined : Icons.volume_up_outlined, color: color),
+                  // Deliberately alertMessageEn, not alertMessageLocal:
+                  // flutter_tts's voice/locale isn't set per-region, so
+                  // reading e.g. Arabic or Amharic script with the
+                  // device's default (likely English) TTS voice would
+                  // produce garbled, not helpful, audio.
                   onPressed: () => _readAloud(region.alertMessageEn, steps, l10n.whatYouShouldDo),
                 ),
             ],
@@ -96,8 +101,45 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                         l10n.floodRiskSuffix(region.riskLevel.toUpperCase()),
                         style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 17),
                       ),
+                      const SizedBox(height: 12),
+                      // Local-language alert first (what this region's own
+                      // residents actually receive by SMS/USSD), English
+                      // second — same "Local Warning" / "English
+                      // Translation" split as the web dashboard's
+                      // AlertDetails.jsx. Skips the English block entirely
+                      // when the region's own language already is English
+                      // (alertMessageLocal and alertMessageEn are then the
+                      // same string — see backend/app/models/translations.py).
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(l10n.localWarningLabel,
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              region.localLanguage.toUpperCase(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 10, color: AppColors.inkSoft),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 6),
-                      Text(region.alertMessageEn),
+                      Text(region.alertMessageLocal),
+                      if (region.localLanguage.toLowerCase() != 'english') ...[
+                        const SizedBox(height: 14),
+                        Text(l10n.englishTranslationLabel,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.inkSoft)),
+                        const SizedBox(height: 4),
+                        Text(region.alertMessageEn,
+                            style: const TextStyle(color: AppColors.inkSoft, fontSize: 13)),
+                      ],
                       const SizedBox(height: 12),
                       const Divider(),
                       const SizedBox(height: 8),
@@ -135,7 +177,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                             l10n.shareAlertTemplate(
                               region.riskLevel.toUpperCase(),
                               region.locationName,
-                              region.alertMessageEn,
+                              region.alertMessageLocal,
                             ),
                           ),
                           child: Text(l10n.shareAlert),

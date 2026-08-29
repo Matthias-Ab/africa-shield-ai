@@ -35,6 +35,15 @@ class Region {
   });
 
   factory Region.fromJson(Map<String, dynamic> json) {
+    // GET /api/regions has no top-level `risk_score` — it only lives
+    // nested inside `risk_score_breakdown.risk_score` (see
+    // docs/api-contract.md). This model's own `toJson()` (used for the
+    // offline cache round-trip) writes it flat, so accept either shape
+    // rather than force-casting a field the real API response doesn't
+    // have at that level — that force-cast used to throw on every real
+    // API response, silently failing the whole regions+alerts load.
+    final breakdown = json['risk_score_breakdown'] as Map<String, dynamic>?;
+    final riskScoreValue = json['risk_score'] ?? breakdown?['risk_score'];
     return Region(
       locationName: json['location_name'] as String,
       country: json['country'] as String,
@@ -43,7 +52,7 @@ class Region {
       rainfallMm24h: (json['rainfall_mm_24h'] as num).toDouble(),
       riverLevelM: (json['river_level_m'] as num).toDouble(),
       riskLevel: json['risk_level'] as String,
-      riskScore: (json['risk_score'] as num).toDouble(),
+      riskScore: (riskScoreValue as num).toDouble(),
       alertMessageEn: json['alert_message_en'] as String,
       alertMessageLocal: json['alert_message_local'] as String,
       localLanguage: json['local_language'] as String,

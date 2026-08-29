@@ -1,5 +1,13 @@
 # API Contract — Africa Shield AI Backend
 
+**Status (as of 2026-08-28): push notifications are real, additive to
+every alert send.** Two new endpoints, `POST /api/push-tokens` and
+`DELETE /api/push-tokens/{token}`, let a device register for/unregister
+from real push notifications (Firebase Cloud Messaging). `POST
+/api/alerts/send`'s response gained a new `push_status` field
+(`"sent"` / `"simulated"` / `"failed"` / `"no_recipients"`) — additive,
+no existing field changed. See those endpoints' sections below.
+
 **Status (as of 2026-08-10): risk scoring and translation are real.**
 `POST /api/risk-check` and `GET /api/regions` now compute live from the
 rules-based model in `backend/app/models/risk_model.py` and the
@@ -344,7 +352,8 @@ nothing.
     "channel": "SMS (simulated)",
     "recipients": 1,
     "timestamp": "2026-08-17T07:47:30Z",
-    "trigger": "manual"
+    "trigger": "manual",
+    "push_status": "no_recipients"
   }
 ]
 ```
@@ -358,6 +367,7 @@ nothing.
 | `recipients`     | int    | **Only present on real-send-log entries.** Number of subscribers the message went to (0 for a simulated send). Absent on the older hardcoded `mock-data.json` entries returned as a fallback — don't assume it's always present. |
 | `timestamp`      | string | ISO 8601, UTC                                   |
 | `trigger`        | string | **New (2026-08-18).** `"manual"` (a person called `POST /api/alerts/send`) or `"automatic"` (a sensor reading pushed the region into `high` — see `POST /api/sensor-reading`). Only present on real-send-log entries, same caveat as `recipients`. |
+| `push_status`    | string | **New (2026-08-28).** `"sent"` (real FCM push delivered), `"simulated"` (devices registered, but no Firebase project configured), `"failed"`, or `"no_recipients"` (no device registered for this region via `POST /api/push-tokens`). Push is additive to whichever `channel` was used, not a separate channel. Only present on real-send-log entries, same caveat as `recipients`. |
 
 ---
 
@@ -371,6 +381,11 @@ below), the latter for recipients a text-only channel doesn't reach
 the matching credentials are configured (see `backend/.env.example`) and
 the region has at least one subscriber; otherwise falls back to a clearly
 labeled simulation so this is always safe to call.
+
+Also pushes a real notification (Firebase Cloud Messaging) to every
+device registered for this region via `POST /api/push-tokens`, regardless
+of `channel` — push is additive, not a third channel choice, since a
+device can want push *and* SMS at once. See `push_status` below.
 
 ### Request
 
@@ -396,6 +411,49 @@ counterpart.
 Recipients come from `backend/app/data/subscribers.json` — a list of
 `{"phone_number": ..., "location_name": ...}` pairs, populated by
 `POST /api/ussd`'s subscribe flow (or seeded by hand for testing).
+
+---
+
+## `POST /api/push-tokens`
+
+Registers (or re-registers) a mobile device's FCM token against a
+region, so `POST /api/alerts/send` can push a real notification to it.
+
+### Request
+
+```json
+{
+  "token": "fcm-device-token-abc123",
+  "location_name": "Lagos, Nigeria"
+}
+```
+
+| Field           | Type   | Notes                                                        |
+|-----------------|--------|----------------------------------------------------------------|
+| `token`         | string | The device's FCM registration token.                            |
+| `location_name` | string | Freeform, same as `POST /api/hazard-reports` — not required to already exist in `regions.json`. |
+
+### Response
+
+`201 Created`, echoes the request body. A token already registered
+elsewhere is moved to the new region rather than duplicated.
+
+---
+
+## `DELETE /api/push-tokens/{token}`
+
+Unregisters a device token — called when push notifications are turned
+off from the mobile app's Settings > Alert Channels.
+
+### Response
+
+```json
+{ "removed": true }
+```
+
+Always `200`, whether or not `token` was actually registered — the
+caller's desired end state ("this token gets no more pushes") is
+satisfied either way.
 
 ---
 

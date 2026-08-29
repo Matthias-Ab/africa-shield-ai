@@ -41,7 +41,11 @@ class AlertCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                region.alertMessageEn,
+                // The region's own local-language alert text (matches
+                // what a real SMS/USSD alert for this region would say),
+                // not the English field — see AlertDetailScreen for a
+                // side-by-side English translation when more room exists.
+                region.alertMessageLocal,
                 style: const TextStyle(color: AppColors.ink, fontSize: 15, height: 1.3),
               ),
               const SizedBox(height: 10),

@@ -79,15 +79,16 @@ class _PillNavBar extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           for (var i = 0; i < items.length; i++)
-            _PillNavItem(
-              icon: items[i].icon,
-              selectedIcon: items[i].selectedIcon,
-              label: items[i].label,
-              selected: i == index,
-              onTap: () => onChanged(i),
+            Expanded(
+              child: _PillNavItem(
+                icon: items[i].icon,
+                selectedIcon: items[i].selectedIcon,
+                label: items[i].label,
+                selected: i == index,
+                onTap: () => onChanged(i),
+              ),
             ),
         ],
       ),
@@ -116,7 +117,7 @@ class _PillNavItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? AppColors.navy : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -126,12 +127,19 @@ class _PillNavItem extends StatelessWidget {
           children: [
             Icon(selected ? selectedIcon : icon, color: selected ? Colors.white : AppColors.inkSoft, size: 22),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : AppColors.inkSoft,
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            // FittedBox instead of a fixed font size: translated labels
+            // (e.g. French, Portuguese) run longer than the English
+            // originals and would otherwise overflow this fixed-width pill.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: selected ? Colors.white : AppColors.inkSoft,
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
             ),
           ],

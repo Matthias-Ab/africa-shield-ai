@@ -96,7 +96,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> {
               ),
               if (selected != null)
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16 + kBottomNavClearance),
                   child: Card(
                     color: AppColors.bgForRiskLevel(selected.riskLevel),
                     child: Padding(
