@@ -12,11 +12,9 @@ import {
   useMap,
 } from "react-leaflet";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import "leaflet/dist/leaflet.css";
-
-const API_URL = "http://localhost:8000/api/regions";
 
 const riskStyles = {
   high: {
@@ -59,38 +57,8 @@ function MapBounds({ regions }) {
   return null;
 }
 
-function RiskMap() {
-  const [regions, setRegions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
+function RiskMap({ regions = [], onRefresh }) {
   const mapWrapperRef = useRef(null);
-
-  const fetchRegions = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(false);
-
-      const response = await fetch(API_URL);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch regions");
-      }
-
-      const data = await response.json();
-
-      setRegions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error fetching map regions:", err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRegions();
-  }, [fetchRegions]);
 
   const validRegions = useMemo(() => {
     return regions.filter(
@@ -107,6 +75,17 @@ function RiskMap() {
         .filter(Boolean)
     ).size;
   }, [regions]);
+
+  const getRiskScore = (region) => {
+    const score =
+      region.risk_score ??
+      region.risk_score_breakdown?.risk_score ??
+      0;
+
+    if (typeof score !== "number") return 0;
+
+    return score <= 1 ? Math.round(score * 100) : Math.round(score);
+  };
 
   const handleFullscreen = async () => {
     if (!mapWrapperRef.current) return;
@@ -130,12 +109,12 @@ function RiskMap() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
             <Layers3 size={18} />
           </div>
 
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-teal-600">
+            <p className="text-[10px] font-extrabold uppercase tracking-[1.4px] text-blue-600">
               REGIONAL INTELLIGENCE
             </p>
 
@@ -153,22 +132,18 @@ function RiskMap() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={fetchRegions}
-            disabled={loading}
+            onClick={onRefresh}
             title="Refresh map data"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600 disabled:opacity-50"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
           >
-            <RefreshCw
-              size={16}
-              className={loading ? "animate-spin" : ""}
-            />
+            <RefreshCw size={16} />
           </button>
 
           <button
             type="button"
             title="Fullscreen"
             onClick={handleFullscreen}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-600"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
           >
             <Maximize2 size={16} />
           </button>
@@ -177,147 +152,123 @@ function RiskMap() {
 
       {/* Map */}
       <div className="relative h-[420px] w-full">
-        {error ? (
-          <div className="flex h-full items-center justify-center bg-slate-50">
-            <div className="text-center">
-              <p className="text-sm font-bold text-slate-700">
-                Map data unavailable
-              </p>
+        <MapContainer
+          center={[5, 20]}
+          zoom={3}
+          minZoom={2}
+          maxZoom={10}
+          scrollWheelZoom={true}
+          className="h-full w-full"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
 
-              <button
-                onClick={fetchRegions}
-                className="mt-3 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700"
+          <MapBounds regions={validRegions} />
+
+          {validRegions.map((region, index) => {
+            const riskLevel =
+              region.risk_level?.toLowerCase() || "low";
+
+            const style =
+              riskStyles[riskLevel] || riskStyles.low;
+
+            const score = getRiskScore(region);
+
+            return (
+              <CircleMarker
+                key={`${region.location_name}-${index}`}
+                center={[
+                  region.latitude,
+                  region.longitude,
+                ]}
+                radius={10}
+                pathOptions={{
+                  color: "#ffffff",
+                  weight: 3,
+                  fillColor: style.fillColor,
+                  fillOpacity: 0.95,
+                }}
               >
-                Try again
-              </button>
-            </div>
-          </div>
-        ) : (
-          <MapContainer
-            center={[5, 20]}
-            zoom={3}
-            minZoom={2}
-            maxZoom={10}
-            scrollWheelZoom={true}
-            className="h-full w-full"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+                <Popup>
+                  <div className="min-w-[180px]">
+                    <p className="text-sm font-bold text-slate-800">
+                      {region.location_name}
+                    </p>
 
-            <MapBounds regions={validRegions} />
+                    <p className="mt-1 text-xs text-slate-500">
+                      {region.country}
+                    </p>
 
-            {validRegions.map((region, index) => {
-              const riskLevel =
-                region.risk_level?.toLowerCase() || "low";
+                    <div className="mt-3 rounded-lg bg-slate-50 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          Risk level
+                        </span>
 
-              const style =
-                riskStyles[riskLevel] || riskStyles.low;
+                        <span
+                          className={`text-xs font-bold uppercase ${
+                            riskLevel === "high"
+                              ? "text-red-600"
+                              : riskLevel === "medium"
+                              ? "text-orange-600"
+                              : "text-emerald-600"
+                          }`}
+                        >
+                          {riskLevel}
+                        </span>
+                      </div>
 
-              return (
-                <CircleMarker
-                  key={`${region.location_name}-${index}`}
-                  center={[
-                    region.latitude,
-                    region.longitude,
-                  ]}
-                  radius={10}
-                  pathOptions={{
-                    color: "#ffffff",
-                    weight: 3,
-                    fillColor: style.fillColor,
-                    fillOpacity: 0.95,
-                  }}
-                >
-                  <Popup>
-                    <div className="min-w-[180px]">
-                      <p className="text-sm font-bold text-slate-800">
-                        {region.location_name}
-                      </p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          Risk score
+                        </span>
 
-                      <p className="mt-1 text-xs text-slate-500">
-                        {region.country}
-                      </p>
+                        <span className="text-xs font-bold text-slate-800">
+                          {score}/100
+                        </span>
+                      </div>
 
-                      <div className="mt-3 rounded-lg bg-slate-50 p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-500">
-                            Risk level
-                          </span>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          Rainfall
+                        </span>
 
-                          <span
-                            className={`text-xs font-bold uppercase ${
-                              riskLevel === "high"
-                                ? "text-red-600"
-                                : riskLevel === "medium"
-                                ? "text-orange-600"
-                                : "text-emerald-600"
-                            }`}
-                          >
-                            {riskLevel}
-                          </span>
-                        </div>
+                        <span className="text-xs font-bold text-slate-800">
+                          {region.rainfall_mm_24h ?? 0} mm
+                        </span>
+                      </div>
 
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-slate-500">
-                            Risk score
-                          </span>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          River level
+                        </span>
 
-                          <span className="text-xs font-bold text-slate-800">
-                            {typeof region.risk_score === "number"
-                              ? Math.round(
-                                  region.risk_score <= 1
-                                    ? region.risk_score * 100
-                                    : region.risk_score
-                                )
-                              : 0}
-                            /100
-                          </span>
-                        </div>
-
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-slate-500">
-                            Rainfall
-                          </span>
-
-                          <span className="text-xs font-bold text-slate-800">
-                            {region.rainfall_mm_24h ?? 0} mm
-                          </span>
-                        </div>
-
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="text-xs text-slate-500">
-                            River level
-                          </span>
-
-                          <span className="text-xs font-bold text-slate-800">
-                            {region.river_level_m ?? 0} m
-                          </span>
-                        </div>
+                        <span className="text-xs font-bold text-slate-800">
+                          {region.river_level_m ?? 0} m
+                        </span>
                       </div>
                     </div>
-                  </Popup>
-                </CircleMarker>
-              );
-            })}
-          </MapContainer>
-        )}
+                  </div>
+                </Popup>
+              </CircleMarker>
+            );
+          })}
+        </MapContainer>
 
         {/* Network status */}
-        {!loading && !error && (
-          <div className="absolute bottom-5 left-1/2 z-[1000] -translate-x-1/2">
-            <div className="rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-md backdrop-blur">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+        <div className="absolute bottom-5 left-1/2 z-[1000] -translate-x-1/2">
+          <div className="rounded-full border border-slate-200 bg-white/95 px-4 py-2 shadow-md backdrop-blur">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
 
-                <span className="text-[10px] font-semibold text-slate-600">
-                  Monitoring {validRegions.length} regions
-                </span>
-              </div>
+              <span className="text-[10px] font-semibold text-slate-600">
+                Monitoring {validRegions.length} regions
+              </span>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Legend */}
         <div className="absolute bottom-5 right-5 z-[1000] rounded-xl border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur">
@@ -350,19 +301,17 @@ function RiskMap() {
         </div>
 
         {/* Country count */}
-        {!loading && !error && (
-          <div className="absolute left-5 top-5 z-[1000]">
-            <div className="rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-md backdrop-blur">
-              <p className="text-xs font-bold text-slate-700">
-                Africa Monitoring Network
-              </p>
+        <div className="absolute left-5 top-5 z-[1000]">
+          <div className="rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-md backdrop-blur">
+            <p className="text-xs font-bold text-slate-700">
+              Africa Monitoring Network
+            </p>
 
-              <p className="mt-1 text-[10px] text-slate-400">
-                Monitoring {countries} countries
-              </p>
-            </div>
+            <p className="mt-1 text-[10px] text-slate-400">
+              Monitoring {countries} countries
+            </p>
           </div>
-        )}
+        </div>
       </div>
     </section>
   );

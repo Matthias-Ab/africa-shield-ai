@@ -29,8 +29,8 @@ const colorMap = {
     badge: "bg-emerald-50 text-emerald-600",
   },
   default: {
-    icon: "bg-teal-50 text-teal-600",
-    badge: "bg-teal-50 text-teal-600",
+    icon: "bg-blue-50 text-blue-600",
+    badge: "bg-blue-50 text-blue-600",
   },
 };
 
@@ -68,11 +68,11 @@ function StatCard({
         duration-300
         ${
           active
-            ? "border-teal-300 bg-teal-50/30 shadow-md shadow-teal-100"
+            ? "border-blue-300 bg-blue-50/30 shadow-md shadow-blue-100"
             : "border-slate-200"
         }
         hover:-translate-y-1
-        hover:border-teal-200
+        hover:border-blue-200
         hover:shadow-lg
       `}
     >
@@ -85,7 +85,7 @@ function StatCard({
           top-0
           h-full
           w-1
-          bg-teal-500
+          bg-blue-500
           transition-opacity
           duration-300
           ${active ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
@@ -145,8 +145,8 @@ function StatCard({
           duration-300
           ${
             active
-              ? "text-teal-600"
-              : "text-transparent group-hover:text-teal-600"
+              ? "text-blue-600"
+              : "text-transparent group-hover:text-blue-600"
           }
         `}
       >
